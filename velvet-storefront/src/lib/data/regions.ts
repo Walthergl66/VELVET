@@ -16,7 +16,7 @@ export const listRegions = async () => {
       next,
       cache: "force-cache",
     })
-    .then(({ regions }) => regions)
+    .then(({ regions }: { regions: HttpTypes.StoreRegion[] }) => regions)
     .catch(medusaError)
 }
 
@@ -49,15 +49,24 @@ export const getRegion = async (countryCode: string) => {
       return null
     }
 
-    regions.forEach((region) => {
-      region.countries?.forEach((c) => {
-        regionMap.set(c?.iso_2 ?? "", region)
+    interface Country {
+      iso_2?: string
+    }
+
+    interface Region {
+      countries?: Country[]
+      // Add other properties from HttpTypes.StoreRegion if needed
+    }
+
+    regions.forEach((region: Region) => {
+      region.countries?.forEach((c: Country) => {
+        regionMap.set(c?.iso_2 ?? "", region as HttpTypes.StoreRegion)
       })
     })
 
     const region = countryCode
       ? regionMap.get(countryCode)
-      : regionMap.get("us")
+      : regionMap.get("ec")
 
     return region
   } catch (e: any) {

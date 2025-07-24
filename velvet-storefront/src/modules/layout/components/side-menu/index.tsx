@@ -69,7 +69,7 @@ const SideMenu = () => {
                             href={href}
                             className="block w-full px-4 py-3 text-left text-lg font-medium text-gray-800 hover:bg-pink-50 hover:text-pink-500 rounded-md transition-all cursor-pointer"
                             onClick={close}
-                            data-testid={${name.toLowerCase()}-link}
+                            data-testid={`${name.toLowerCase()}-link`}
                           >
                             {name}
                           </LocalizedClientLink>
