@@ -1,29 +1,33 @@
-# Usar la imagen oficial de Node.js
+# Etapa base
 FROM node:18-alpine AS base
-
-# Instalar dependencias
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
 
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+# Etapa de instalación de dependencias
+FROM base AS deps
+COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
   elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
+  else echo "No lockfile found." && exit 1; \
   fi
 
-# Imagen de desarrollo
-FROM base AS dev
-WORKDIR /app
+# Etapa de build de la app
+FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+RUN npm run build
 
-ENV NODE_ENV=development
-ENV NEXT_TELEMETRY_DISABLED=1
+# Etapa final (producción)
+FROM base AS runner
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
 
 EXPOSE 3000
+ENV PORT 3000
+ENV NODE_ENV production
 
-# Usar npm run dev para desarrollo
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
