@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, Session, AuthError } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
 /**

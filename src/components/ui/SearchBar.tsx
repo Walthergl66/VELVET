@@ -80,8 +80,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
       {isOpen && suggestions.length > 0 && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
           <ul className="py-2">
-            {suggestions.map((suggestion, index) => (
-              <li key={index}>
+            {suggestions.map((suggestion) => (
+              <li key={suggestion}>
                 <button
                   onClick={() => {
                     setQuery(suggestion);
@@ -104,9 +104,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
       {/* Overlay para cerrar el dropdown */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 z-40" 
+        <button 
+          className="fixed inset-0 z-40 bg-transparent border-none cursor-default" 
           onClick={() => setIsOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setIsOpen(false);
+            }
+          }}
+          aria-label="Cerrar sugerencias de búsqueda"
         />
       )}
     </div>
