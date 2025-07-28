@@ -5,7 +5,6 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import Image from 'next/image';
-import { redirect } from 'next/navigation';
 
 /**
  * Página de checkout - Proceso de finalización de compra
@@ -32,7 +31,7 @@ interface PaymentForm {
 }
 
 export default function CheckoutPage() {
-  const { cart, clearCart, loading: cartLoading } = useCart();
+  const { cart, clearCart } = useCart();
   const { user, isAuthenticated } = useAuth();
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -117,6 +116,7 @@ export default function CheckoutPage() {
       alert('¡Pedido realizado con éxito! Recibirás un email de confirmación.');
       window.location.href = '/user/dashboard';
     } catch (error) {
+      console.error('Error al procesar el pedido:', error);
       alert('Error al procesar el pedido. Inténtalo de nuevo.');
     } finally {
       setIsProcessing(false);
@@ -219,10 +219,11 @@ export default function CheckoutPage() {
                 <form onSubmit={handleShippingSubmit} className="p-6 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
                         Nombre *
                       </label>
                       <input
+                        id="firstName"
                         type="text"
                         required
                         value={shippingForm.firstName}
@@ -231,10 +232,11 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
                         Apellido *
                       </label>
                       <input
+                        id="lastName"
                         type="text"
                         required
                         value={shippingForm.lastName}
@@ -246,10 +248,11 @@ export default function CheckoutPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                         Email *
                       </label>
                       <input
+                        id="email"
                         type="email"
                         required
                         value={shippingForm.email}
@@ -258,10 +261,11 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
                         Teléfono *
                       </label>
                       <input
+                        id="phone"
                         type="tel"
                         required
                         value={shippingForm.phone}
@@ -272,10 +276,11 @@ export default function CheckoutPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
                       Dirección *
                     </label>
                     <input
+                      id="address"
                       type="text"
                       required
                       value={shippingForm.address}
@@ -287,10 +292,11 @@ export default function CheckoutPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-1">
                         Ciudad *
                       </label>
                       <input
+                        id="city"
                         type="text"
                         required
                         value={shippingForm.city}
@@ -299,10 +305,11 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
                         Estado *
                       </label>
                       <input
+                        id="state"
                         type="text"
                         required
                         value={shippingForm.state}
@@ -311,10 +318,11 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
                         Código Postal *
                       </label>
                       <input
+                        id="zipCode"
                         type="text"
                         required
                         value={shippingForm.zipCode}
@@ -344,10 +352,11 @@ export default function CheckoutPage() {
                 </div>
                 <form onSubmit={handlePaymentSubmit} className="p-6 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-1">
                       Número de Tarjeta *
                     </label>
                     <input
+                      id="cardNumber"
                       type="text"
                       required
                       value={paymentForm.cardNumber}
@@ -358,10 +367,11 @@ export default function CheckoutPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="cardName" className="block text-sm font-medium text-gray-700 mb-1">
                       Nombre en la Tarjeta *
                     </label>
                     <input
+                      id="cardName"
                       type="text"
                       required
                       value={paymentForm.cardName}
@@ -373,10 +383,11 @@ export default function CheckoutPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-1">
                         Fecha de Vencimiento *
                       </label>
                       <input
+                        id="expiryDate"
                         type="text"
                         required
                         value={paymentForm.expiryDate}
@@ -386,10 +397,11 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 mb-1">
                         CVV *
                       </label>
                       <input
+                        id="cvv"
                         type="text"
                         required
                         value={paymentForm.cvv}

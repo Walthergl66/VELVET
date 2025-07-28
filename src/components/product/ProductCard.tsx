@@ -12,8 +12,8 @@ import { useCart } from '@/context/CartContext';
  */
 
 interface ProductCardProps {
-  product: Product;
-  className?: string;
+  readonly product: Product;
+  readonly className?: string;
 }
 
 export default function ProductCard({ product, className = '' }: ProductCardProps) {
@@ -46,6 +46,12 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
     }
   };
 
+  const getButtonText = () => {
+    if (loading) return 'Agregando...';
+    if (isProductInCart) return 'En Carrito';
+    return 'Agregar al Carrito';
+  };
+
   const isProductInCart = selectedSize && selectedColor 
     ? isInCart(product.id, selectedSize, selectedColor)
     : false;
@@ -55,10 +61,15 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
     : 0;
 
   return (
-    <div 
+    <article 
       className={`group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
+        setIsHovered(false);
+        setShowQuickAdd(false);
+      }}
+      onFocus={() => setIsHovered(true)}
+      onBlur={() => {
         setIsHovered(false);
         setShowQuickAdd(false);
       }}
@@ -119,50 +130,64 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
             <div className="space-y-2">
               {/* Size Selection */}
               {product.sizes && product.sizes.length > 0 && (
-                <div>
-                  <label className="text-xs font-medium text-gray-700 block mb-1">
+                <fieldset>
+                  <legend className="text-xs font-medium text-gray-700 block mb-1">
                     Talla:
-                  </label>
+                  </legend>
                   <div className="flex gap-1">
                     {product.sizes.map((size) => (
-                      <button
+                      <label
                         key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-2 py-1 text-xs border rounded ${
+                        className={`px-2 py-1 text-xs border rounded cursor-pointer ${
                           selectedSize === size
                             ? 'bg-black text-white border-black'
                             : 'border-gray-300 hover:border-gray-400'
                         }`}
                       >
+                        <input
+                          type="radio"
+                          name={`size-${product.id}`}
+                          value={size}
+                          checked={selectedSize === size}
+                          onChange={() => setSelectedSize(size)}
+                          className="sr-only"
+                        />
                         {size}
-                      </button>
+                      </label>
                     ))}
                   </div>
-                </div>
+                </fieldset>
               )}
 
               {/* Color Selection */}
               {product.colors && product.colors.length > 0 && (
-                <div>
-                  <label className="text-xs font-medium text-gray-700 block mb-1">
+                <fieldset>
+                  <legend className="text-xs font-medium text-gray-700 block mb-1">
                     Color:
-                  </label>
+                  </legend>
                   <div className="flex gap-1">
                     {product.colors.map((color) => (
-                      <button
+                      <label
                         key={color}
-                        onClick={() => setSelectedColor(color)}
-                        className={`px-2 py-1 text-xs border rounded ${
+                        className={`px-2 py-1 text-xs border rounded cursor-pointer ${
                           selectedColor === color
                             ? 'bg-black text-white border-black'
                             : 'border-gray-300 hover:border-gray-400'
                         }`}
                       >
+                        <input
+                          type="radio"
+                          name={`color-${product.id}`}
+                          value={color}
+                          checked={selectedColor === color}
+                          onChange={() => setSelectedColor(color)}
+                          className="sr-only"
+                        />
                         {color}
-                      </button>
+                      </label>
                     ))}
                   </div>
-                </div>
+                </fieldset>
               )}
 
               <button
@@ -170,7 +195,7 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
                 disabled={loading || !selectedSize || !selectedColor || isProductInCart}
                 className="w-full bg-black text-white text-xs font-medium py-2 rounded hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                {loading ? 'Agregando...' : isProductInCart ? 'En Carrito' : 'Agregar al Carrito'}
+                {getButtonText()}
               </button>
             </div>
           </div>
@@ -212,9 +237,9 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
         {/* Rating */}
         <div className="flex items-center gap-1 mt-2">
           <div className="flex">
-            {[...Array(5)].map((_, i) => (
+            {Array.from({ length: 5 }, (_, i) => (
               <svg
-                key={i}
+                key={`star-${product.id}-${i}`}
                 className={`w-4 h-4 ${
                   i < Math.floor(4.5) // Rating por defecto para mockup
                     ? 'text-yellow-400'
@@ -247,6 +272,6 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
           </button>
         )}
       </div>
-    </div>
+    </article>
   );
 }
