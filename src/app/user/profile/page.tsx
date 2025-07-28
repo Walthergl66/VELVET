@@ -14,6 +14,7 @@ export default function UserProfile() {
   const { user, isAuthenticated, loading, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -49,17 +50,18 @@ export default function UserProfile() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setNotification(null);
     try {
       const result = await updateProfile(formData);
       if (result.success) {
         setIsEditing(false);
-        // TODO: Mostrar notificación de éxito
-        alert('Perfil actualizado correctamente');
+        setNotification({ type: 'success', message: 'Perfil actualizado correctamente' });
       } else {
-        alert(result.error || 'Error al actualizar el perfil');
+        setNotification({ type: 'error', message: result.error || 'Error al actualizar el perfil' });
       }
     } catch (error) {
-      alert('Error inesperado al actualizar el perfil');
+      console.error('Error updating profile:', error);
+      setNotification({ type: 'error', message: 'Error inesperado al actualizar el perfil' });
     } finally {
       setIsSaving(false);
     }
@@ -98,6 +100,36 @@ export default function UserProfile() {
           </p>
         </div>
 
+        {/* Notification */}
+        {notification && (
+          <div className={`mb-6 p-4 rounded-lg ${
+            notification.type === 'success' 
+              ? 'bg-green-50 border border-green-200 text-green-800' 
+              : 'bg-red-50 border border-red-200 text-red-800'
+          }`}>
+            <div className="flex items-center">
+              {notification.type === 'success' ? (
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+              <span>{notification.message}</span>
+              <button
+                onClick={() => setNotification(null)}
+                className="ml-auto text-current hover:opacity-70"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-6">
           {/* Información Personal */}
           <div className="bg-white rounded-lg shadow-sm">
@@ -133,10 +165,10 @@ export default function UserProfile() {
             <div className="p-6 space-y-6">
               {/* Email (No editable) */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email-field" className="block text-sm font-medium text-gray-700 mb-2">
                   Correo electrónico
                 </label>
-                <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
+                <div id="email-field" className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
                   {user?.email}
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
@@ -147,12 +179,13 @@ export default function UserProfile() {
               {/* Nombre */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-2">
                     Nombre
                   </label>
                   {isEditing ? (
                     <input
                       type="text"
+                      id="first_name"
                       name="first_name"
                       value={formData.first_name}
                       onChange={handleInputChange}
@@ -167,12 +200,13 @@ export default function UserProfile() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-2">
                     Apellido
                   </label>
                   {isEditing ? (
                     <input
                       type="text"
+                      id="last_name"
                       name="last_name"
                       value={formData.last_name}
                       onChange={handleInputChange}
@@ -189,12 +223,13 @@ export default function UserProfile() {
 
               {/* Teléfono */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                   Teléfono
                 </label>
                 {isEditing ? (
                   <input
                     type="tel"
+                    id="phone"
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
@@ -210,10 +245,10 @@ export default function UserProfile() {
 
               {/* Fecha de registro */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="member-since" className="block text-sm font-medium text-gray-700 mb-2">
                   Miembro desde
                 </label>
-                <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
+                <div id="member-since" className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
                   {user?.created_at ? new Date(user.created_at).toLocaleDateString('es-MX', {
                     year: 'numeric',
                     month: 'long',
@@ -258,8 +293,9 @@ export default function UserProfile() {
                     <p className="text-sm text-gray-500">Recibe actualizaciones sobre tus pedidos</p>
                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" defaultChecked className="sr-only peer" />
+                <label htmlFor="email-notifications" className="relative inline-flex items-center cursor-pointer">
+                  <span className="sr-only">Activar notificaciones por email</span>
+                  <input id="email-notifications" type="checkbox" defaultChecked className="sr-only peer" />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-black"></div>
                 </label>
               </div>

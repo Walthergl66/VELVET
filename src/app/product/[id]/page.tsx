@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
-import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/types';
 import Image from 'next/image';
@@ -18,7 +17,6 @@ import Link from 'next/link';
 export default function ProductPage() {
   const params = useParams();
   const { addToCart, loading: cartLoading } = useCart();
-  const { isAuthenticated } = useAuth();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -115,6 +113,12 @@ export default function ProductPage() {
     }).format(price);
   };
 
+  const getAddToCartButtonText = () => {
+    if (cartLoading) return 'Agregando...';
+    if (product?.stock === 0) return 'Agotado';
+    return 'Agregar al Carrito';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
@@ -124,8 +128,8 @@ export default function ProductPage() {
             <div className="space-y-4">
               <div className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
               <div className="grid grid-cols-4 gap-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
+                {Array.from({ length: 4 }, (_, i) => ({ id: `skeleton-thumb-${i}`, index: i })).map(({ id }) => (
+                  <div key={id} className="aspect-square bg-gray-200 rounded-lg animate-pulse" />
                 ))}
               </div>
             </div>
@@ -136,8 +140,8 @@ export default function ProductPage() {
               <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse" />
               <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse" />
               <div className="space-y-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-4 bg-gray-200 rounded animate-pulse" />
+                {Array.from({ length: 4 }, (_, i) => ({ id: `skeleton-line-${i}`, index: i })).map(({ id }) => (
+                  <div key={id} className="h-4 bg-gray-200 rounded animate-pulse" />
                 ))}
               </div>
             </div>
@@ -218,7 +222,7 @@ export default function ProductPage() {
               <div className="grid grid-cols-4 gap-2">
                 {product.images.map((image, index) => (
                   <button
-                    key={index}
+                    key={`thumbnail-${image}-${index}`}
                     onClick={() => setSelectedImage(index)}
                     className={`aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 transition-colors ${
                       selectedImage === index ? 'border-black' : 'border-transparent hover:border-gray-300'
@@ -359,7 +363,7 @@ export default function ProductPage() {
                 disabled={cartLoading || product.stock === 0}
                 className="w-full bg-black text-white py-4 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                {cartLoading ? 'Agregando...' : product.stock === 0 ? 'Agotado' : 'Agregar al Carrito'}
+                {getAddToCartButtonText()}
               </button>
               
               <div className="grid grid-cols-2 gap-3">

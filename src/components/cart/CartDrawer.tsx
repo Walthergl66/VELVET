@@ -15,7 +15,7 @@ interface CartDrawerProps {
 }
 
 const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
-  const { cart, removeFromCart, updateQuantity, loading } = useCart();
+  const { cart, removeFromCart, updateQuantity } = useCart();
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-MX', {
@@ -24,13 +24,22 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
     }).format(price);
   };
 
+  const handleOverlayKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      onClose();
+    }
+  };
+
   return (
     <>
       {/* Overlay */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity"
+        <button
+          type="button"
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity cursor-default"
           onClick={onClose}
+          onKeyDown={handleOverlayKeyDown}
+          aria-label="Cerrar carrito de compras"
         />
       )}
 
@@ -45,6 +54,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
             <button
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-full"
+              aria-label="Cerrar carrito de compras"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -93,6 +103,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                            aria-label={`Disminuir cantidad de ${item.product.name}`}
                           >
                             -
                           </button>
@@ -100,6 +111,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                            aria-label={`Aumentar cantidad de ${item.product.name}`}
                           >
                             +
                           </button>
@@ -107,6 +119,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                         <button
                           onClick={() => removeFromCart(item.id)}
                           className="text-red-500 hover:text-red-700 text-sm"
+                          aria-label={`Eliminar ${item.product.name} del carrito`}
                         >
                           Eliminar
                         </button>

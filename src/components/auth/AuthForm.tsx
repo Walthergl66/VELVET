@@ -11,9 +11,9 @@ import Link from 'next/link';
  */
 
 interface AuthFormProps {
-  mode?: 'login' | 'register';
-  redirectTo?: string;
-  onClose?: () => void;
+  readonly mode?: 'login' | 'register';
+  readonly redirectTo?: string;
+  readonly onClose?: () => void;
 }
 
 export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: AuthFormProps) {
@@ -105,6 +105,28 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const getSubmitButtonText = () => {
+    if (isSubmitting) {
+      return isLogin ? 'Iniciando sesión...' : 'Creando cuenta...';
+    }
+    return isLogin ? 'Iniciar sesión' : 'Crear cuenta';
+  };
+
+  const renderSubmitButton = () => {
+    const buttonText = getSubmitButtonText();
+    
+    if (isSubmitting) {
+      return (
+        <div className="flex items-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+          {buttonText}
+        </div>
+      );
+    }
+    
+    return buttonText;
   };
 
   const toggleMode = () => {
@@ -285,14 +307,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
               disabled={isSubmitting}
               className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSubmitting ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  {isLogin ? 'Iniciando sesión...' : 'Creando cuenta...'}
-                </div>
-              ) : (
-                isLogin ? 'Iniciar sesión' : 'Crear cuenta'
-              )}
+              {renderSubmitButton()}
             </button>
           </div>
 
