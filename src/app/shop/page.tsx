@@ -4,7 +4,6 @@ import React, { useState, useMemo } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import ProductCard from '@/components/product/ProductCard';
-import Link from 'next/link';
 
 /**
  * Página de la tienda - Lista todos los productos con filtros y búsqueda
@@ -46,67 +45,66 @@ export default function ShopPage() {
     { value: 'newest', label: 'Más Recientes' },
   ];
 
+  // Helper functions for filtering
+  const matchesSearch = (product: any, searchTerm: string) => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    return product.name.toLowerCase().includes(term) ||
+           product.description?.toLowerCase().includes(term);
+  };
+
+  const matchesCategory = (product: any, selectedCategory: string) => {
+    return !selectedCategory || product.category_id === selectedCategory;
+  };
+
+  const matchesPrice = (product: any, priceRange: { min: number; max: number }) => {
+    const productPrice = product.discount_price || product.price;
+    return productPrice >= priceRange.min && productPrice <= priceRange.max;
+  };
+
+  const matchesSizes = (product: any, selectedSizes: string[]) => {
+    if (selectedSizes.length === 0) return true;
+    if (!product.sizes) return false;
+    const productSizes = Array.isArray(product.sizes) ? product.sizes : [];
+    return selectedSizes.some(size => productSizes.includes(size));
+  };
+
+  const matchesColors = (product: any, selectedColors: string[]) => {
+    if (selectedColors.length === 0) return true;
+    if (!product.colors) return false;
+    const productColors = Array.isArray(product.colors) ? product.colors : [];
+    return selectedColors.some(color => productColors.includes(color));
+  };
+
+  const sortProducts = (products: any[], sortBy: SortOption) => {
+    const sorted = [...products];
+    switch (sortBy) {
+      case 'price-low':
+        return sorted.sort((a, b) => (a.discount_price || a.price) - (b.discount_price || b.price));
+      case 'price-high':
+        return sorted.sort((a, b) => (b.discount_price || b.price) - (a.discount_price || a.price));
+      case 'name':
+        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+      case 'newest':
+        return sorted.sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime());
+      default:
+        return sorted;
+    }
+  };
+
   // Productos filtrados y ordenados
   const filteredProducts = useMemo(() => {
     if (!products) return [];
 
-    let filtered = products.filter(product => {
-      // Filtro por búsqueda
-      if (searchTerm && !product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !product.description?.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
-
-      // Filtro por categoría
-      if (selectedCategory && product.category_id !== selectedCategory) {
-        return false;
-      }
-
-      // Filtro por precio
-      const productPrice = product.discount_price || product.price;
-      if (productPrice < priceRange.min || productPrice > priceRange.max) {
-        return false;
-      }
-
-      // Filtro por tallas (si están disponibles)
-      if (selectedSizes.length > 0 && product.sizes) {
-        const productSizes = Array.isArray(product.sizes) ? product.sizes : [];
-        if (!selectedSizes.some(size => productSizes.includes(size))) {
-          return false;
-        }
-      }
-
-      // Filtro por colores (si están disponibles)
-      if (selectedColors.length > 0 && product.colors) {
-        const productColors = Array.isArray(product.colors) ? product.colors : [];
-        if (!selectedColors.some(color => productColors.includes(color))) {
-          return false;
-        }
-      }
-
-      return true;
+    const filtered = products.filter(product => {
+      return matchesSearch(product, searchTerm) &&
+             matchesCategory(product, selectedCategory) &&
+             matchesPrice(product, priceRange) &&
+             matchesSizes(product, selectedSizes) &&
+             matchesColors(product, selectedColors);
     });
 
-    // Ordenamiento
-    switch (sortBy) {
-      case 'price-low':
-        filtered.sort((a, b) => (a.discount_price || a.price) - (b.discount_price || b.price));
-        break;
-      case 'price-high':
-        filtered.sort((a, b) => (b.discount_price || b.price) - (a.discount_price || a.price));
-        break;
-      case 'name':
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'newest':
-        filtered.sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime());
-        break;
-      default:
-        // Mantener orden predeterminado
-        break;
-    }
-
-    return filtered;
+    return sortProducts(filtered, sortBy);
   }, [products, searchTerm, selectedCategory, selectedSizes, selectedColors, priceRange, sortBy]);
 
   const handleSizeToggle = (size: string) => {
@@ -139,6 +137,55 @@ export default function ShopPage() {
       style: 'currency',
       currency: 'MXN',
     }).format(price);
+  };
+
+  const renderProductsGrid = () => {
+    if (productsLoading) {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }, (_, index) => (
+            <div key={`skeleton-${index}`} className="bg-white rounded-lg shadow-sm overflow-hidden animate-pulse">
+              <div className="w-full h-64 bg-gray-200" />
+              <div className="p-4 space-y-2">
+                <div className="h-4 bg-gray-200 rounded" />
+                <div className="h-4 bg-gray-200 rounded w-3/4" />
+                <div className="h-6 bg-gray-200 rounded w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (filteredProducts.length > 0) {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredProducts.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-center py-16">
+        <svg className="w-24 h-24 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.5-.65-6.364-1.75L3 16.25v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.25l-2.636-3" />
+        </svg>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          No se encontraron productos
+        </h3>
+        <p className="text-gray-600 mb-6">
+          Intenta ajustar tus filtros o buscar con términos diferentes.
+        </p>
+        <button
+          onClick={clearFilters}
+          className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+        >
+          Limpiar Filtros
+        </button>
+      </div>
+    );
   };
 
   if (productsError) {
@@ -202,10 +249,11 @@ export default function ShopPage() {
             <div className={`bg-white rounded-lg shadow-sm p-6 space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
               {/* Search */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="search-products" className="block text-sm font-medium text-gray-700 mb-2">
                   Buscar Productos
                 </label>
                 <input
+                  id="search-products"
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -215,10 +263,10 @@ export default function ShopPage() {
               </div>
 
               {/* Categories */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <fieldset>
+                <legend className="block text-sm font-medium text-gray-700 mb-2">
                   Categorías
-                </label>
+                </legend>
                 <div className="space-y-2">
                   <label className="flex items-center">
                     <input
@@ -245,16 +293,18 @@ export default function ShopPage() {
                     </label>
                   ))}
                 </div>
-              </div>
+              </fieldset>
 
               {/* Price Range */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <fieldset>
+                <legend className="block text-sm font-medium text-gray-700 mb-2">
                   Rango de Precio
-                </label>
+                </legend>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
+                    <label htmlFor="price-min" className="sr-only">Precio mínimo</label>
                     <input
+                      id="price-min"
                       type="number"
                       value={priceRange.min}
                       onChange={(e) => setPriceRange({...priceRange, min: Number(e.target.value)})}
@@ -262,7 +312,9 @@ export default function ShopPage() {
                       className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
                     />
                     <span className="text-gray-500">-</span>
+                    <label htmlFor="price-max" className="sr-only">Precio máximo</label>
                     <input
+                      id="price-max"
                       type="number"
                       value={priceRange.max}
                       onChange={(e) => setPriceRange({...priceRange, max: Number(e.target.value)})}
@@ -274,13 +326,13 @@ export default function ShopPage() {
                     {formatPrice(priceRange.min)} - {formatPrice(priceRange.max)}
                   </div>
                 </div>
-              </div>
+              </fieldset>
 
               {/* Sizes */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <fieldset>
+                <legend className="block text-sm font-medium text-gray-700 mb-2">
                   Tallas
-                </label>
+                </legend>
                 <div className="grid grid-cols-3 gap-2">
                   {availableSizes.map(size => (
                     <button
@@ -296,19 +348,20 @@ export default function ShopPage() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </fieldset>
 
               {/* Colors */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <fieldset>
+                <legend className="block text-sm font-medium text-gray-700 mb-2">
                   Colores
-                </label>
+                </legend>
                 <div className="grid grid-cols-4 gap-2">
                   {availableColors.map(color => (
                     <button
                       key={color.value}
                       onClick={() => handleColorToggle(color.value)}
                       title={color.name}
+                      aria-label={`Seleccionar color ${color.name}`}
                       className={`w-8 h-8 rounded-full border-2 transition-all ${
                         selectedColors.includes(color.value)
                           ? 'border-black ring-2 ring-black ring-offset-2'
@@ -322,7 +375,7 @@ export default function ShopPage() {
                     </button>
                   ))}
                 </div>
-              </div>
+              </fieldset>
 
               {/* Clear Filters */}
               <button
@@ -346,8 +399,9 @@ export default function ShopPage() {
                 )}
               </div>
               <div className="flex items-center space-x-2">
-                <label className="text-sm text-gray-600">Ordenar por:</label>
+                <label htmlFor="sort-select" className="text-sm text-gray-600">Ordenar por:</label>
                 <select
+                  id="sort-select"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
@@ -362,44 +416,7 @@ export default function ShopPage() {
             </div>
 
             {/* Products Grid */}
-            {productsLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {Array.from({ length: 8 }).map((_, index) => (
-                  <div key={index} className="bg-white rounded-lg shadow-sm overflow-hidden animate-pulse">
-                    <div className="w-full h-64 bg-gray-200" />
-                    <div className="p-4 space-y-2">
-                      <div className="h-4 bg-gray-200 rounded" />
-                      <div className="h-4 bg-gray-200 rounded w-3/4" />
-                      <div className="h-6 bg-gray-200 rounded w-1/2" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredProducts.map(product => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-16">
-                <svg className="w-24 h-24 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.5-.65-6.364-1.75L3 16.25v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.25l-2.636-3" />
-                </svg>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  No se encontraron productos
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Intenta ajustar tus filtros o buscar con términos diferentes.
-                </p>
-                <button
-                  onClick={clearFilters}
-                  className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
-                >
-                  Limpiar Filtros
-                </button>
-              </div>
-            )}
+            {renderProductsGrid()}
           </div>
         </div>
       </div>

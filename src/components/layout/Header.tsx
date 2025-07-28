@@ -24,6 +24,13 @@ export default function Header() {
     setIsUserMenuOpen(false);
   };
 
+  const getCartAriaLabel = () => {
+    const itemCount = getItemCount();
+    return itemCount > 0 
+      ? `Carrito de compras (${itemCount} artículos)`
+      : 'Carrito de compras (vacío)';
+  };
+
   const navigation = [
     { name: 'Inicio', href: '/' },
     { name: 'Tienda', href: '/shop' },
@@ -69,6 +76,7 @@ export default function Header() {
                 <input
                   type="text"
                   placeholder="Buscar productos..."
+                  aria-label="Buscar productos"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-black focus:border-black"
                 />
               </div>
@@ -78,7 +86,10 @@ export default function Header() {
             <div className="flex items-center space-x-4">
               
               {/* Search Icon (Mobile) */}
-              <button className="lg:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors">
+              <button 
+                className="lg:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                aria-label="Buscar productos"
+              >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -89,6 +100,8 @@ export default function Header() {
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                  aria-label="Menú de usuario"
+                  aria-expanded={isUserMenuOpen}
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -155,6 +168,7 @@ export default function Header() {
               <button
                 onClick={() => setIsCartOpen(true)}
                 className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                aria-label={getCartAriaLabel()}
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -170,6 +184,8 @@ export default function Header() {
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                aria-label="Menú de navegación móvil"
+                aria-expanded={isMobileMenuOpen}
               >
                 {isMobileMenuOpen ? (
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,6 +226,7 @@ export default function Header() {
                     <input
                       type="text"
                       placeholder="Buscar productos..."
+                      aria-label="Buscar productos"
                       className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-black focus:border-black"
                     />
                   </div>
@@ -221,9 +238,15 @@ export default function Header() {
 
         {/* Click outside to close user menu */}
         {isUserMenuOpen && (
-          <div
-            className="fixed inset-0 z-10"
+          <button
+            className="fixed inset-0 z-10 bg-transparent border-0 cursor-default"
+            aria-label="Cerrar menú de usuario"
             onClick={() => setIsUserMenuOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setIsUserMenuOpen(false);
+              }
+            }}
           />
         )}
       </header>
