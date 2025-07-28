@@ -1,15 +1,15 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
 import { Cart, CartItem, Product } from '@/types';
 import { 
   getUserCart, 
   addToCart as addToCartDB, 
   updateCartItemQuantity, 
   removeFromCart as removeFromCartDB,
-  clearCart as clearCartDB 
+  clearCart as clearCartDB,
+  supabase 
 } from '@/lib/supabase';
-import { supabase } from '@/lib/supabase';
 
 /**
  * Contexto del carrito de compras para la tienda VELVET integrado con Supabase
@@ -56,7 +56,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     case 'SET_CART':
       return { ...state, items: action.payload, loading: false, error: null };
     
-    case 'ADD_ITEM':
+    case 'ADD_ITEM': {
       const existingItemIndex = state.items.findIndex(
         item => item.product_id === action.payload.product_id && 
                 item.size === action.payload.size && 
@@ -73,6 +73,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       } else {
         return { ...state, items: [...state.items, action.payload] };
       }
+    }
     
     case 'UPDATE_ITEM':
       return {
@@ -155,7 +156,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           dispatch({ type: 'SET_CART', payload: cartItems || [] });
         }
       } catch (err) {
-        dispatch({ type: 'SET_ERROR', payload: 'Error al cargar el carrito' });
+        console.error('Error al cargar el carrito:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Error al cargar el carrito';
+        dispatch({ type: 'SET_ERROR', payload: errorMessage });
       }
     };
 
@@ -187,7 +190,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      const { data, error } = await addToCartDB(product.id, quantity, size, color);
+      const { error } = await addToCartDB(product.id, quantity, size, color);
       
       if (error) {
         // Si el usuario no está autenticado, usar localStorage
@@ -214,7 +217,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dispatch({ type: 'SET_CART', payload: updatedCart || [] });
       }
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', payload: 'Error al agregar al carrito' });
+      console.error('Error al agregar al carrito:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error al agregar al carrito';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -233,7 +238,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dispatch({ type: 'REMOVE_ITEM', payload: itemId });
       }
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', payload: 'Error al eliminar del carrito' });
+      console.error('Error al eliminar del carrito:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error al eliminar del carrito';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -256,7 +263,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dispatch({ type: 'UPDATE_ITEM', payload: { id: itemId, quantity } });
       }
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', payload: 'Error al actualizar cantidad' });
+      console.error('Error al actualizar cantidad:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error al actualizar cantidad';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -276,7 +285,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('velvet-cart');
       }
     } catch (err) {
-      dispatch({ type: 'SET_ERROR', payload: 'Error al limpiar carrito' });
+      console.error('Error al limpiar carrito:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error al limpiar carrito';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -300,7 +311,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     ...totals,
   };
 
-  const value: CartContextType = {
+  const value: CartContextType = useMemo(() => ({
     cart,
     addToCart,
     removeFromCart,
@@ -310,7 +321,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isInCart,
     loading: state.loading,
     error: state.error,
-  };
+  }), [cart, state.loading, state.error]);
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
