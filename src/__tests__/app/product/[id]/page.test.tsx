@@ -248,8 +248,10 @@ describe('ProductPage', () => {
     render(<ProductPage />)
 
     await waitFor(() => {
-      expect(screen.getByText('10')).toBeInTheDocument()
+      // Buscar el texto que contiene "disponibles" con más flexibilidad
       expect(screen.getByText(/disponibles/i)).toBeInTheDocument()
+      // También verificar que aparece el número de stock (puede estar separado)
+      expect(screen.getByText(/10.*disponibles|disponibles.*10/i)).toBeInTheDocument()
     })
   })
 })

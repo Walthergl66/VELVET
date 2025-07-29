@@ -99,7 +99,7 @@ describe('useProducts', () => {
   })
 
   it('should filter by category', async () => {
-    const { result } = renderHook(() => useProducts({ category: 'cat1' }))
+    const { result } = renderHook(() => useProducts({ category: 'vestidos' }))
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false)

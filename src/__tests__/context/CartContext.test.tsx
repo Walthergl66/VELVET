@@ -219,6 +219,9 @@ describe('CartContext', () => {
   })
 
   it('should handle errors correctly', async () => {
+    // Silenciar console.error para este test específico
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
     const errorMessage = 'Error adding to cart'
     mockAddToCartDB.mockRejectedValue(new Error(errorMessage))
 
@@ -233,5 +236,8 @@ describe('CartContext', () => {
     await waitFor(() => {
       expect(result.current.error).toBe(errorMessage)
     })
+
+    // Restaurar console.error
+    consoleSpy.mockRestore()
   })
 })
