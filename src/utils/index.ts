@@ -3,10 +3,23 @@
  */
 
 export const formatPrice = (price: number, currency = 'EUR'): string => {
-  return new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency,
-  }).format(price);
+  // Formatear el número con 2 decimales
+  const formattedNumber = Math.abs(price).toFixed(2).replace('.', ',');
+  
+  // Agregar separadores de miles si es necesario
+  const parts = formattedNumber.split(',');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  
+  const finalNumber = parts.join(',');
+  
+  // Manejar diferentes monedas
+  switch (currency) {
+    case 'USD':
+      return `$${finalNumber}`;
+    case 'EUR':
+    default:
+      return `${finalNumber} €`;
+  }
 };
 
 export const formatDate = (date: string | Date): string => {
@@ -65,7 +78,13 @@ export const validatePassword = (password: string): {
 
 export const truncateText = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength).trim() + '...';
+  // Truncar hasta la última palabra completa que cabe en maxLength
+  const truncated = text.slice(0, maxLength);
+  const lastSpaceIndex = truncated.lastIndexOf(' ');
+  if (lastSpaceIndex > 0) {
+    return truncated.slice(0, lastSpaceIndex) + '...';
+  }
+  return truncated + '...';
 };
 
 export const calculateDiscount = (originalPrice: number, discountPercentage: number): {

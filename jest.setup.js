@@ -16,6 +16,15 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/',
 }))
 
+// Mock Next.js Image component
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: (props) => {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img {...props} />
+  },
+}))
+
 // Mock Supabase client - simplified version
 global.mockSupabase = {
   auth: {
@@ -36,8 +45,14 @@ global.mockSupabase = {
     order: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
     single: jest.fn(),
+    then: jest.fn((callback) => callback({ data: [], error: null })),
   })),
 }
+
+// Mock de Supabase
+jest.mock('@/lib/supabase', () => ({
+  supabase: global.mockSupabase,
+}))
 
 // Mock intersection observer
 global.IntersectionObserver = class IntersectionObserver {

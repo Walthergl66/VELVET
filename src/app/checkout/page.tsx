@@ -35,6 +35,7 @@ export default function CheckoutPage() {
   const { user, isAuthenticated } = useAuth();
   const [currentStep, setCurrentStep] = useState<'shipping' | 'payment' | 'review'>('shipping');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [validationError, setValidationError] = useState<string>('');
 
   const [shippingForm, setShippingForm] = useState<ShippingForm>({
     firstName: user?.user_metadata?.first_name || '',
@@ -90,6 +91,21 @@ export default function CheckoutPage() {
 
   const handleShippingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError('');
+    
+    // Validar campos requeridos
+    const requiredFields = [
+      'firstName', 'lastName', 'email', 'phone', 
+      'address', 'city', 'state', 'zipCode'
+    ];
+    
+    const emptyFields = requiredFields.filter(field => !shippingForm[field as keyof ShippingForm]);
+    
+    if (emptyFields.length > 0) {
+      setValidationError('Por favor, completa todos los campos de envío');
+      return;
+    }
+    
     setCurrentStep('payment');
   };
 
@@ -216,6 +232,11 @@ export default function CheckoutPage() {
                 <div className="px-6 py-4 border-b border-gray-200">
                   <h2 className="text-lg font-semibold text-gray-900">Información de Envío</h2>
                 </div>
+                {validationError && (
+                  <div className="px-6 py-4 bg-red-50 border-b border-red-200">
+                    <p className="text-sm text-red-600">{validationError}</p>
+                  </div>
+                )}
                 <form onSubmit={handleShippingSubmit} className="p-6 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
