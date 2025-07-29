@@ -19,6 +19,15 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
+# Etapa de desarrollo
+FROM base AS development
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+EXPOSE 8080
+ENV PORT=8080
+ENV NODE_ENV=development
+CMD ["npm", "run", "dev"]
+
 # Etapa final (producción)
 FROM base AS runner
 COPY --from=builder /app/public ./public
@@ -26,8 +35,9 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
-EXPOSE 3000
-ENV PORT=3000
+EXPOSE 8080
+ENV PORT=8080
 ENV NODE_ENV=production
 
 CMD ["npm", "start"]
+
