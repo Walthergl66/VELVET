@@ -41,13 +41,13 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-white shadow-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="bg-white shadow-sm sticky top-0 z-30">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             
             {/* Logo */}
-            <div className="flex-shrink-0">
-              <Link href="/" className="text-2xl font-bold text-black">
+            <div className="flex-shrink-0 flex items-center justify-start w-70">
+              <Link href="/" className="text-4xl font-bold bg-gradient-to-r from-[#ff3b4a] via-[#B32134] to-[#490000] bg-clip-text text-transparent">
                 VELVET
               </Link>
             </div>
@@ -101,7 +101,7 @@ export default function Header() {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
                   aria-label="Menú de usuario"
-                  aria-expanded={isUserMenuOpen}
+                  aria-expanded={isUserMenuOpen ? "true" : "false"}
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -185,7 +185,7 @@ export default function Header() {
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
                 aria-label="Menú de navegación móvil"
-                aria-expanded={isMobileMenuOpen}
+                aria-expanded={isMobileMenuOpen ? "true" : "false"}
               >
                 {isMobileMenuOpen ? (
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
