@@ -1,0 +1,15 @@
+# Coverage directory used by tools like Istanbul
+coverage/
+
+# nyc test coverage
+.nyc_output
+
+# Test results
+test-results/
+junit.xml
+
+# Jest cache
+.jest-cache/
+
+# Test environment variables
+.env.test.local

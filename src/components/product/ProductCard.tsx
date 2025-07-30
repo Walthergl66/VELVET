@@ -78,7 +78,7 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
       <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-100">
         <Link href={`/product/${product.id}`}>
           <Image
-            src={product.images?.[0] || '/images/placeholder.jpg'}
+            src={product.images?.[0] || '/images/placeholder-product.jpg'}
             alt={product.name}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -87,6 +87,11 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
 
         {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {product.featured && (
+            <span className="bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded">
+              Destacado
+            </span>
+          )}
           {product.discount_price && (
             <span className="bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
               -{discountPercentage}%
@@ -216,6 +221,21 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
           </p>
         )}
 
+        {/* Product Details */}
+        {(product.material || product.weight || product.dimensions) && (
+          <div className="text-xs text-gray-500 mt-1 space-y-1">
+            {product.material && (
+              <p>Material: {product.material}</p>
+            )}
+            {product.weight && (
+              <p>Peso: {product.weight}kg</p>
+            )}
+            {product.dimensions && (
+              <p>Dimensiones: {product.dimensions}</p>
+            )}
+          </div>
+        )}
+
         {/* Price */}
         <div className="flex items-center gap-2 mt-2">
           {product.discount_price ? (
@@ -258,17 +278,22 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
         </div>
 
         {/* Quick Add Button */}
-        {!showQuickAdd && product.stock > 0 && (
+        {!showQuickAdd && (
           <button
-            onClick={() => setShowQuickAdd(true)}
-            className={`w-full mt-3 bg-gray-100 text-gray-900 py-2 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200 ${
-              isHovered ? 'opacity-100' : 'opacity-0'
-            }`}
+            onClick={() => product.stock > 0 ? setShowQuickAdd(true) : undefined}
+            disabled={product.stock === 0 || loading}
+            className={`w-full mt-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+              product.stock === 0 
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : isProductInCart
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+            } ${isHovered ? 'opacity-100' : 'opacity-0'}`}
           >
             <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293a1 1 0 000 1.414L7 19m5-6v6a1 1 0 001 1h4a1 1 0 001-1v-6m-5-6v-2a4 4 0 118 0v2m-8 0V7a4 4 0 118 0v2m-8 0h8" />
             </svg>
-            Agregar al Carrito
+            {product.stock === 0 ? 'Agotado' : getButtonText()}
           </button>
         )}
       </div>
