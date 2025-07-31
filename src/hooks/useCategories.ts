@@ -24,7 +24,6 @@ export function useCategories() {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
-        .eq('is_active', true)
         .order('name');
 
       if (error) {

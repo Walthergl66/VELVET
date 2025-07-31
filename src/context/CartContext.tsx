@@ -18,12 +18,12 @@ import {
 
 interface CartContextType {
   cart: Cart;
-  addToCart: (product: Product, size: string, color: string, quantity?: number) => Promise<void>;
+  addToCart: (product: Product, quantity: string, size?: string, color?: number) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
   getItemCount: () => number;
-  isInCart: (productId: string, size: string, color: string) => boolean;
+  isInCart: (productId: string, size?: string, color?: string) => boolean;
   loading: boolean;
   error: string | null;
 }
@@ -186,23 +186,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('velvet-cart', JSON.stringify(cartData));
   }, [state.items]);
 
-  const addToCart = async (product: Product, size: string, color: string, quantity: number = 1) => {
+  const addToCart = async (product: Product, quantity: string, size?: string, color?: number) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     
+    const quantityNum = parseInt(quantity, 10);
+    const sizeStr = size || '';
+    const colorStr = color ? color.toString() : '';
+    
     try {
-      const { error } = await addToCartDB(product.id, quantity, size, color);
+      const { error } = await addToCartDB(product.id, quantityNum, sizeStr, colorStr);
       
       if (error) {
         // Si el usuario no está autenticado, usar localStorage
         if (typeof error === 'string' && error === 'Usuario no autenticado') {
           const cartItem: CartItem = {
-            id: `${product.id}-${size}-${color}-${Date.now()}`,
+            id: `${product.id}-${sizeStr}-${colorStr}-${Date.now()}`,
             user_id: 'guest',
             product_id: product.id,
             product,
-            quantity,
-            size,
-            color,
+            quantity: quantityNum,
+            size: sizeStr || null,
+            color: colorStr || null,
             added_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           };
@@ -297,11 +301,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return state.items.reduce((count, item) => count + item.quantity, 0);
   };
 
-  const isInCart = (productId: string, size: string, color: string) => {
+  const isInCart = (productId: string, size?: string, color?: string) => {
     return state.items.some(
       item => item.product_id === productId && 
-               item.size === size && 
-               item.color === color
+               item.size === (size || null) && 
+               item.color === (color || null)
     );
   };
 

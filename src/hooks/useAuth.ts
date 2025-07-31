@@ -112,13 +112,14 @@ export function useAuth() {
       // Si el registro fue exitoso, crear perfil de usuario
       if (data.user) {
         const { error: profileError } = await supabase
-          .from('users')
+          .from('user_profiles')
           .insert({
             id: data.user.id,
             email: data.user.email!,
             first_name: firstName,
             last_name: lastName,
             phone: phone || null,
+            role: 'user'
           });
 
         if (profileError) {

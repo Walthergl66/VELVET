@@ -431,4 +431,94 @@ export const signOut = async () => {
   return { error };
 };
 
+// Storage functions
+
+/**
+ * Sube una imagen al storage de Supabase
+ */
+export const uploadImage = async (file: File, folder: string = 'products'): Promise<{ url?: string; error?: string }> => {
+  try {
+    // Generar nombre único para el archivo
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+    const filePath = `${folder}/${fileName}`;
+
+    // Subir archivo
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    // Obtener URL pública
+    const { data: { publicUrl } } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return { url: publicUrl };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Error desconocido' };
+  }
+};
+
+/**
+ * Elimina una imagen del storage
+ */
+export const deleteImage = async (url: string): Promise<{ error?: string }> => {
+  try {
+    // Extraer el path de la URL
+    const urlParts = url.split('/');
+    const bucketIndex = urlParts.findIndex(part => part === 'product-images');
+    if (bucketIndex === -1) {
+      return { error: 'URL de imagen inválida' };
+    }
+    
+    const filePath = urlParts.slice(bucketIndex + 1).join('/');
+
+    const { error } = await supabase.storage
+      .from('product-images')
+      .remove([filePath]);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    return {};
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Error desconocido' };
+  }
+};
+
+/**
+ * Lista archivos en un folder específico
+ */
+export const listImages = async (folder: string = 'products') => {
+  try {
+    const { data, error } = await supabase.storage
+      .from('product-images')
+      .list(folder);
+
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    // Convertir a URLs públicas
+    const imageUrls = data?.map(file => {
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(`${folder}/${file.name}`);
+      return publicUrl;
+    }) || [];
+
+    return { data: imageUrls, error: null };
+  } catch (error) {
+    return { data: null, error: error instanceof Error ? error.message : 'Error desconocido' };
+  }
+};
+
 export default supabase;

@@ -1,13 +1,38 @@
 /**
- * Esquemas SQL para la base de datos Supabase de VELVET
- * Ejecuta estos scripts en el SQL Editor de Supabase para crear las tablas necesarias
+ * Esquema SQL completo para la base de datos Supabase de VELVET
+ * Incluye todas las tablas, sistema de roles, y configuraciones
+ * Ejecuta este script completo en el SQL Editor de Supabase
  */
 
 -- Habilitar extensiones necesarias
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- ==========================================
+-- TIPOS DE DATOS PERSONALIZADOS
+-- ==========================================
+
+-- Enum para roles de usuario
+-- Habilitar extensiones necesarias
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Enum para roles de usuario
+DO $$ BEGIN
+  CREATE TYPE user_role AS ENUM ('user', 'admin', 'super_admin');
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
+
+-- ==========================================
+-- TABLAS PRINCIPALES
+-- ==========================================
+
+
+-- ==========================================
+-- TABLAS PRINCIPALES
+-- ==========================================
+
 -- Tabla de categorías
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(255) NOT NULL,
   slug VARCHAR(255) UNIQUE NOT NULL,
@@ -19,8 +44,8 @@ CREATE TABLE categories (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tabla de productos
-CREATE TABLE products (
+-- Tabla de productos (con sistema de variantes)
+CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(255) NOT NULL,
   description TEXT,
@@ -45,8 +70,52 @@ CREATE TABLE products (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tabla de usuarios (perfil extendido)
-CREATE TABLE user_profiles (
+-- Tabla de opciones de producto (ej: Color, Talla)
+CREATE TABLE IF NOT EXISTS product_options (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL, -- 'Color', 'Talla', etc.
+  type VARCHAR(50) DEFAULT 'select', -- 'select', 'color', 'size'
+  position INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabla de valores de opciones (ej: Rojo, Azul, S, M, L)
+CREATE TABLE IF NOT EXISTS product_option_values (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  option_id UUID REFERENCES product_options(id) ON DELETE CASCADE,
+  value VARCHAR(100) NOT NULL,
+  color_hex VARCHAR(7), -- Para opciones de color
+  image_url TEXT, -- Para mostrar imagen de la variante
+  position INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabla de variantes de producto
+CREATE TABLE IF NOT EXISTS product_variants (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+  sku VARCHAR(100) UNIQUE,
+  price DECIMAL(10,2), -- Precio específico de la variante (opcional)
+  stock INTEGER DEFAULT 0,
+  weight DECIMAL(8,2),
+  image_url TEXT, -- Imagen específica de esta variante
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabla de relación variante-valores (muchos a muchos)
+CREATE TABLE IF NOT EXISTS variant_option_values (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  variant_id UUID REFERENCES product_variants(id) ON DELETE CASCADE,
+  option_value_id UUID REFERENCES product_option_values(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(variant_id, option_value_id)
+);
+
+-- Tabla de usuarios (perfil extendido) con roles
+CREATE TABLE IF NOT EXISTS user_profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id),
   email VARCHAR(255) NOT NULL,
   first_name VARCHAR(100),
@@ -55,13 +124,14 @@ CREATE TABLE user_profiles (
   avatar_url TEXT,
   date_of_birth DATE,
   gender VARCHAR(20),
+  role user_role DEFAULT 'user',
   preferences JSONB DEFAULT '{}',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Tabla de direcciones
-CREATE TABLE addresses (
+CREATE TABLE IF NOT EXISTS addresses (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
   type VARCHAR(20) CHECK (type IN ('shipping', 'billing')) NOT NULL,
@@ -76,20 +146,21 @@ CREATE TABLE addresses (
 );
 
 -- Tabla de carrito (persistente)
-CREATE TABLE cart_items (
+CREATE TABLE IF NOT EXISTS cart_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
   product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+  variant_id UUID REFERENCES product_variants(id) ON DELETE SET NULL,
   quantity INTEGER NOT NULL CHECK (quantity > 0),
   size VARCHAR(20),
   color VARCHAR(50),
   added_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id, product_id, size, color)
+  UNIQUE(user_id, product_id, variant_id, size, color)
 );
 
 -- Tabla de órdenes
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES user_profiles(id),
   status VARCHAR(20) CHECK (status IN ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded')) DEFAULT 'pending',
@@ -110,10 +181,11 @@ CREATE TABLE orders (
 );
 
 -- Tabla de items de órdenes
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
   product_id UUID REFERENCES products(id),
+  variant_id UUID REFERENCES product_variants(id),
   product_snapshot JSONB NOT NULL, -- Snapshot del producto al momento de la compra
   quantity INTEGER NOT NULL CHECK (quantity > 0),
   size VARCHAR(20),
@@ -124,7 +196,7 @@ CREATE TABLE order_items (
 );
 
 -- Tabla de wishlist
-CREATE TABLE wishlist_items (
+CREATE TABLE IF NOT EXISTS wishlist_items (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
   product_id UUID REFERENCES products(id) ON DELETE CASCADE,
@@ -133,7 +205,7 @@ CREATE TABLE wishlist_items (
 );
 
 -- Tabla de reseñas
-CREATE TABLE reviews (
+CREATE TABLE IF NOT EXISTS reviews (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   product_id UUID REFERENCES products(id) ON DELETE CASCADE,
   user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
@@ -149,7 +221,7 @@ CREATE TABLE reviews (
 );
 
 -- Tabla de cupones
-CREATE TABLE coupons (
+CREATE TABLE IF NOT EXISTS coupons (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   code VARCHAR(50) UNIQUE NOT NULL,
   type VARCHAR(20) CHECK (type IN ('percentage', 'fixed')) NOT NULL,
@@ -165,7 +237,7 @@ CREATE TABLE coupons (
 );
 
 -- Tabla de newsletter
-CREATE TABLE newsletter_subscribers (
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email VARCHAR(255) UNIQUE NOT NULL,
   preferences JSONB DEFAULT '{"new_products": true, "sales": true, "newsletter": true}',
@@ -174,17 +246,33 @@ CREATE TABLE newsletter_subscribers (
   unsubscribed_at TIMESTAMP WITH TIME ZONE
 );
 
--- Índices para optimización
-CREATE INDEX idx_products_category ON products(category_id);
-CREATE INDEX idx_products_featured ON products(featured) WHERE featured = TRUE;
-CREATE INDEX idx_products_active ON products(active) WHERE active = TRUE;
-CREATE INDEX idx_products_price ON products(price);
-CREATE INDEX idx_products_created_at ON products(created_at);
-CREATE INDEX idx_orders_user_id ON orders(user_id);
-CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_cart_items_user_id ON cart_items(user_id);
-CREATE INDEX idx_reviews_product_id ON reviews(product_id);
-CREATE INDEX idx_wishlist_user_id ON wishlist_items(user_id);
+-- ==========================================
+-- ÍNDICES PARA OPTIMIZACIÓN
+-- ==========================================
+
+-- Índices principales
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
+CREATE INDEX IF NOT EXISTS idx_products_featured ON products(featured) WHERE featured = TRUE;
+CREATE INDEX IF NOT EXISTS idx_products_active ON products(active) WHERE active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_products_price ON products(price);
+CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at);
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_cart_items_user_id ON cart_items(user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON reviews(product_id);
+CREATE INDEX IF NOT EXISTS idx_wishlist_user_id ON wishlist_items(user_id);
+
+-- Índices para sistema de variantes
+CREATE INDEX IF NOT EXISTS idx_product_options_product ON product_options(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_variants_product ON product_variants(product_id);
+CREATE INDEX IF NOT EXISTS idx_variant_option_values_variant ON variant_option_values(variant_id);
+
+-- Índices para roles
+CREATE INDEX IF NOT EXISTS idx_user_profiles_role ON user_profiles(role);
+
+-- ==========================================
+-- FUNCIONES Y TRIGGERS
+-- ==========================================
 
 -- Función para actualizar updated_at automáticamente
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -196,6 +284,16 @@ END;
 $$ language 'plpgsql';
 
 -- Triggers para updated_at
+DROP TRIGGER IF EXISTS update_categories_updated_at ON categories;
+DROP TRIGGER IF EXISTS update_products_updated_at ON products;
+DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON user_profiles;
+DROP TRIGGER IF EXISTS update_addresses_updated_at ON addresses;
+DROP TRIGGER IF EXISTS update_cart_items_updated_at ON cart_items;
+DROP TRIGGER IF EXISTS update_orders_updated_at ON orders;
+DROP TRIGGER IF EXISTS update_reviews_updated_at ON reviews;
+DROP TRIGGER IF EXISTS update_coupons_updated_at ON coupons;
+DROP TRIGGER IF EXISTS update_product_variants_updated_at ON product_variants;
+
 CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_user_profiles_updated_at BEFORE UPDATE ON user_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -204,6 +302,7 @@ CREATE TRIGGER update_cart_items_updated_at BEFORE UPDATE ON cart_items FOR EACH
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_reviews_updated_at BEFORE UPDATE ON reviews FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_coupons_updated_at BEFORE UPDATE ON coupons FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_product_variants_updated_at BEFORE UPDATE ON product_variants FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Función para actualizar el conteo de productos en categorías
 CREATE OR REPLACE FUNCTION update_category_product_count()
@@ -226,11 +325,53 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_category_product_count_trigger ON products;
 CREATE TRIGGER update_category_product_count_trigger
     AFTER INSERT OR UPDATE OR DELETE ON products
     FOR EACH ROW EXECUTE FUNCTION update_category_product_count();
 
--- Políticas de Row Level Security (RLS)
+-- ==========================================
+-- FUNCIONES PARA SISTEMA DE ROLES
+-- ==========================================
+
+-- Función para verificar si un usuario es admin
+
+
+-- Función para verificar si un usuario es super admin
+
+
+-- Función para obtener el rol del usuario actual
+
+
+-- Funciones para gestión de roles (solo super admins)
+
+
+
+
+-- Funciones para gestión por email (para testing/setup inicial)
+
+
+
+
+
+
+-- Vista para ver usuarios con roles
+
+
+-- Función para contar usuarios por rol
+CREATE OR REPLACE FUNCTION count_users_by_role()
+RETURNS TABLE(role user_role, count bigint) AS $$
+  SELECT 
+    up.role, 
+    COUNT(*)::bigint
+  FROM user_profiles up
+  GROUP BY up.role 
+  ORDER BY up.role;
+$$ LANGUAGE sql SECURITY DEFINER;
+
+
+
+-- Habilitar RLS en todas las tablas
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE addresses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cart_items ENABLE ROW LEVEL SECURITY;
@@ -238,38 +379,71 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wishlist_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
-
--- Políticas para user_profiles
-CREATE POLICY "Users can view their own profile" ON user_profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update their own profile" ON user_profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users can insert their own profile" ON user_profiles FOR INSERT WITH CHECK (auth.uid() = id);
-
--- Políticas para addresses
-CREATE POLICY "Users can manage their own addresses" ON addresses FOR ALL USING (auth.uid() = user_id);
-
--- Políticas para cart_items
-CREATE POLICY "Users can manage their own cart" ON cart_items FOR ALL USING (auth.uid() = user_id);
-
--- Políticas para orders
-CREATE POLICY "Users can view their own orders" ON orders FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can create their own orders" ON orders FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Políticas para order_items
-CREATE POLICY "Users can view their own order items" ON order_items FOR SELECT USING (
-    EXISTS (SELECT 1 FROM orders WHERE orders.id = order_items.order_id AND orders.user_id = auth.uid())
-);
-
--- Políticas para wishlist
-CREATE POLICY "Users can manage their own wishlist" ON wishlist_items FOR ALL USING (auth.uid() = user_id);
-
--- Políticas para reviews
-CREATE POLICY "Users can view all reviews" ON reviews FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Users can create reviews for their orders" ON reviews FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update their own reviews" ON reviews FOR UPDATE USING (auth.uid() = user_id);
-
--- Permitir lectura pública de productos y categorías
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_options ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_option_values ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_variants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE variant_option_values ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Anyone can view active products" ON products FOR SELECT USING (active = true);
-CREATE POLICY "Anyone can view categories" ON categories FOR SELECT USING (true);
+-- Limpiar políticas existentes
+
+-- Políticas para user_profiles
+
+
+
+-- Políticas para addresses
+
+-- Políticas para cart_items
+
+-- Políticas para orders
+
+
+-- Políticas para order_items
+
+-- Políticas para wishlist
+
+-- Políticas para reviews
+
+-- Políticas para productos y categorías
+
+-- Políticas para variantes de productos
+
+-- Políticas para administradores
+
+
+
+
+
+
+-- Política para Supabase Storage
+
+
+-- ==========================================
+-- COMENTARIOS DE DOCUMENTACIÓN
+-- ==========================================
+
+COMMENT ON TYPE user_role IS 'Roles de usuario: user (cliente), admin (administrador), super_admin (super administrador)';
+
+
+
+
+
+
+
+
+
+
+
+
+-- Permisos amplios para todos los roles
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO anon, authenticated;
+
+
+-- ==========================================
+-- MENSAJE DE FINALIZACIÓN
+-- ==========================================
+
+

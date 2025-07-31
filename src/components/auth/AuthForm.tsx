@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 /**
@@ -94,11 +95,36 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
         });
       }
 
-      if (result.success) {
+      if (result.success && result.user) {
+        // Si el login es exitoso, verificar el rol del usuario para redirección
+        if (isLogin && result.user) {
+          try {
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('role')
+              .eq('id', result.user.id)
+              .single();
+
+            if (profile?.role === 'admin' || profile?.role === 'super_admin') {
+              // Redirigir a admin si es administrador
+              router.push('/admin');
+            } else {
+              // Redirigir al destino original o dashboard de usuario
+              router.push(redirectTo || '/user/dashboard');
+            }
+          } catch (error) {
+            console.error('Error verificando rol:', error);
+            // En caso de error, usar redirección por defecto
+            router.push(redirectTo);
+          }
+        } else {
+          // Para registro, siempre ir al destino especificado
+          router.push(redirectTo);
+        }
+
         if (onClose) {
           onClose();
         }
-        router.push(redirectTo);
       }
     } catch (err) {
       console.error('Error en autenticación:', err);
@@ -186,7 +212,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                     required={!isLogin}
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
                     placeholder="Tu nombre"
                   />
                 </div>
@@ -201,7 +227,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                     required={!isLogin}
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
                     placeholder="Tu apellido"
                   />
                 </div>
@@ -221,7 +247,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                 required
                 value={formData.email}
                 onChange={handleInputChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
                 placeholder="tu@ejemplo.com"
               />
             </div>
@@ -238,7 +264,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                   type="tel"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
                   placeholder="+52 (555) 123-4567"
                 />
               </div>
@@ -258,7 +284,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                   required
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black"
+                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
                   placeholder="••••••••"
                 />
                 <button
@@ -293,7 +319,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                   required={!isLogin}
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black"
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
                   placeholder="••••••••"
                 />
               </div>
