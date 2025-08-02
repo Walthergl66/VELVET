@@ -65,6 +65,9 @@ export const upsertUserProfile = async (profile: {
 /**
  * Obtiene productos con filtros
  */
+/**
+ * Obtiene productos con filtros
+ */
 export const getProducts = async (filters: {
   category_id?: string;
   subcategory_id?: string;
@@ -81,73 +84,130 @@ export const getProducts = async (filters: {
 } = {}) => {
   let query = supabase
     .from('products')
-    .select('*')
+    .select(`
+      *,
+      category:categories!category_id(id, name, slug),
+      subcategory:categories!subcategory_id(id, name, slug),
+      variants:product_variants!inner(id, sku, price, stock, weight, image_url, active),
+      options:product_options!inner(
+        id, 
+        name, 
+        type, 
+        position,
+        values:product_option_values(id, value, color_hex, image_url, position)
+      )
+    `, { count: 'exact' })
     .eq('active', true);
 
-  // Aplicar filtros
-  if (filters.category_id) {
-    query = query.eq('category_id', filters.category_id);
-  }
+  if (filters.category_id) query = query.eq('category_id', filters.category_id);
+  if (filters.subcategory_id) query = query.eq('subcategory_id', filters.subcategory_id);
+  if (filters.featured !== undefined) query = query.eq('featured', filters.featured);
+  if (filters.search) query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,tags.cs.{${filters.search}}`);
+  if (filters.min_price !== undefined) query = query.gte('price', filters.min_price);
+  if (filters.max_price !== undefined) query = query.lte('price', filters.max_price);
+  // Los filtros de sizes y colors ahora se manejan a través del sistema de variantes y opciones
+  // if (filters.sizes?.length) query = query.overlaps('sizes', filters.sizes);
+  // if (filters.colors?.length) query = query.overlaps('colors', filters.colors);
 
-  if (filters.subcategory_id) {
-    query = query.eq('subcategory_id', filters.subcategory_id);
-  }
-
-  if (filters.featured !== undefined) {
-    query = query.eq('featured', filters.featured);
-  }
-
-  if (filters.search) {
-    query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,tags.cs.{${filters.search}}`);
-  }
-
-  if (filters.min_price !== undefined) {
-    query = query.gte('price', filters.min_price);
-  }
-
-  if (filters.max_price !== undefined) {
-    query = query.lte('price', filters.max_price);
-  }
-
-  if (filters.sizes && filters.sizes.length > 0) {
-    query = query.overlaps('sizes', filters.sizes);
-  }
-
-  if (filters.colors && filters.colors.length > 0) {
-    query = query.overlaps('colors', filters.colors);
-  }
-
-  // Ordenamiento
   const sortBy = filters.sort_by || 'created_at';
   const sortOrder = filters.sort_order || 'desc';
   query = query.order(sortBy, { ascending: sortOrder === 'asc' });
 
-  // Paginación
-  if (filters.limit) {
-    query = query.limit(filters.limit);
-  }
-
-  if (filters.offset) {
-    query = query.range(filters.offset, filters.offset + (filters.limit || 20) - 1);
-  }
+  if (filters.limit) query = query.limit(filters.limit);
+  if (filters.offset) query = query.range(filters.offset, filters.offset + (filters.limit || 20) - 1);
 
   const { data, error, count } = await query;
   return { data, error, count };
 };
 
-/**
- * Obtiene un producto por ID
- */
 export const getProductById = async (id: string) => {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select(`
+      *,
+      category:categories!category_id(id, name, slug),
+      subcategory:categories!subcategory_id(id, name, slug),
+      variants:product_variants(id, sku, price, stock, weight, image_url, active),
+      options:product_options(
+        id, 
+        name, 
+        type, 
+        position,
+        values:product_option_values(id, value, color_hex, image_url, position)
+      )
+    `)
     .eq('id', id)
     .eq('active', true)
     .single();
 
   return { data, error };
 };
+
+/**
+ * Obtiene las variantes de un producto específico
+ */
+export const getProductVariants = async (productId: string) => {
+  const { data, error } = await supabase
+    .from('product_variants')
+    .select(`
+      *,
+      option_values:variant_option_values(
+        *,
+        option_value:product_option_values(
+          *,
+          option:product_options(*)
+        )
+      )
+    `)
+    .eq('product_id', productId)
+    .eq('active', true);
+
+  return { data, error };
+};
+
+/**
+ * Obtiene las opciones de un producto específico
+ */
+export const getProductOptions = async (productId: string) => {
+  const { data, error } = await supabase
+    .from('product_options')
+    .select(`
+      *,
+      values:product_option_values(*)
+    `)
+    .eq('product_id', productId)
+    .order('position');
+
+  return { data, error };
+};
+
+/**
+ * Busca una variante específica basada en las opciones seleccionadas
+ */
+export const findVariantByOptions = async (productId: string, selectedOptions: Record<string, string>) => {
+  // Esta función requiere lógica más compleja para encontrar la variante correcta
+  // basada en las opciones seleccionadas a través de la tabla variant_option_values
+  const optionValueIds = Object.values(selectedOptions);
+  
+  if (optionValueIds.length === 0) {
+    return { data: null, error: 'No se han seleccionado opciones' };
+  }
+
+  const { data, error } = await supabase
+    .from('product_variants')
+    .select(`
+      *,
+      variant_option_values!inner(
+        option_value_id
+      )
+    `)
+    .eq('product_id', productId)
+    .eq('active', true)
+    .in('variant_option_values.option_value_id', optionValueIds);
+
+  return { data, error };
+};
+
 
 /**
  * Obtiene todas las categorías
@@ -162,7 +222,7 @@ export const getCategories = async () => {
 };
 
 /**
- * Obtiene el carrito del usuario actual
+ * Obtiene el carrito del usuario actual con información de productos y variantes
  */
 export const getUserCart = async () => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -175,7 +235,8 @@ export const getUserCart = async () => {
     .from('cart_items')
     .select(`
       *,
-      product:products(*)
+      product:products(*),
+      variant:product_variants(*)
     `)
     .eq('user_id', user.id)
     .order('added_at', { ascending: false });
@@ -184,9 +245,15 @@ export const getUserCart = async () => {
 };
 
 /**
- * Agrega un producto al carrito
+ * Agrega un producto al carrito con soporte para variantes
  */
-export const addToCart = async (productId: string, quantity: number, size?: string, color?: string) => {
+export const addToCart = async (
+  productId: string, 
+  quantity: number, 
+  variantId?: string,
+  size?: string, 
+  color?: string
+) => {
   const { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
@@ -199,6 +266,7 @@ export const addToCart = async (productId: string, quantity: number, size?: stri
     .select('*')
     .eq('user_id', user.id)
     .eq('product_id', productId)
+    .eq('variant_id', variantId || null)
     .eq('size', size || null)
     .eq('color', color || null)
     .single();
@@ -220,6 +288,7 @@ export const addToCart = async (productId: string, quantity: number, size?: stri
       .insert({
         user_id: user.id,
         product_id: productId,
+        variant_id: variantId || null,
         quantity,
         size,
         color
