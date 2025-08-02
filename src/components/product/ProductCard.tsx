@@ -14,9 +14,10 @@ import { useCart } from '@/context/CartContext';
 interface ProductCardProps {
   readonly product: Product;
   readonly className?: string;
+  readonly priority?: boolean; // Para imágenes above the fold
 }
 
-export default function ProductCard({ product, className = '' }: ProductCardProps) {
+export default function ProductCard({ product, className = '', priority = false }: ProductCardProps) {
   const { addToCart, isInCart, loading } = useCart();
   const [isHovered, setIsHovered] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<string>('');
@@ -116,12 +117,17 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
       }}
     >
       {/* Product Image */}
-      <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-100">
-        <Link href={`/product/${product.id}`}>
+      <div 
+        className="image-container-fill relative aspect-square overflow-hidden rounded-t-lg bg-gray-100" 
+        style={{ position: 'relative', zIndex: 0 }}
+      >
+        <Link href={`/product/${product.id}`} className="block w-full h-full">
           <Image
             src={product.images?.[0] || '/images/placeholder-product.jpg'}
             alt={product.name}
             fill
+            priority={priority}
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </Link>
