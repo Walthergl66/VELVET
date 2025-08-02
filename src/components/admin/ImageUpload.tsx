@@ -96,70 +96,89 @@ export default function ImageUpload({
     setUploadState(prev => ({ ...prev, error: null }));
   }, [selectedFiles, existingImages.length, maxFiles]);
 
-  // Subir archivos a Supabase Storage
-  const uploadFiles = async () => {
-    if (selectedFiles.length === 0) return;
+  // Verificar si el bucket existe
+  const checkBucketExists = async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.storage.listBuckets();
+      if (error) {
+        console.error('Error checking buckets:', error);
+        return false;
+      }
+      return data.some(bucket => bucket.id === 'product-images');
+    } catch (error) {
+      console.error('Error checking bucket existence:', error);
+      return false;
+    }
+  };
 
+  // Subir archivos a Supabase Storage
+// Subir archivos a Supabase Storage (sin checkBucketExists)
+// Subir archivos a Supabase Storage (sin checkBucketExists)
+const uploadFiles = async () => {
+  if (selectedFiles.length === 0) return;
+
+  setUploadState({
+    uploading: true,
+    progress: 0,
+    error: null
+  });
+
+  try {
+    const uploadPromises = selectedFiles.map(async (file, index) => {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+      const filePath = `${folder}/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        if (error.message.includes('Bucket not found')) {
+          throw new Error('El bucket product-images no existe.');
+        } else if (error.message.includes('Unauthorized')) {
+          throw new Error('No tienes permisos para subir imágenes. Verifica tu sesión.');
+        } else {
+          throw new Error(`Error subiendo ${file.name}: ${error.message}`);
+        }
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      const progress = ((index + 1) / selectedFiles.length) * 100;
+      setUploadState(prev => ({ ...prev, progress }));
+
+      return publicUrl;
+    });
+
+    const uploadedUrls = await Promise.all(uploadPromises);
+
+    onImagesUploaded(uploadedUrls);
+
+    setSelectedFiles([]);
+    setPreviewUrls([]);
     setUploadState({
-      uploading: true,
+      uploading: false,
       progress: 0,
       error: null
     });
 
-    try {
-      const uploadPromises = selectedFiles.map(async (file, index) => {
-        // Generar nombre único para el archivo
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-        const filePath = `${folder}/${fileName}`;
+  } catch (error) {
+    console.error('Error uploading files:', error);
+    setUploadState({
+      uploading: false,
+      progress: 0,
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
 
-        // Subir archivo
-        const { data, error } = await supabase.storage
-          .from('product-images')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
 
-        if (error) {
-          throw new Error(`Error subiendo ${file.name}: ${error.message}`);
-        }
-
-        // Obtener URL pública
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-images')
-          .getPublicUrl(filePath);
-
-        // Actualizar progreso
-        const progress = ((index + 1) / selectedFiles.length) * 100;
-        setUploadState(prev => ({ ...prev, progress }));
-
-        return publicUrl;
-      });
-
-      const uploadedUrls = await Promise.all(uploadPromises);
-      
-      // Notificar urls subidas
-      onImagesUploaded(uploadedUrls);
-      
-      // Limpiar estado
-      setSelectedFiles([]);
-      setPreviewUrls([]);
-      setUploadState({
-        uploading: false,
-        progress: 0,
-        error: null
-      });
-
-    } catch (error) {
-      console.error('Error uploading files:', error);
-      setUploadState({
-        uploading: false,
-        progress: 0,
-        error: error instanceof Error ? error.message : 'Error desconocido'
-      });
-    }
-  };
 
   // Remover archivo seleccionado
   const removeFile = (index: number) => {
