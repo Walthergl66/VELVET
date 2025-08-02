@@ -14,13 +14,14 @@ import { useCart } from '@/context/CartContext';
 interface ProductCardProps {
   readonly product: Product;
   readonly className?: string;
+  readonly priority?: boolean; // Para imágenes above the fold
 }
 
-export default function ProductCard({ product, className = '' }: ProductCardProps) {
+export default function ProductCard({ product, className = '', priority = false }: ProductCardProps) {
   const { addToCart, isInCart, loading } = useCart();
   const [isHovered, setIsHovered] = useState(false);
-  const [selectedSize, setSelectedSize] = useState<string>('');
-  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedVariant, setSelectedVariant] = useState<string>('');
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   const formatPrice = (price: number) => {
@@ -30,17 +31,50 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
     }).format(price);
   };
 
+  // Función auxiliar para obtener opciones de talla del producto
+  const getSizeOptions = () => {
+    const sizeOption = product.options?.find(option => 
+      option.title?.toLowerCase().includes('talla') || 
+      option.title?.toLowerCase().includes('size')
+    );
+    return sizeOption?.values?.map(value => value.value) || [];
+  };
+
+  // Función auxiliar para obtener opciones de color del producto
+  const getColorOptions = () => {
+    const colorOption = product.options?.find(option => 
+      option.title?.toLowerCase().includes('color') || 
+      option.title?.toLowerCase().includes('colour')
+    );
+    return colorOption?.values?.map(value => value.value) || [];
+  };
+
+  // Función para verificar si todas las opciones requeridas están seleccionadas
+  const hasRequiredOptions = () => {
+    if (!product.options || product.options.length === 0) return true;
+    return product.options.every(option => selectedOptions[option.id]);
+  };
+
   const handleQuickAdd = async () => {
-    if (!selectedSize || !selectedColor) {
+    if (!hasRequiredOptions()) {
       setShowQuickAdd(true);
       return;
     }
 
     try {
-      await addToCart(product, selectedSize, selectedColor, 1);
+      // Obtener opciones de tamaño y color desde las opciones del producto
+      const sizeOption = product.options?.find(opt => opt.title.toLowerCase().includes('talla') || opt.title.toLowerCase().includes('size'));
+      const colorOption = product.options?.find(opt => opt.title.toLowerCase().includes('color'));
+      
+      const selectedSize = sizeOption ? sizeOption.values?.find(val => val.id === selectedOptions[sizeOption.id])?.value || '' : '';
+      const selectedColor = colorOption ? colorOption.values?.find(val => val.id === selectedOptions[colorOption.id])?.value || '' : '';
+
+      // Buscar variante correspondiente si existe
+      const selectedVariant = product.variants?.find(variant => variant.active && variant.stock > 0);
+      
+      await addToCart(product, selectedSize, selectedColor, 1, selectedVariant?.id);
       setShowQuickAdd(false);
-      setSelectedSize('');
-      setSelectedColor('');
+      setSelectedOptions({});
     } catch (error) {
       console.error('Error al agregar al carrito:', error);
     }
@@ -52,9 +86,17 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
     return 'Agregar al Carrito';
   };
 
-  const isProductInCart = selectedSize && selectedColor 
-    ? isInCart(product.id, selectedSize, selectedColor)
-    : false;
+  const isProductInCart = (() => {
+    if (!hasRequiredOptions()) return false;
+    
+    const sizeOption = product.options?.find(opt => opt.title.toLowerCase().includes('talla') || opt.title.toLowerCase().includes('size'));
+    const colorOption = product.options?.find(opt => opt.title.toLowerCase().includes('color'));
+    
+    const selectedSize = sizeOption ? sizeOption.values?.find(val => val.id === selectedOptions[sizeOption.id])?.value || '' : '';
+    const selectedColor = colorOption ? colorOption.values?.find(val => val.id === selectedOptions[colorOption.id])?.value || '' : '';
+    
+    return isInCart(product.id, selectedSize, selectedColor);
+  })();
 
   const discountPercentage = product.discount_price 
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
@@ -75,12 +117,17 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
       }}
     >
       {/* Product Image */}
-      <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-100">
-        <Link href={`/product/${product.id}`}>
+      <div 
+        className="image-container-fill relative aspect-square overflow-hidden rounded-t-lg bg-gray-100" 
+        style={{ position: 'relative', zIndex: 0 }}
+      >
+        <Link href={`/product/${product.id}`} className="block w-full h-full">
           <Image
             src={product.images?.[0] || '/images/placeholder-product.jpg'}
             alt={product.name}
             fill
+            priority={priority}
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </Link>
@@ -133,71 +180,43 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
         {showQuickAdd && product.stock > 0 && (
           <div className="absolute inset-x-2 bottom-2 bg-white p-3 rounded-lg shadow-lg">
             <div className="space-y-2">
-              {/* Size Selection */}
-              {product.sizes && product.sizes.length > 0 && (
-                <fieldset>
+              {/* Product Options */}
+              {product.options && product.options.map((option) => (
+                <fieldset key={option.id}>
                   <legend className="text-xs font-medium text-gray-700 block mb-1">
-                    Talla:
+                    {option.title}:
                   </legend>
-                  <div className="flex gap-1">
-                    {product.sizes.map((size) => (
+                  <div className="flex gap-1 flex-wrap">
+                    {option.values?.map((value) => (
                       <label
-                        key={size}
+                        key={value.id}
                         className={`px-2 py-1 text-xs border rounded cursor-pointer ${
-                          selectedSize === size
+                          selectedOptions[option.id] === value.id
                             ? 'bg-black text-white border-black'
                             : 'border-gray-300 hover:border-gray-400'
                         }`}
                       >
                         <input
                           type="radio"
-                          name={`size-${product.id}`}
-                          value={size}
-                          checked={selectedSize === size}
-                          onChange={() => setSelectedSize(size)}
+                          name={`option-${option.id}-${product.id}`}
+                          value={value.id}
+                          checked={selectedOptions[option.id] === value.id}
+                          onChange={() => setSelectedOptions(prev => ({
+                            ...prev,
+                            [option.id]: value.id
+                          }))}
                           className="sr-only"
                         />
-                        {size}
+                        {value.value}
                       </label>
                     ))}
                   </div>
                 </fieldset>
-              )}
-
-              {/* Color Selection */}
-              {product.colors && product.colors.length > 0 && (
-                <fieldset>
-                  <legend className="text-xs font-medium text-gray-700 block mb-1">
-                    Color:
-                  </legend>
-                  <div className="flex gap-1">
-                    {product.colors.map((color) => (
-                      <label
-                        key={color}
-                        className={`px-2 py-1 text-xs border rounded cursor-pointer ${
-                          selectedColor === color
-                            ? 'bg-black text-white border-black'
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={`color-${product.id}`}
-                          value={color}
-                          checked={selectedColor === color}
-                          onChange={() => setSelectedColor(color)}
-                          className="sr-only"
-                        />
-                        {color}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              )}
+              ))}
 
               <button
                 onClick={handleQuickAdd}
-                disabled={loading || !selectedSize || !selectedColor || isProductInCart}
+                disabled={loading || !hasRequiredOptions() || isProductInCart}
                 className="w-full bg-black text-white text-xs font-medium py-2 rounded hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {getButtonText()}
@@ -231,7 +250,11 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
               <p>Peso: {product.weight}kg</p>
             )}
             {product.dimensions && (
-              <p>Dimensiones: {product.dimensions}</p>
+              <p>Dimensiones: {
+                typeof product.dimensions === 'object' 
+                  ? `${product.dimensions.length || 0} x ${product.dimensions.width || 0} x ${product.dimensions.height || 0} cm`
+                  : product.dimensions
+              }</p>
             )}
           </div>
         )}

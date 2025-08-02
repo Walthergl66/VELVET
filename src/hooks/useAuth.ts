@@ -109,20 +109,39 @@ export function useAuth() {
         return { success: false, error: error.message };
       }
 
-      // Si el registro fue exitoso, crear perfil de usuario
+      // El perfil se crea automáticamente por el trigger handle_new_user
+      // Solo registramos el evento de registro exitoso
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert({
-            id: data.user.id,
-            email: data.user.email!,
-            first_name: firstName,
-            last_name: lastName,
-            phone: phone || null,
-          });
+        console.log('Usuario registrado exitosamente:', data.user.email);
+        
+        // Esperar un poco para que el trigger cree el perfil
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verificar que el perfil fue creado
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
 
-        if (profileError) {
-          console.error('Error al crear perfil:', profileError);
+        if (profileError || !profile) {
+          console.warn('El perfil de usuario no fue creado automáticamente');
+          
+          // Como fallback, crear el perfil manualmente
+          const { error: insertError } = await supabase
+            .from('user_profiles')
+            .insert({
+              id: data.user.id,
+              email: data.user.email!,
+              first_name: firstName,
+              last_name: lastName,
+              phone: phone || null,
+              role: 'user'
+            });
+
+          if (insertError) {
+            console.error('Error al crear perfil manualmente:', insertError);
+          }
         }
       }
 
@@ -232,7 +251,7 @@ export function useAuth() {
 
     try {
       const { error } = await supabase
-        .from('users')
+        .from('user_profiles')
         .update(updates)
         .eq('id', state.user.id);
 

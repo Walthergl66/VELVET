@@ -55,8 +55,6 @@ export interface Database {
           images: string[];
           category_id: string | null;
           subcategory_id: string | null;
-          sizes: string[];
-          colors: string[];
           stock: number;
           featured: boolean;
           tags: string[];
@@ -79,8 +77,6 @@ export interface Database {
           images?: string[];
           category_id?: string | null;
           subcategory_id?: string | null;
-          sizes?: string[];
-          colors?: string[];
           stock?: number;
           featured?: boolean;
           tags?: string[];
@@ -103,8 +99,6 @@ export interface Database {
           images?: string[];
           category_id?: string | null;
           subcategory_id?: string | null;
-          sizes?: string[];
-          colors?: string[];
           stock?: number;
           featured?: boolean;
           tags?: string[];
@@ -119,6 +113,104 @@ export interface Database {
           updated_at?: string;
         };
       };
+      product_variants: {
+        Row: {
+          id: string;
+          product_id: string;
+          sku: string | null;
+          price: number;
+          stock: number;
+          weight: number | null;
+          image_url: string | null;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          sku?: string | null;
+          price: number;
+          stock?: number;
+          weight?: number | null;
+          image_url?: string | null;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          sku?: string | null;
+          price?: number;
+          stock?: number;
+          weight?: number | null;
+          image_url?: string | null;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      product_options: {
+        Row: {
+          id: string;
+          product_id: string;
+          title: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          title: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          title?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      product_option_values: {
+        Row: {
+          id: string;
+          option_id: string;
+          value: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          option_id: string;
+          value: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          option_id?: string;
+          value?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      variant_option_values: {
+        Row: {
+          variant_id: string;
+          option_value_id: string;
+        };
+        Insert: {
+          variant_id: string;
+          option_value_id: string;
+        };
+        Update: {
+          variant_id?: string;
+          option_value_id?: string;
+        };
+      };
       user_profiles: {
         Row: {
           id: string;
@@ -129,6 +221,7 @@ export interface Database {
           avatar_url: string | null;
           date_of_birth: string | null;
           gender: string | null;
+          role: 'user' | 'admin' | 'super_admin';
           preferences: any;
           created_at: string;
           updated_at: string;
@@ -142,6 +235,7 @@ export interface Database {
           avatar_url?: string | null;
           date_of_birth?: string | null;
           gender?: string | null;
+          role?: 'user' | 'admin' | 'super_admin';
           preferences?: any;
           created_at?: string;
           updated_at?: string;
@@ -155,6 +249,7 @@ export interface Database {
           avatar_url?: string | null;
           date_of_birth?: string | null;
           gender?: string | null;
+          role?: 'user' | 'admin' | 'super_admin';
           preferences?: any;
           created_at?: string;
           updated_at?: string;
@@ -259,6 +354,20 @@ export interface Database {
 export type Product = Database['public']['Tables']['products']['Row'] & {
   category?: Category;
   subcategory?: Category;
+  variants?: ProductVariant[];
+  options?: ProductOption[];
+};
+
+export type ProductVariant = Database['public']['Tables']['product_variants']['Row'] & {
+  option_values?: ProductOptionValue[];
+};
+
+export type ProductOption = Database['public']['Tables']['product_options']['Row'] & {
+  values?: ProductOptionValue[];
+};
+
+export type ProductOptionValue = Database['public']['Tables']['product_option_values']['Row'] & {
+  option?: ProductOption;
 };
 
 export type Category = Database['public']['Tables']['categories']['Row'] & {
@@ -289,6 +398,8 @@ export interface CartItem {
   quantity: number;
   size: string | null;
   color: string | null;
+  variant_id?: string;
+  variant?: ProductVariant;
   added_at: string;
   updated_at: string;
 }

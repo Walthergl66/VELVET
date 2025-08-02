@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
-import { Product } from '@/types';
+import { Product, ProductVariant, ProductOption, ProductOptionValue } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -22,8 +22,8 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState<string>('');
-  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
 
@@ -38,11 +38,12 @@ export default function ProductPage() {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      // Cargar producto base
+      const { data: productData, error: productError } = await supabase
         .from('products')
         .select(`
           *,
-          categories (
+          categories!category_id (
             id,
             name,
             slug
@@ -52,22 +53,64 @@ export default function ProductPage() {
         .eq('active', true)
         .single();
 
-      if (error) {
-        throw new Error(error.message);
+      if (productError) {
+        throw new Error(productError.message);
       }
 
-      if (!data) {
+      if (!productData) {
         throw new Error('Producto no encontrado');
       }
 
-      setProduct(data);
-      
-      // Auto-seleccionar primera talla y color disponibles
-      if (data.sizes && data.sizes.length > 0) {
-        setSelectedSize(data.sizes[0]);
+      // Cargar variantes
+      const { data: variantsData, error: variantsError } = await supabase
+        .from('product_variants')
+        .select('*')
+        .eq('product_id', productId)
+        .eq('active', true);
+
+      // Cargar opciones con sus valores
+      const { data: optionsData, error: optionsError } = await supabase
+        .from('product_options')
+        .select(`
+          *,
+          product_option_values (
+            id,
+            value
+          )
+        `)
+        .eq('product_id', productId);
+
+      if (variantsError || optionsError) {
+        throw new Error('Error cargando opciones del producto');
       }
-      if (data.colors && data.colors.length > 0) {
-        setSelectedColor(data.colors[0]);
+
+      // Combinar datos
+      const product: Product = {
+        ...productData,
+        category: productData.categories, // Corregir el nombre del campo
+        variants: variantsData || [],
+        options: optionsData?.map(option => ({
+          ...option,
+          values: option.product_option_values || []
+        })) || []
+      };
+
+      setProduct(product);
+      
+      // Auto-seleccionar primera variante si existe
+      if (product.variants && product.variants.length > 0) {
+        setSelectedVariant(product.variants[0]);
+      }
+
+      // Auto-seleccionar primeros valores de opciones
+      if (product.options && product.options.length > 0) {
+        const initialOptions: Record<string, string> = {};
+        product.options.forEach(option => {
+          if (option.values && option.values.length > 0) {
+            initialOptions[option.id] = option.values[0].id;
+          }
+        });
+        setSelectedOptions(initialOptions);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
@@ -81,22 +124,36 @@ export default function ProductPage() {
   const handleAddToCart = async () => {
     if (!product) return;
 
-    if (product.sizes && product.sizes.length > 0 && !selectedSize) {
-      alert('Por favor selecciona una talla');
-      return;
+    // Verificar que se hayan seleccionado todas las opciones requeridas
+    if (product.options && product.options.length > 0) {
+      const missingOptions = product.options.filter(option => !selectedOptions[option.id]);
+      if (missingOptions.length > 0) {
+        alert(`Por favor selecciona: ${missingOptions.map(opt => opt.title).join(', ')}`);
+        return;
+      }
     }
 
-    if (product.colors && product.colors.length > 0 && !selectedColor) {
-      alert('Por favor selecciona un color');
+    // Verificar stock de la variante seleccionada o del producto base
+    const availableStock = selectedVariant ? selectedVariant.stock : product.stock;
+    if (availableStock === 0) {
+      alert('Producto agotado');
       return;
     }
 
     try {
+      // Obtener el tamaño y color desde las opciones seleccionadas
+      const sizeOption = product.options?.find(opt => opt.title.toLowerCase().includes('talla') || opt.title.toLowerCase().includes('size'));
+      const colorOption = product.options?.find(opt => opt.title.toLowerCase().includes('color'));
+      
+      const selectedSize = sizeOption ? sizeOption.values?.find(val => val.id === selectedOptions[sizeOption.id])?.value || '' : '';
+      const selectedColor = colorOption ? colorOption.values?.find(val => val.id === selectedOptions[colorOption.id])?.value || '' : '';
+
       await addToCart(
         product,
-        quantity.toString(),
         selectedSize,
-        parseInt(selectedColor, 10)
+        selectedColor,
+        quantity,
+        selectedVariant?.id
       );
       
       alert('Producto agregado al carrito');
@@ -104,6 +161,35 @@ export default function ProductPage() {
       alert('Error al agregar al carrito');
       console.error('Error adding to cart:', err);
     }
+  };
+
+  const handleOptionChange = (optionId: string, valueId: string) => {
+    const newOptions = { ...selectedOptions, [optionId]: valueId };
+    setSelectedOptions(newOptions);
+    
+    // Buscar variante que coincida con las opciones seleccionadas
+    if (product?.variants && product.variants.length > 0) {
+      // Aquí se podría implementar lógica más compleja para encontrar la variante correcta
+      // Por ahora, usamos la primera variante disponible
+      const availableVariant = product.variants.find(variant => variant.active && variant.stock > 0);
+      if (availableVariant) {
+        setSelectedVariant(availableVariant);
+      }
+    }
+  };
+
+  const getCurrentPrice = () => {
+    if (selectedVariant) {
+      return selectedVariant.price;
+    }
+    return product?.discount_price || product?.price || 0;
+  };
+
+  const getAvailableStock = () => {
+    if (selectedVariant) {
+      return selectedVariant.stock;
+    }
+    return product?.stock || 0;
   };
 
   const formatPrice = (price: number) => {
@@ -115,7 +201,7 @@ export default function ProductPage() {
 
   const getAddToCartButtonText = () => {
     if (cartLoading) return 'Agregando...';
-    if (product?.stock === 0) return 'Agotado';
+    if (getAvailableStock() === 0) return 'Agotado';
     return 'Agregar al Carrito';
   };
 
@@ -177,8 +263,9 @@ export default function ProductPage() {
     );
   }
 
-  const currentPrice = product.discount_price || product.price;
-  const hasDiscount = product.discount_price && product.discount_price < product.price;
+  const currentPrice = getCurrentPrice();
+  const originalPrice = product.discount_price ? product.price : null;
+  const hasDiscount = originalPrice && currentPrice < originalPrice;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -257,12 +344,12 @@ export default function ProductPage() {
                 </span>
                 {hasDiscount && (
                   <span className="text-xl text-gray-500 line-through">
-                    {formatPrice(product.price)}
+                    {formatPrice(originalPrice!)}
                   </span>
                 )}
                 {hasDiscount && (
                   <span className="bg-red-100 text-red-800 text-sm font-medium px-2 py-1 rounded">
-                    -{Math.round(((product.price - currentPrice) / product.price) * 100)}%
+                    -{Math.round(((originalPrice! - currentPrice) / originalPrice!) * 100)}%
                   </span>
                 )}
               </div>
@@ -276,61 +363,32 @@ export default function ProductPage() {
               </div>
             )}
 
-            {/* Colors */}
-            {product.colors && product.colors.length > 0 && (
-              <div>
+            {/* Opciones del Producto */}
+            {product.options && product.options.map((option) => (
+              <div key={option.id}>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  Color: <span className="font-normal text-gray-600">{selectedColor}</span>
+                  {option.title}: {' '}
+                  <span className="font-normal text-gray-600">
+                    {option.values?.find(val => val.id === selectedOptions[option.id])?.value || 'Seleccionar'}
+                  </span>
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {product.colors.map((color) => (
+                  {option.values?.map((value) => (
                     <button
-                      key={color}
-                      onClick={() => setSelectedColor(color)}
+                      key={value.id}
+                      onClick={() => handleOptionChange(option.id, value.id)}
                       className={`px-4 py-2 border rounded-lg transition-colors ${
-                        selectedColor === color
+                        selectedOptions[option.id] === value.id
                           ? 'border-black bg-black text-white'
                           : 'border-gray-300 text-gray-700 hover:border-gray-400'
                       }`}
                     >
-                      {color}
+                      {value.value}
                     </button>
                   ))}
                 </div>
               </div>
-            )}
-
-            {/* Sizes */}
-            {product.sizes && product.sizes.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Talla: <span className="font-normal text-gray-600">{selectedSize}</span>
-                  </h3>
-                  <button
-                    onClick={() => setShowSizeGuide(!showSizeGuide)}
-                    className="text-sm text-gray-600 hover:text-gray-900 underline"
-                  >
-                    Guía de tallas
-                  </button>
-                </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {product.sizes.map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      className={`py-3 border rounded-lg transition-colors ${
-                        selectedSize === size
-                          ? 'border-black bg-black text-white'
-                          : 'border-gray-300 text-gray-700 hover:border-gray-400'
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            ))}
 
             {/* Quantity */}
             <div>
@@ -344,14 +402,14 @@ export default function ProductPage() {
                 </button>
                 <span className="w-16 text-center font-semibold">{quantity}</span>
                 <button
-                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                  onClick={() => setQuantity(Math.min(getAvailableStock(), quantity + 1))}
                   className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
-                  disabled={quantity >= product.stock}
+                  disabled={quantity >= getAvailableStock()}
                 >
                   +
                 </button>
                 <span className="text-sm text-gray-500 ml-4">
-                  {product.stock} disponibles
+                  {getAvailableStock()} disponibles
                 </span>
               </div>
             </div>
@@ -360,7 +418,7 @@ export default function ProductPage() {
             <div className="space-y-3">
               <button
                 onClick={handleAddToCart}
-                disabled={cartLoading || product.stock === 0}
+                disabled={cartLoading || getAvailableStock() === 0}
                 className="w-full bg-black text-white py-4 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 {getAddToCartButtonText()}
@@ -384,16 +442,30 @@ export default function ProductPage() {
                   <span className="font-medium">{product.material}</span>
                 </div>
               )}
-              {product.sku && (
+              {(product.sku || selectedVariant?.sku) && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">SKU:</span>
-                  <span className="font-medium">{product.sku}</span>
+                  <span className="font-medium">{selectedVariant?.sku || product.sku}</span>
+                </div>
+              )}
+              {selectedVariant?.weight && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Peso:</span>
+                  <span className="font-medium">{selectedVariant.weight}g</span>
                 </div>
               )}
               {product.care_instructions && (
                 <div>
                   <span className="text-gray-600">Cuidados:</span>
                   <p className="text-sm text-gray-600 mt-1">{product.care_instructions}</p>
+                </div>
+              )}
+              {selectedVariant && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Variante:</span>
+                  <span className="font-medium">
+                    {Object.values(selectedOptions).length > 0 ? 'Personalizada' : 'Estándar'}
+                  </span>
                 </div>
               )}
             </div>

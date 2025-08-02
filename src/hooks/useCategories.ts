@@ -1,22 +1,22 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Category } from '@/types';
 
 /**
- * Hook para gestionar las categorías de productos
- * Maneja la carga de categorías desde Supabase
+ * Hook para gestionar las categorías de productos desde Supabase
  */
-
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchCategories();
+    refetch();
   }, []);
 
-  const fetchCategories = async () => {
+  const refetch = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -24,21 +24,17 @@ export function useCategories() {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
-        .eq('is_active', true)
         .order('name');
 
-      if (error) {
-        const errorMessage = typeof error === 'string' ? error : error.message || 'Error al cargar categorías';
-        throw new Error(errorMessage);
-      }
+      if (error) throw new Error(error.message);
 
       setCategories(data || []);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-      setError(errorMessage);
+      const message = err instanceof Error ? err.message : 'Error desconocido';
+      setError(message);
       console.error('Error fetching categories:', err);
-      
-      // Fallback con categorías de ejemplo para desarrollo
+
+      // Fallback local en desarrollo
       setCategories([
         {
           id: '1',
@@ -88,10 +84,6 @@ export function useCategories() {
 
   const getCategoryBySlug = (slug: string) => {
     return categories.find(category => category.slug === slug);
-  };
-
-  const refetch = () => {
-    fetchCategories();
   };
 
   return {

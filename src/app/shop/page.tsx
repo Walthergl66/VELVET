@@ -64,15 +64,31 @@ export default function ShopPage() {
 
   const matchesSizes = (product: any, selectedSizes: string[]) => {
     if (selectedSizes.length === 0) return true;
-    if (!product.sizes) return false;
-    const productSizes = Array.isArray(product.sizes) ? product.sizes : [];
+    
+    // Usar el nuevo sistema de opciones
+    const sizeOption = product.options?.find((option: any) => 
+      option.title?.toLowerCase().includes('talla') || 
+      option.title?.toLowerCase().includes('size')
+    );
+    
+    if (!sizeOption?.values) return false;
+    
+    const productSizes = sizeOption.values.map((value: any) => value.value);
     return selectedSizes.some(size => productSizes.includes(size));
   };
 
   const matchesColors = (product: any, selectedColors: string[]) => {
     if (selectedColors.length === 0) return true;
-    if (!product.colors) return false;
-    const productColors = Array.isArray(product.colors) ? product.colors : [];
+    
+    // Usar el nuevo sistema de opciones
+    const colorOption = product.options?.find((option: any) => 
+      option.title?.toLowerCase().includes('color') || 
+      option.title?.toLowerCase().includes('colour')
+    );
+    
+    if (!colorOption?.values) return false;
+    
+    const productColors = colorOption.values.map((value: any) => value.value);
     return selectedColors.some(color => productColors.includes(color));
   };
 
@@ -160,8 +176,12 @@ export default function ShopPage() {
     if (filteredProducts.length > 0) {
       return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map(product => (
-            <ProductCard key={product.id} product={product} />
+          {filteredProducts.map((product, index) => (
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              priority={index < 4} // Solo las primeras 4 imágenes tienen priority
+            />
           ))}
         </div>
       );

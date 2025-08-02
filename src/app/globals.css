@@ -21,3 +21,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Clase específica para contenedores de imágenes con fill */
+.image-container-fill {
+  position: relative !important;
+}
+
+/* Asegurar que los contenedores de Next.js Image con fill tengan position relative */
+.image-container-fill,
+div[class*="aspect-square"] {
+  position: relative !important;
+}
+
+/* Forzar posición relativa para contenedores de imágenes */
+@media screen {
+  .image-container-fill {
+    position: relative !important;
+    display: block !important;
+  }
+}

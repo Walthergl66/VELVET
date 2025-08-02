@@ -35,6 +35,8 @@ export const useProducts = (params: UseProductsParams = {}) => {
       setError(null);
 
       try {
+        console.log('Fetching products with params:', params);
+        
         // Convertir parámetros de categoría slug a ID si es necesario
         let categoryId = params.category;
         let subcategoryId = params.subcategory;
@@ -69,8 +71,11 @@ export const useProducts = (params: UseProductsParams = {}) => {
 
         const { data, error: fetchError, count } = await getProducts(filters);
 
+        console.log('Products fetch result:', { data, error: fetchError, count });
+
         if (fetchError) {
           const errorMessage = typeof fetchError === 'string' ? fetchError : fetchError.message || 'Error desconocido';
+          console.error('Fetch error:', errorMessage);
           throw new Error(errorMessage);
         }
 
