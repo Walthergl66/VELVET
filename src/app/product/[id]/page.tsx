@@ -43,7 +43,7 @@ export default function ProductPage() {
         .from('products')
         .select(`
           *,
-          categories (
+          categories!category_id (
             id,
             name,
             slug
@@ -87,6 +87,7 @@ export default function ProductPage() {
       // Combinar datos
       const product: Product = {
         ...productData,
+        category: productData.categories, // Corregir el nombre del campo
         variants: variantsData || [],
         options: optionsData?.map(option => ({
           ...option,
@@ -140,11 +141,19 @@ export default function ProductPage() {
     }
 
     try {
+      // Obtener el tamaño y color desde las opciones seleccionadas
+      const sizeOption = product.options?.find(opt => opt.title.toLowerCase().includes('talla') || opt.title.toLowerCase().includes('size'));
+      const colorOption = product.options?.find(opt => opt.title.toLowerCase().includes('color'));
+      
+      const selectedSize = sizeOption ? sizeOption.values?.find(val => val.id === selectedOptions[sizeOption.id])?.value || '' : '';
+      const selectedColor = colorOption ? colorOption.values?.find(val => val.id === selectedOptions[colorOption.id])?.value || '' : '';
+
       await addToCart(
         product,
-        quantity.toString(),
-        selectedOptions['size'] || '', // Compatibilidad con la lógica anterior
-        selectedOptions['color'] ? parseInt(selectedOptions['color'], 10) : 0 // Compatibilidad
+        selectedSize,
+        selectedColor,
+        quantity,
+        selectedVariant?.id
       );
       
       alert('Producto agregado al carrito');
@@ -162,7 +171,7 @@ export default function ProductPage() {
     if (product?.variants && product.variants.length > 0) {
       // Aquí se podría implementar lógica más compleja para encontrar la variante correcta
       // Por ahora, usamos la primera variante disponible
-      const availableVariant = product.variants.find(variant => variant.is_active && variant.stock > 0);
+      const availableVariant = product.variants.find(variant => variant.active && variant.stock > 0);
       if (availableVariant) {
         setSelectedVariant(availableVariant);
       }
