@@ -61,11 +61,17 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
     }
 
     try {
-      // Para compatibilidad con el sistema de carrito actual, usamos las opciones seleccionadas
-      const sizeValue = getSizeOptions().length > 0 ? Object.values(selectedOptions)[0] || '' : '';
-      const colorValue = getColorOptions().length > 0 ? Object.values(selectedOptions)[1] || Object.values(selectedOptions)[0] || '' : '';
+      // Obtener opciones de tamaño y color desde las opciones del producto
+      const sizeOption = product.options?.find(opt => opt.title.toLowerCase().includes('talla') || opt.title.toLowerCase().includes('size'));
+      const colorOption = product.options?.find(opt => opt.title.toLowerCase().includes('color'));
       
-      await addToCart(product, sizeValue, colorValue, 1);
+      const selectedSize = sizeOption ? sizeOption.values?.find(val => val.id === selectedOptions[sizeOption.id])?.value || '' : '';
+      const selectedColor = colorOption ? colorOption.values?.find(val => val.id === selectedOptions[colorOption.id])?.value || '' : '';
+
+      // Buscar variante correspondiente si existe
+      const selectedVariant = product.variants?.find(variant => variant.active && variant.stock > 0);
+      
+      await addToCart(product, selectedSize, selectedColor, 1, selectedVariant?.id);
       setShowQuickAdd(false);
       setSelectedOptions({});
     } catch (error) {
@@ -79,9 +85,17 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
     return 'Agregar al Carrito';
   };
 
-  const isProductInCart = hasRequiredOptions() 
-    ? isInCart(product.id, Object.values(selectedOptions)[0] || '', Object.values(selectedOptions)[1] || '')
-    : false;
+  const isProductInCart = (() => {
+    if (!hasRequiredOptions()) return false;
+    
+    const sizeOption = product.options?.find(opt => opt.title.toLowerCase().includes('talla') || opt.title.toLowerCase().includes('size'));
+    const colorOption = product.options?.find(opt => opt.title.toLowerCase().includes('color'));
+    
+    const selectedSize = sizeOption ? sizeOption.values?.find(val => val.id === selectedOptions[sizeOption.id])?.value || '' : '';
+    const selectedColor = colorOption ? colorOption.values?.find(val => val.id === selectedOptions[colorOption.id])?.value || '' : '';
+    
+    return isInCart(product.id, selectedSize, selectedColor);
+  })();
 
   const discountPercentage = product.discount_price 
     ? Math.round(((product.price - product.discount_price) / product.price) * 100)
