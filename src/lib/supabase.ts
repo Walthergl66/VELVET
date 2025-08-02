@@ -87,9 +87,56 @@ export const getProducts = async (filters: {
     .select(`
       *,
       category:categories!category_id(id, name, slug),
+      subcategory:categories!subcategory_id(id, name, slug)
+    `, { count: 'exact' })
+    .eq('active', true);
+
+  if (filters.category_id) query = query.eq('category_id', filters.category_id);
+  if (filters.subcategory_id) query = query.eq('subcategory_id', filters.subcategory_id);
+  if (filters.featured !== undefined) query = query.eq('featured', filters.featured);
+  if (filters.search) query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,tags.cs.{${filters.search}}`);
+  if (filters.min_price !== undefined) query = query.gte('price', filters.min_price);
+  if (filters.max_price !== undefined) query = query.lte('price', filters.max_price);
+  // Los filtros de sizes y colors ahora se manejan a través del sistema de variantes y opciones
+  // if (filters.sizes?.length) query = query.overlaps('sizes', filters.sizes);
+  // if (filters.colors?.length) query = query.overlaps('colors', filters.colors);
+
+  const sortBy = filters.sort_by || 'created_at';
+  const sortOrder = filters.sort_order || 'desc';
+  query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+  if (filters.limit) query = query.limit(filters.limit);
+  if (filters.offset) query = query.range(filters.offset, filters.offset + (filters.limit || 20) - 1);
+
+  const { data, error, count } = await query;
+  return { data, error, count };
+};
+
+/**
+ * Obtiene productos con variantes y opciones completas (para páginas de detalle)
+ */
+export const getProductsWithVariants = async (filters: {
+  category_id?: string;
+  subcategory_id?: string;
+  featured?: boolean;
+  search?: string;
+  min_price?: number;
+  max_price?: number;
+  sizes?: string[];
+  colors?: string[];
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+  limit?: number;
+  offset?: number;
+} = {}) => {
+  let query = supabase
+    .from('products')
+    .select(`
+      *,
+      category:categories!category_id(id, name, slug),
       subcategory:categories!subcategory_id(id, name, slug),
-      variants:product_variants!inner(id, sku, price, stock, weight, image_url, active),
-      options:product_options!inner(
+      variants:product_variants(id, sku, price, stock, weight, image_url, active),
+      options:product_options(
         id, 
         name, 
         type, 
@@ -105,9 +152,6 @@ export const getProducts = async (filters: {
   if (filters.search) query = query.or(`name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,tags.cs.{${filters.search}}`);
   if (filters.min_price !== undefined) query = query.gte('price', filters.min_price);
   if (filters.max_price !== undefined) query = query.lte('price', filters.max_price);
-  // Los filtros de sizes y colors ahora se manejan a través del sistema de variantes y opciones
-  // if (filters.sizes?.length) query = query.overlaps('sizes', filters.sizes);
-  // if (filters.colors?.length) query = query.overlaps('colors', filters.colors);
 
   const sortBy = filters.sort_by || 'created_at';
   const sortOrder = filters.sort_order || 'desc';

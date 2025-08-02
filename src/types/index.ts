@@ -121,8 +121,8 @@ export interface Database {
           price: number;
           stock: number;
           weight: number | null;
-          dimensions: any | null;
-          is_active: boolean;
+          image_url: string | null;
+          active: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -133,8 +133,8 @@ export interface Database {
           price: number;
           stock?: number;
           weight?: number | null;
-          dimensions?: any | null;
-          is_active?: boolean;
+          image_url?: string | null;
+          active?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -145,8 +145,8 @@ export interface Database {
           price?: number;
           stock?: number;
           weight?: number | null;
-          dimensions?: any | null;
-          is_active?: boolean;
+          image_url?: string | null;
+          active?: boolean;
           created_at?: string;
           updated_at?: string;
         };
