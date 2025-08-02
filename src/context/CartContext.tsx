@@ -18,7 +18,7 @@ import {
 
 interface CartContextType {
   cart: Cart;
-  addToCart: (product: Product, quantity: string, size?: string, color?: number) => Promise<void>;
+  addToCart: (product: Product, size?: string, color?: string, quantity?: number, variantId?: string) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -186,27 +186,24 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('velvet-cart', JSON.stringify(cartData));
   }, [state.items]);
 
-  const addToCart = async (product: Product, quantity: string, size?: string, color?: number) => {
+  const addToCart = async (product: Product, size?: string, color?: string, quantity: number = 1, variantId?: string) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     
-    const quantityNum = parseInt(quantity, 10);
-    const sizeStr = size || '';
-    const colorStr = color ? color.toString() : '';
-    
     try {
-      const { error } = await addToCartDB(product.id, quantityNum, sizeStr, colorStr);
+      const { error } = await addToCartDB(product.id, quantity, variantId || undefined, size, color);
       
       if (error) {
         // Si el usuario no está autenticado, usar localStorage
         if (typeof error === 'string' && error === 'Usuario no autenticado') {
           const cartItem: CartItem = {
-            id: `${product.id}-${sizeStr}-${colorStr}-${Date.now()}`,
+            id: `${product.id}-${size || ''}-${color || ''}-${Date.now()}`,
             user_id: 'guest',
             product_id: product.id,
+            variant_id: variantId || undefined,
             product,
-            quantity: quantityNum,
-            size: sizeStr || null,
-            color: colorStr || null,
+            quantity: quantity,
+            size: size || null,
+            color: color || null,
             added_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           };
