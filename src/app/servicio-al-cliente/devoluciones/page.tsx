@@ -92,6 +92,12 @@ export default function DevolucionesPage() {
             <span className="px-4 py-2 text-sm font-medium bg-black text-white rounded-md">
               Devoluciones
             </span>
+            <Link 
+              href="/servicio-al-cliente/guia-tallas" 
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              Guía de Tallas
+            </Link>
           </nav>
         </div>
 
