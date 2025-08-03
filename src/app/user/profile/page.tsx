@@ -92,7 +92,7 @@ export default function UserProfile() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-[#ff3b4a] via-[#B32134] to-[#490000] bg-clip-text text-transparent select-none">Mi Perfil</h1>
+          <h1 className="text-4xl font-extrabold text-black select-none">Mi Perfil</h1>
         </div>
         <p className="text-gray-600 mb-8 text-lg text-center">Gestiona tu información personal y preferencias de cuenta</p>
 
