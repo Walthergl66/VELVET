@@ -30,6 +30,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const { signIn, signUp, error, clearError } = useAuth();
   const router = useRouter();
@@ -131,18 +132,20 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
             router.push('/user/dashboard');
           }
         } else if (!isLogin) {
-          // Para registro exitoso, mostrar mensaje de éxito
-          alert('¡Cuenta creada exitosamente! Revisa tu correo para confirmar tu cuenta.');
-          // Redirigir al login para que el usuario inicie sesión
-          setIsLogin(true);
-          setFormData({
-            email: formData.email, // Mantener el email
-            password: '',
-            firstName: '',
-            lastName: '',
-            phone: '',
-            confirmPassword: '',
-          });
+          // Mostrar modal de éxito en vez de alert
+          setShowSuccessModal(true);
+          setTimeout(() => {
+            setShowSuccessModal(false);
+            setIsLogin(true);
+            setFormData({
+              email: formData.email, // Mantener el email
+              password: '',
+              firstName: '',
+              lastName: '',
+              phone: '',
+              confirmPassword: '',
+            });
+          }, 2500);
         }
 
         if (onClose && isLogin) {
@@ -195,7 +198,21 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Modal de éxito */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-all duration-300"></div>
+          <div className="relative z-10 bg-white rounded-2xl shadow-2xl px-8 py-8 flex flex-col items-center max-w-xs w-full animate-fade-in">
+            <svg className="w-14 h-14 text-green-500 mb-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12l2.5 2.5L16 9" />
+            </svg>
+            <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">¡Cuenta creada exitosamente!</h3>
+            <p className="text-gray-600 text-center text-sm mb-2">Revisa tu correo para confirmar tu cuenta.</p>
+          </div>
+        </div>
+      )}
       <div className="max-w-md w-full space-y-8">
         <div>
           <div className="mx-auto h-12 w-12 flex items-center justify-center bg-white rounded-lg shadow">
