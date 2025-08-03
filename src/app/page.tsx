@@ -11,89 +11,117 @@ export default function Home() {
     limit: 4 
   });
 
- return (
+  // Imágenes de modelos para el slideshow
+  const heroImages = [
+    '/Modelo1.jpg',
+    '/Modelo2.avif',
+    '/Modelo3.avif',
+    '/Modelo4.jpg',
+    '/Modelo5.jpg',
+    '/Modelo6.jpg',
+    '/Modelo7.jpg',
+    '/Modelo8.avif',
+    '/Modelo9.jpg',
+    // Agrega más rutas según tus imágenes
+  ];
+  const [currentHero, setCurrentHero] = React.useState(0);
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentHero((prev) => (prev + 1) % heroImages.length);
+    }, 3500); // Cambia cada 3.5 segundos
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
+
+  return (
     <div className="min-h-screen bg-[#fafafa]">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center bg-[#19171b]">
-  {/* Textura sutil + ligera bruma para que resalte el texto */}
-  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/black-linen.png')] opacity-10"></div>
+      <section className="relative h-screen flex items-center justify-center bg-[#19171b] overflow-hidden">
+        {/* Slideshow de imágenes de modelos */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          {heroImages.map((img, idx) => (
+            <img
+              key={img}
+              src={img}
+              alt={`Modelo VELVET ${idx + 1}`}
+              className={`w-full h-full object-cover absolute inset-0 transition-opacity duration-1000 ${idx === currentHero ? 'opacity-100' : 'opacity-0'}`}
+              draggable={false}
+            />
+          ))}
+        </div>
 
-  {/* Overlay principal*/}
-  <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-[#232323]/80 to-[#e0e0e0]/60 backdrop-blur-sm"></div>
+        {/* Overlay negro muy transparente y blur para suavizar las imágenes */}
+        <div className="absolute inset-0 z-5 bg-black/30 backdrop-blur-sm"></div>
+        {/* Overlay de textura y gradientes */}
+        <div className="absolute inset-0 z-20 bg-[url('https://www.transparenttextures.com/patterns/black-linen.png')] opacity-10"></div>
 
-  {/* Acento suave en diagonal para profundidad sin oscurecer */}
-  <div className="absolute inset-0 bg-gradient-to-br from-[#888888]/20 via-[#b0b0b0]/10 to-[#e0e0e0]/0"></div>
+        <div className="absolute inset-0 z-20 bg-gradient-to-br from-[#888888]/20 via-[#b0b0b0]/10 to-[#e0e0e0]/0"></div>
 
-  <div className="relative z-20 text-center text-white px-4 max-w-4xl mx-auto">
-    <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
-      <span className="text-white drop-shadow-lg">VEL</span>
-      <span className="bg-gradient-to-r from-[#ff3b4a] via-[#B32134] to-[#490000] bg-clip-text text-transparent drop-shadow-lg">VET</span>
-    </h1>
+        {/* Contenido principal estático */}
+        <div className="relative z-20 text-center text-white px-4 max-w-4xl mx-auto">
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+            <span className="text-white drop-shadow-lg">VEL</span>
+            <span className="bg-gradient-to-r from-[#ff3b4a] via-[#B32134] to-[#490000] bg-clip-text text-transparent drop-shadow-lg">VET</span>
+          </h1>
+          <div className="w-24 h-1 bg-gradient-to-r from-[#B32134] via-[#51080d] to-[#2b0307] mx-auto my-8"></div>
+          <p className="text-xl md:text-2xl mb-8 font-light">
+            Elegancia redefinida para el mundo moderno
+          </p>
+          <p className="text-[#d1d1d1] mb-10 max-w-2xl mx-auto leading-relaxed">
+            Descubre nuestra colección exclusiva de moda premium. 
+            Cada pieza está cuidadosamente seleccionada para reflejar 
+            tu estilo único y sofisticado.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/shop"
+              className="relative overflow-hidden bg-transparent border border-white text-white px-8 py-4 rounded-sm font-medium group transition-all duration-300"
+            >
+              <span className="relative z-10">Explorar Colección</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-[#B32134] to-[#2b0307] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+            </Link>
+            <Link
+              href="/shop?featured=true"
+              className="relative overflow-hidden bg-white text-[#19171b] px-8 py-4 rounded-sm font-medium group transition-all duration-300 hover:text-white"
+            >
+              <span className="relative z-10 group-hover:text-white transition-colors duration-300">Ver Destacados</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-[#B32134] to-[#51080d] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+            </Link>
+          </div>
+        </div>
 
-    <div className="w-24 h-1 bg-gradient-to-r from-[#B32134] via-[#51080d] to-[#2b0307] mx-auto my-8"></div>
-
-    <p className="text-xl md:text-2xl mb-8 font-light">
-      Elegancia redefinida para el mundo moderno
-    </p>
-
-    <p className="text-[#d1d1d1] mb-10 max-w-2xl mx-auto leading-relaxed">
-      Descubre nuestra colección exclusiva de moda premium. 
-      Cada pieza está cuidadosamente seleccionada para reflejar 
-      tu estilo único y sofisticado.
-    </p>
-
-    <div className="flex flex-col sm:flex-row gap-4 justify-center">
-      <Link
-        href="/shop"
-        className="relative overflow-hidden bg-transparent border border-white text-white px-8 py-4 rounded-sm font-medium group transition-all duration-300"
-      >
-        <span className="relative z-10">Explorar Colección</span>
-        <span className="absolute inset-0 bg-gradient-to-r from-[#B32134] to-[#2b0307] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-      </Link>
-       
-      <Link
-        href="/shop?featured=true"
-        className="relative overflow-hidden bg-white text-[#19171b] px-8 py-4 rounded-sm font-medium group transition-all duration-300 hover:text-white"
-      >
-        <span className="relative z-10 group-hover:text-white transition-colors duration-300">Ver Destacados</span>
-         <span className="absolute inset-0 bg-gradient-to-r from-[#B32134] to-[#51080d] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-      </Link>
-    </div>
-  </div>
-
-  {/* FLECHITA */}
-  <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-    <div className="animate-bounce">
-      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
-        <defs>
-          <filter id="dropshadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.4"/>
-          </filter>
-        </defs>
-        <path
-          d="M19 14l-7 7m0 0l-7-7m7 7V3"
-          stroke="#fff"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          filter="url(#dropshadow)"
-        />
-        <path
-          d="M19 14l-7 7m0 0l-7-7m7 7V3"
-          stroke="url(#shine)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.5"
-        />
-        <linearGradient id="shine" x1="12" y1="3" x2="12" y2="21" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#fff" stopOpacity="0.8" />
-          <stop offset="1" stopColor="#fff" stopOpacity="0" />
-        </linearGradient>
-      </svg>
-    </div>
-  </div>
-</section>
+        {/* FLECHITA */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30">
+          <div className="animate-bounce">
+            <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
+              <defs>
+                <filter id="dropshadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.4"/>
+                </filter>
+              </defs>
+              <path
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                stroke="#fff"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#dropshadow)"
+              />
+              <path
+                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                stroke="url(#shine)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity="0.5"
+              />
+              <linearGradient id="shine" x1="12" y1="3" x2="12" y2="21" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#fff" stopOpacity="0.8" />
+                <stop offset="1" stopColor="#fff" stopOpacity="0" />
+              </linearGradient>
+            </svg>
+          </div>
+        </div>
+      </section>
 
       {/* Productos Destacados */}
       <section className="py-24 bg-[#fafafa]">

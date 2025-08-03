@@ -30,6 +30,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const { signIn, signUp, error, clearError } = useAuth();
   const router = useRouter();
@@ -131,18 +132,20 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
             router.push('/user/dashboard');
           }
         } else if (!isLogin) {
-          // Para registro exitoso, mostrar mensaje de éxito
-          alert('¡Cuenta creada exitosamente! Revisa tu correo para confirmar tu cuenta.');
-          // Redirigir al login para que el usuario inicie sesión
-          setIsLogin(true);
-          setFormData({
-            email: formData.email, // Mantener el email
-            password: '',
-            firstName: '',
-            lastName: '',
-            phone: '',
-            confirmPassword: '',
-          });
+          // Mostrar modal de éxito en vez de alert
+          setShowSuccessModal(true);
+          setTimeout(() => {
+            setShowSuccessModal(false);
+            setIsLogin(true);
+            setFormData({
+              email: formData.email, // Mantener el email
+              password: '',
+              firstName: '',
+              lastName: '',
+              phone: '',
+              confirmPassword: '',
+            });
+          }, 2500);
         }
 
         if (onClose && isLogin) {
@@ -195,11 +198,32 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Modal de éxito */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-all duration-300"></div>
+          <div className="relative z-10 bg-white rounded-2xl shadow-2xl px-8 py-8 flex flex-col items-center max-w-xs w-full animate-fade-in">
+            <svg className="w-14 h-14 mb-4" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="success-gradient" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#ff3b4a" />
+                  <stop offset="0.5" stopColor="#B32134" />
+                  <stop offset="1" stopColor="#490000" />
+                </linearGradient>
+              </defs>
+              <circle cx="28" cy="28" r="26" fill="url(#success-gradient)" />
+              <path d="M18 29.5L25 36.5L38 22.5" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">¡Cuenta creada exitosamente!</h3>
+            <p className="text-gray-600 text-center text-sm mb-2">Revisa tu correo para confirmar tu cuenta.</p>
+          </div>
+        </div>
+      )}
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center bg-black rounded-lg">
-            <span className="text-white font-bold text-xl">V</span>
+          <div className="mx-auto h-12 w-12 flex items-center justify-center bg-white rounded-lg shadow">
+            <span className="text-3xl font-bold bg-gradient-to-r from-[#ff3b4a] via-[#B32134] to-[#490000] bg-clip-text text-transparent select-none">V</span>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             {isLogin ? 'Inicia sesión en tu cuenta' : 'Crea tu cuenta'}
@@ -357,7 +381,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg bg-black text-white hover:text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 shadow-lg transform hover:scale-105 hover:shadow-2xl focus:scale-105 focus:shadow-2xl"
             >
               {renderSubmitButton()}
             </button>
