@@ -80,65 +80,59 @@ export default function UserProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12 px-2 sm:px-6 lg:px-8 flex items-center justify-center">
+      <div className="w-full max-w-2xl space-y-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-4">
-            <Link
-              href="/user/dashboard"
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </Link>
-            <h1 className="text-3xl font-bold text-gray-900">Mi Perfil</h1>
-          </div>
-          <p className="text-gray-600 mt-2">
-            Gestiona tu información personal y preferencias de cuenta
-          </p>
+        <div className="flex items-center space-x-4 mb-6">
+          <Link
+            href="/user/dashboard"
+            className="text-black hover:text-[#B32134] transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-[#ff3b4a] via-[#B32134] to-[#490000] bg-clip-text text-transparent select-none">Mi Perfil</h1>
         </div>
+        <p className="text-gray-600 mb-8 text-lg text-center">Gestiona tu información personal y preferencias de cuenta</p>
 
         {/* Notification */}
         {notification && (
-          <div className={`mb-6 p-4 rounded-lg ${
+          <div className={`mb-6 p-4 rounded-xl shadow border flex items-center gap-2 animate-fade-in-fast ${
             notification.type === 'success' 
-              ? 'bg-green-50 border border-green-200 text-green-800' 
-              : 'bg-red-50 border border-red-200 text-red-800'
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
           }`}>
-            <div className="flex items-center">
-              {notification.type === 'success' ? (
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              )}
-              <span>{notification.message}</span>
-              <button
-                onClick={() => setNotification(null)}
-                className="ml-auto text-current hover:opacity-70"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+            {notification.type === 'success' ? (
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            )}
+            <span>{notification.message}</span>
+            <button
+              onClick={() => setNotification(null)}
+              className="ml-auto text-current hover:opacity-70"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         )}
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Información Personal */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Información Personal</h2>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
+            <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-black">Información Personal</h2>
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="text-black hover:text-gray-800 font-medium transition-colors"
+                  className="px-5 py-2 bg-black text-white rounded-full font-semibold shadow hover:bg-[#B32134] hover:scale-105 transition-all duration-200"
                 >
                   Editar
                 </button>
@@ -147,14 +141,14 @@ export default function UserProfile() {
                   <button
                     onClick={handleCancel}
                     disabled={isSaving}
-                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    className="px-5 py-2 text-black border border-gray-300 rounded-full font-semibold hover:bg-gray-100 transition-all duration-200 disabled:opacity-50"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+                    className="px-5 py-2 bg-black text-white rounded-full font-semibold shadow hover:bg-[#B32134] hover:scale-105 transition-all duration-200 disabled:opacity-50"
                   >
                     {isSaving ? 'Guardando...' : 'Guardar'}
                   </button>
@@ -162,7 +156,7 @@ export default function UserProfile() {
               )}
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-8 space-y-6">
               {/* Email (No editable) */}
               <div>
                 <label htmlFor="email-field" className="block text-sm font-medium text-gray-700 mb-2">
@@ -177,7 +171,7 @@ export default function UserProfile() {
               </div>
 
               {/* Nombre */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-2">
                     Nombre
@@ -189,7 +183,7 @@ export default function UserProfile() {
                       name="first_name"
                       value={formData.first_name}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                       placeholder="Tu nombre"
                     />
                   ) : (
@@ -210,7 +204,7 @@ export default function UserProfile() {
                       name="last_name"
                       value={formData.last_name}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                       placeholder="Tu apellido"
                     />
                   ) : (
@@ -233,7 +227,7 @@ export default function UserProfile() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                     placeholder="+52 (555) 123-4567"
                   />
                 ) : (
@@ -260,11 +254,11 @@ export default function UserProfile() {
           </div>
 
           {/* Configuración de Cuenta */}
-          <div className="bg-white rounded-lg shadow-sm">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Configuración de Cuenta</h2>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
+            <div className="px-8 py-6 border-b border-gray-100">
+              <h2 className="text-2xl font-bold text-black">Configuración de Cuenta</h2>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-8 space-y-4">
               <Link
                 href="/user/change-password"
                 className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -303,11 +297,11 @@ export default function UserProfile() {
           </div>
 
           {/* Zona de Peligro */}
-          <div className="bg-white rounded-lg shadow-sm border border-red-200">
-            <div className="px-6 py-4 border-b border-red-200">
-              <h2 className="text-lg font-semibold text-red-900">Zona de Peligro</h2>
+          <div className="bg-white rounded-2xl shadow-xl border border-red-200">
+            <div className="px-8 py-6 border-b border-red-200">
+              <h2 className="text-2xl font-bold text-red-900">Zona de Peligro</h2>
             </div>
-            <div className="p-6">
+            <div className="p-8">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium text-red-900">Eliminar Cuenta</h3>
@@ -315,7 +309,7 @@ export default function UserProfile() {
                     Esta acción no se puede deshacer. Se eliminarán todos tus datos permanentemente.
                   </p>
                 </div>
-                <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                <button className="px-5 py-2 bg-gradient-to-r from-[#ff3b4a] via-[#B32134] to-[#490000] text-white rounded-full font-semibold shadow hover:scale-105 transition-all duration-200">
                   Eliminar Cuenta
                 </button>
               </div>
