@@ -357,10 +357,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium 
-              rounded-lg bg-black text-white hover:text-white hover:bg-gradient-to-r hover:from-[#7a1a1a] 
-              hover:via-[#4a0d0d] hover:to-[#1a0000] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4a0d0d] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 shadow-lg
-              transform hover:scale-102 hover:shadow-2xl focus:scale-102 focus:shadow-2xl"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg bg-black text-white hover:text-white hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 shadow-lg transform hover:scale-105 hover:shadow-2xl focus:scale-105 focus:shadow-2xl"
             >
               {renderSubmitButton()}
             </button>
