@@ -87,6 +87,12 @@ export default function GuiaTallasPage() {
             <span className="px-4 py-2 text-sm font-medium bg-black text-white rounded-md">
               Guía de Tallas
             </span>
+            <Link 
+              href="/servicio-al-cliente/faq" 
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              FAQ
+            </Link>
           </nav>
         </div>
 
