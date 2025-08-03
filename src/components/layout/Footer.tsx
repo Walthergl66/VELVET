@@ -73,7 +73,7 @@ const Footer: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Servicio al Cliente</h3>
             <ul className="space-y-2">
-              <li><Link href="/servicio-al-cliente" className="text-gray-300 hover:text-white transition-colors text-sm">Contacto</Link></li>
+              <li><Link href="/servicio-al-cliente/contact" className="text-gray-300 hover:text-white transition-colors text-sm">Contacto</Link></li>
               <li><Link href="/servicio-al-cliente/envios" className="text-gray-300 hover:text-white transition-colors text-sm">Envíos</Link></li>
               <li><Link href="/user/dashboard" className="text-gray-300 hover:text-white transition-colors text-sm">Mi Cuenta</Link></li>
               <li><Link href="/help/returns" className="text-gray-300 hover:text-white transition-colors text-sm">Devoluciones</Link></li>

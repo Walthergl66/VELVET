@@ -117,7 +117,7 @@ export default function EnviosPage() {
         <div className="flex justify-center mb-8">
           <nav className="flex space-x-1 bg-white rounded-lg p-1 shadow-sm">
             <Link 
-              href="/servicio-al-cliente" 
+              href="/servicio-al-cliente/contact" 
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
             >
               Contacto
@@ -372,7 +372,7 @@ export default function EnviosPage() {
         <div className="mt-12 text-center">
           <div className="flex flex-wrap justify-center gap-4">
             <Link 
-              href="/servicio-al-cliente" 
+              href="/servicio-al-cliente/contact" 
               className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
               ← Volver a Servicio al Cliente

@@ -81,6 +81,27 @@ export default function ServicioClientePage() {
           </p>
         </div>
 
+        {/* Navegación de servicio al cliente */}
+        <div className="flex justify-center mb-8">
+          <nav className="flex space-x-1 bg-white rounded-lg p-1 shadow-sm">
+            <span className="px-4 py-2 text-sm font-medium bg-black text-white rounded-md">
+              Contacto
+            </span>
+            <Link 
+              href="/servicio-al-cliente/envios" 
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              Envíos
+            </Link>
+            <Link 
+              href="/servicio-al-cliente/devoluciones" 
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              Devoluciones
+            </Link>
+          </nav>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Formulario de Contacto */}
           <div className="lg:col-span-2">
