@@ -73,12 +73,12 @@ const Footer: React.FC = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Servicio al Cliente</h3>
             <ul className="space-y-2">
-              <li><Link href="/help/contact" className="text-gray-300 hover:text-white transition-colors text-sm">Contacto</Link></li>
-              <li><Link href="/help/shipping" className="text-gray-300 hover:text-white transition-colors text-sm">Envíos</Link></li>
-              <li><Link href="/help/returns" className="text-gray-300 hover:text-white transition-colors text-sm">Devoluciones</Link></li>
-              <li><Link href="/help/size-guide" className="text-gray-300 hover:text-white transition-colors text-sm">Guía de Tallas</Link></li>
+              <li><Link href="/servicio-al-cliente/contact" className="text-gray-300 hover:text-white transition-colors text-sm">Contacto</Link></li>
+              <li><Link href="/servicio-al-cliente/envios" className="text-gray-300 hover:text-white transition-colors text-sm">Envíos</Link></li>
+              <li><Link href="/user/dashboard" className="text-gray-300 hover:text-white transition-colors text-sm">Mi Cuenta</Link></li>
+              <li><Link href="/servicio-al-cliente/devoluciones" className="text-gray-300 hover:text-white transition-colors text-sm">Devoluciones</Link></li>
+              <li><Link href="/servicio-al-cliente/guia-tallas" className="text-gray-300 hover:text-white transition-colors text-sm">Guía de Tallas</Link></li>
               <li><Link href="/help/faq" className="text-gray-300 hover:text-white transition-colors text-sm">Preguntas Frecuentes</Link></li>
-              <li><Link href="/help/privacy" className="text-gray-300 hover:text-white transition-colors text-sm">Política de Privacidad</Link></li>
             </ul>
           </div>
 
