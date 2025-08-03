@@ -36,7 +36,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
       {isOpen && (
         <button
           type="button"
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity cursor-default"
+          className="fixed inset-0 z-50 transition-opacity cursor-default bg-black/10 backdrop-blur-sm"
           onClick={onClose}
           onKeyDown={handleOverlayKeyDown}
           aria-label="Cerrar carrito de compras"
