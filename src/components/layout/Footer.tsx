@@ -78,7 +78,7 @@ const Footer: React.FC = () => {
               <li><Link href="/user/dashboard" className="text-gray-300 hover:text-white transition-colors text-sm">Mi Cuenta</Link></li>
               <li><Link href="/servicio-al-cliente/devoluciones" className="text-gray-300 hover:text-white transition-colors text-sm">Devoluciones</Link></li>
               <li><Link href="/servicio-al-cliente/guia-tallas" className="text-gray-300 hover:text-white transition-colors text-sm">Guía de Tallas</Link></li>
-              <li><Link href="/help/faq" className="text-gray-300 hover:text-white transition-colors text-sm">Preguntas Frecuentes</Link></li>
+              <li><Link href="/servicio-al-cliente/faq" className="text-gray-300 hover:text-white transition-colors text-sm">Preguntas Frecuentes</Link></li>
             </ul>
           </div>
 
