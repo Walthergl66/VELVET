@@ -114,10 +114,10 @@ export function useAuth() {
       if (data.user) {
         console.log('Usuario registrado exitosamente:', data.user.email);
         
-        // Esperar un poco para que el trigger cree el perfil
+        // Esperar a que el trigger cree el perfil
         await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Verificar que el perfil fue creado
+        // Solo verificar que el perfil fue creado (sin intentar crearlo)
         const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('*')
@@ -125,23 +125,9 @@ export function useAuth() {
           .single();
 
         if (profileError || !profile) {
-          console.warn('El perfil de usuario no fue creado automáticamente');
-          
-          // Como fallback, crear el perfil manualmente
-          const { error: insertError } = await supabase
-            .from('user_profiles')
-            .insert({
-              id: data.user.id,
-              email: data.user.email!,
-              first_name: firstName,
-              last_name: lastName,
-              phone: phone || null,
-              role: 'user'
-            });
-
-          if (insertError) {
-            console.error('Error al crear perfil manualmente:', insertError);
-          }
+          console.warn('El perfil de usuario tardó en crearse, pero el registro fue exitoso');
+        } else {
+          console.log('Perfil de usuario creado correctamente');
         }
       }
 
