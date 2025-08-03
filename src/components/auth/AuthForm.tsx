@@ -198,8 +198,8 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center bg-black rounded-lg">
-            <span className="text-white font-bold text-xl">V</span>
+          <div className="mx-auto h-12 w-12 flex items-center justify-center bg-white rounded-lg shadow">
+            <span className="text-3xl font-bold bg-gradient-to-r from-[#ff3b4a] via-[#B32134] to-[#490000] bg-clip-text text-transparent select-none">V</span>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             {isLogin ? 'Inicia sesión en tu cuenta' : 'Crea tu cuenta'}
@@ -357,7 +357,10 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium 
+              rounded-lg bg-black text-white hover:text-white hover:bg-gradient-to-r hover:from-[#7a1a1a] 
+              hover:via-[#4a0d0d] hover:to-[#1a0000] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4a0d0d] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-500 shadow-lg
+              transform hover:scale-102 hover:shadow-2xl focus:scale-102 focus:shadow-2xl"
             >
               {renderSubmitButton()}
             </button>
