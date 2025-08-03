@@ -181,19 +181,60 @@ export default function NewProductPage() {
     setLoading(true);
 
     try {
+      // Generar SKU único si no se proporciona
+      let sku = formData.sku?.trim();
+      if (!sku) {
+        sku = `VEL-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      }
+
+      // Verificar si el SKU ya existe
+      const { data: existingSku } = await supabase
+        .from('products')
+        .select('id')
+        .eq('sku', sku)
+        .single();
+
+      if (existingSku) {
+        alert(`El SKU "${sku}" ya existe. Por favor usa un SKU diferente o déjalo vacío para generar uno automáticamente.`);
+        setLoading(false);
+        return;
+      }
+
+      // Preparar los datos del producto
+      const productData = {
+        name: formData.name,
+        description: formData.description,
+        price: Number(formData.price),
+        discount_price: formData.discount_price ? Number(formData.discount_price) : null,
+        category_id: formData.category_id || null,
+        subcategory_id: formData.subcategory_id || null,
+        stock: Number(formData.stock),
+        featured: Boolean(formData.featured),
+        brand: formData.brand || null,
+        material: formData.material || null,
+        care_instructions: formData.care_instructions || null,
+        sku: sku,
+        weight: formData.weight ? Number(formData.weight) : null,
+        tags: formData.tags || [],
+        images: formData.images || [],
+        active: true
+      };
+
+      console.log('Datos del producto a crear:', JSON.stringify(productData, null, 2));
+
       // Crear el producto
       const { data: product, error: productError } = await supabase
         .from('products')
-        .insert([{
-          ...formData,
-          subcategory_id: formData.subcategory_id || null,
-          discount_price: formData.discount_price || null,
-          weight: formData.weight || null
-        }])
+        .insert([productData])
         .select()
         .single();
 
-      if (productError) throw productError;
+      console.log('Respuesta de Supabase:', { product, error: productError });
+
+      if (productError) {
+        console.error('Error detallado de Supabase:', JSON.stringify(productError, null, 2));
+        throw productError;
+      }
 
       // Crear las opciones del producto
       for (const [optionTitle, values] of Object.entries(productOptions)) {
@@ -230,9 +271,36 @@ export default function NewProductPage() {
       alert('Producto creado exitosamente');
       router.push('/admin/products');
 
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error creating product:', error);
-      alert('Error al crear el producto: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+      console.error('Error detallado:', JSON.stringify(error, null, 2));
+      
+      let errorMessage = 'Error desconocido';
+      
+      // Manejar errores específicos de base de datos
+      if (error && typeof error === 'object' && error !== null) {
+        const dbError = error as { code?: string; message?: string };
+        
+        if (dbError.code === '23505') {
+          if (dbError.message?.includes('products_sku_key')) {
+            errorMessage = 'El SKU ya existe. Por favor usa un SKU diferente o déjalo vacío para generar uno automáticamente.';
+          } else {
+            errorMessage = 'Ya existe un registro con esos datos. Verifica que todos los campos únicos sean diferentes.';
+          }
+        } else if (dbError.code === '23502') {
+          errorMessage = 'Faltan campos obligatorios. Verifica que hayas completado todos los campos requeridos.';
+        } else if (dbError.code === '23503') {
+          errorMessage = 'Referencia inválida. Verifica que la categoría seleccionada sea válida.';
+        } else if (dbError.message) {
+          errorMessage = dbError.message;
+        } else {
+          errorMessage = JSON.stringify(error);
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      alert('Error al crear el producto: ' + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -396,7 +464,7 @@ export default function NewProductPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                SKU
+                SKU <span className="text-gray-500 text-sm">(Opcional - se generará automáticamente si se deja vacío)</span>
               </label>
               <input
                 type="text"
@@ -404,8 +472,11 @@ export default function NewProductPage() {
                 value={formData.sku}
                 onChange={handleInputChange}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                placeholder="Ej: CAM-001"
+                placeholder="Ej: CAM-001 (opcional)"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                El SKU debe ser único. Si no proporcionas uno, se generará automáticamente.
+              </p>
             </div>
           </div>
 
