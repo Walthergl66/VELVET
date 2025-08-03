@@ -204,9 +204,16 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-all duration-300"></div>
           <div className="relative z-10 bg-white rounded-2xl shadow-2xl px-8 py-8 flex flex-col items-center max-w-xs w-full animate-fade-in">
-            <svg className="w-14 h-14 text-green-500 mb-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12l2.5 2.5L16 9" />
+            <svg className="w-14 h-14 mb-4" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="success-gradient" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#ff3b4a" />
+                  <stop offset="0.5" stopColor="#B32134" />
+                  <stop offset="1" stopColor="#490000" />
+                </linearGradient>
+              </defs>
+              <circle cx="28" cy="28" r="26" fill="url(#success-gradient)" />
+              <path d="M18 29.5L25 36.5L38 22.5" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">¡Cuenta creada exitosamente!</h3>
             <p className="text-gray-600 text-center text-sm mb-2">Revisa tu correo para confirmar tu cuenta.</p>
