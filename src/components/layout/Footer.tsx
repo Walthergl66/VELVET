@@ -103,9 +103,9 @@ const Footer: React.FC = () => {
             </form>
             <div className="space-y-2 text-sm text-gray-300">
               <h4 className="font-medium">Información de Contacto</h4>
-              <p>📧 contacto@velvet.com</p>
-              <p>📞 +52 55 1234 5678</p>
-              <p>📍 Ciudad de México, México</p>
+              <p>📧 emiliosleimen555@gmail.com</p>
+              <p>📞 +593 96 272 0681</p>
+              <p>📍 Ciudad de Manta, Ecuador</p>
             </div>
           </div>
         </div>
@@ -119,17 +119,8 @@ const Footer: React.FC = () => {
                 <div className="bg-white p-1 rounded">
                   <span className="text-black text-xs font-bold">VISA</span>
                 </div>
-                <div className="bg-white p-1 rounded">
-                  <span className="text-black text-xs font-bold">MC</span>
-                </div>
-                <div className="bg-white p-1 rounded">
-                  <span className="text-black text-xs font-bold">AMEX</span>
-                </div>
                 <div className="bg-blue-600 p-1 rounded">
                   <span className="text-white text-xs font-bold">PayPal</span>
-                </div>
-                <div className="bg-green-500 p-1 rounded">
-                  <span className="text-white text-xs font-bold">MP</span>
                 </div>
               </div>
             </div>
