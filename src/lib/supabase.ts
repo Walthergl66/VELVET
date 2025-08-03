@@ -634,4 +634,174 @@ export const listImages = async (folder: string = 'products') => {
   }
 };
 
+/**
+ * Funciones para gestión de direcciones
+ */
+
+/**
+ * Obtiene todas las direcciones del usuario actual
+ */
+export const getUserAddresses = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'Usuario no autenticado' };
+    }
+
+    const { data, error } = await supabase
+      .from('addresses')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: false });
+
+    return { data, error };
+  } catch (error) {
+    return { data: null, error: error instanceof Error ? error.message : 'Error desconocido' };
+  }
+};
+
+/**
+ * Crea una nueva dirección
+ */
+export const createAddress = async (addressData: {
+  type: 'shipping' | 'billing';
+  street: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country?: string;
+  is_default?: boolean;
+}) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'Usuario no autenticado' };
+    }
+
+    // Si esta dirección se marca como predeterminada, desmarcar las demás
+    if (addressData.is_default) {
+      await supabase
+        .from('addresses')
+        .update({ is_default: false })
+        .eq('user_id', user.id);
+    }
+
+    const { data, error } = await supabase
+      .from('addresses')
+      .insert({
+        ...addressData,
+        user_id: user.id,
+        country: addressData.country || 'México'
+      })
+      .select()
+      .single();
+
+    return { data, error };
+  } catch (error) {
+    return { data: null, error: error instanceof Error ? error.message : 'Error desconocido' };
+  }
+};
+
+/**
+ * Actualiza una dirección existente
+ */
+export const updateAddress = async (id: string, addressData: {
+  type?: 'shipping' | 'billing';
+  street?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+  is_default?: boolean;
+}) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'Usuario no autenticado' };
+    }
+
+    // Si esta dirección se marca como predeterminada, desmarcar las demás
+    if (addressData.is_default) {
+      await supabase
+        .from('addresses')
+        .update({ is_default: false })
+        .eq('user_id', user.id);
+    }
+
+    const { data, error } = await supabase
+      .from('addresses')
+      .update({
+        ...addressData,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    return { data, error };
+  } catch (error) {
+    return { data: null, error: error instanceof Error ? error.message : 'Error desconocido' };
+  }
+};
+
+/**
+ * Elimina una dirección
+ */
+export const deleteAddress = async (id: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'Usuario no autenticado' };
+    }
+
+    const { error } = await supabase
+      .from('addresses')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+
+    return { data: null, error };
+  } catch (error) {
+    return { data: null, error: error instanceof Error ? error.message : 'Error desconocido' };
+  }
+};
+
+/**
+ * Establece una dirección como predeterminada
+ */
+export const setDefaultAddress = async (id: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { data: null, error: 'Usuario no autenticado' };
+    }
+
+    // Desmarcar todas las direcciones como predeterminadas
+    await supabase
+      .from('addresses')
+      .update({ is_default: false })
+      .eq('user_id', user.id);
+
+    // Marcar la dirección especificada como predeterminada
+    const { data, error } = await supabase
+      .from('addresses')
+      .update({ is_default: true, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    return { data, error };
+  } catch (error) {
+    return { data: null, error: error instanceof Error ? error.message : 'Error desconocido' };
+  }
+};
+
 export default supabase;

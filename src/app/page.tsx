@@ -95,7 +95,7 @@ export default function Home() {
             <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
               <defs>
                 <filter id="dropshadow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.4"/>
+                  <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000" floodOpacity="0.4"/>
                 </filter>
               </defs>
               <path
