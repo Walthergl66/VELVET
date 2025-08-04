@@ -43,7 +43,7 @@ export default function ProductPage() {
         .from('products')
         .select(`
           *,
-          categories!category_id (
+          categories!products_category_id_fkey (
             id,
             name,
             slug
