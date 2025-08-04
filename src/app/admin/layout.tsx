@@ -17,7 +17,7 @@ interface AdminLayoutProps {
 }
 
 const navigation = [
-  { name: 'Dashboard', href: '/admin', icon: '📊' },
+  { name: 'Inicio', href: '/admin', icon: '📊' },
   { name: 'Productos', href: '/admin/products', icon: '👕' },
   { name: 'Categorías', href: '/admin/categories', icon: '📁' },
   { name: 'Pedidos', href: '/admin/orders', icon: '📦' },
@@ -85,45 +85,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/admin" className="text-2xl font-bold text-gray-900">
-                VELVET Admin
-              </Link>
-              {role === 'super_admin' && (
-                <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                  Super Admin
-                </span>
-              )}
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                {user.email}
-              </span>
-              <Link
-                href="/"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Ver Tienda
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Cerrar Sesión
-              </button>
-              <div className="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-gray-600">
-                  {user.email?.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
       <div className="flex">
         {/* Sidebar */}
