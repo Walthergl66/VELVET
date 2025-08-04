@@ -1,0 +1,53 @@
+-- Política RLS para permitir a administradores eliminar productos
+-- Ejecutar en Supabase Dashboard -> SQL Editor
+
+-- 1. Crear función RPC para eliminar productos (opcional, como respaldo)
+CREATE OR REPLACE FUNCTION delete_product(product_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  user_role TEXT;
+BEGIN
+  -- Verificar que el usuario esté autenticado
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Usuario no autenticado';
+  END IF;
+  
+  -- Obtener el rol del usuario (corregido: usar 'id' en lugar de 'user_id')
+  SELECT role INTO user_role 
+  FROM user_profiles 
+  WHERE id = auth.uid();
+  
+  -- Solo admins pueden eliminar productos
+  IF user_role != 'admin' THEN
+    RAISE EXCEPTION 'Solo los administradores pueden eliminar productos';
+  END IF;
+  
+  -- Eliminar el producto
+  DELETE FROM products WHERE id = product_id;
+  
+  RETURN TRUE;
+END;
+$$;
+
+-- 2. Crear política para permitir DELETE a administradores
+DROP POLICY IF EXISTS "Admins can delete products" ON products;
+
+CREATE POLICY "Admins can delete products"
+ON products
+FOR DELETE
+USING (
+  EXISTS (
+    SELECT 1 FROM user_profiles 
+    WHERE id = auth.uid() 
+    AND role = 'admin'
+  )
+);
+
+-- 3. Verificar que RLS esté habilitado en la tabla products
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+
+-- 4. Conceder permisos de ejecución de la función RPC
+GRANT EXECUTE ON FUNCTION delete_product(UUID) TO authenticated;
