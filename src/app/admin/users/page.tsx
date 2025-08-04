@@ -15,6 +15,7 @@ interface UsersPageState {
   loading: boolean;
   searchTerm: string;
   selectedRole: string;
+  selectedStatus: string;
   sortBy: string;
   currentPage: number;
   totalPages: number;
@@ -24,6 +25,7 @@ interface UsersPageState {
 interface UserStats {
   totalUsers: number;
   totalAdmins: number;
+  blockedUsers: number;
   newUsersThisMonth: number;
 }
 
@@ -34,6 +36,7 @@ export default function AdminUsersPage() {
     loading: true,
     searchTerm: '',
     selectedRole: 'all',
+    selectedStatus: 'all',
     sortBy: 'created_at',
     currentPage: 1,
     totalPages: 1,
@@ -43,23 +46,26 @@ export default function AdminUsersPage() {
   const [stats, setStats] = useState<UserStats>({
     totalUsers: 0,
     totalAdmins: 0,
+    blockedUsers: 0,
     newUsersThisMonth: 0
   });
 
   const [isUpdatingRole, setIsUpdatingRole] = useState<string | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState<string | null>(null);
+  const [isToggleBlocking, setIsToggleBlocking] = useState<string | null>(null);
   const itemsPerPage = 20;
 
   useEffect(() => {
     loadUsers();
     loadStats();
-  }, [state.currentPage, state.searchTerm, state.selectedRole, state.sortBy]);
+  }, [state.currentPage, state.searchTerm, state.selectedRole, state.selectedStatus, state.sortBy]);
 
   const loadStats = async () => {
     try {
       // Estadísticas generales
       const { data: allUsers, error } = await supabase
         .from('user_profiles')
-        .select('role, created_at');
+        .select('role, created_at, preferences');
 
       if (error) throw error;
 
@@ -69,6 +75,7 @@ export default function AdminUsersPage() {
       const stats = {
         totalUsers: allUsers?.length || 0,
         totalAdmins: allUsers?.filter(u => u.role === 'admin').length || 0,
+        blockedUsers: allUsers?.filter(u => u.preferences?.blocked === true).length || 0,
         newUsersThisMonth: allUsers?.filter(u => 
           new Date(u.created_at) >= firstDayOfMonth
         ).length || 0
@@ -95,6 +102,13 @@ export default function AdminUsersPage() {
 
       if (state.selectedRole !== 'all') {
         query = query.eq('role', state.selectedRole);
+      }
+
+      // Filtro por estado (bloqueado/activo)
+      if (state.selectedStatus === 'blocked') {
+        query = query.eq('preferences->blocked', true);
+      } else if (state.selectedStatus === 'active') {
+        query = query.or('preferences->blocked.is.null,preferences->blocked.eq.false');
       }
 
       // Ordenamiento
@@ -162,6 +176,100 @@ export default function AdminUsersPage() {
     }
   };
 
+  const deleteUser = async (userId: string, userEmail: string) => {
+    // Solo admins pueden eliminar usuarios
+    if (!isAdmin) {
+      alert('Solo los administradores pueden eliminar usuarios.');
+      return;
+    }
+
+    if (!confirm(`¿Estás seguro de que quieres ELIMINAR PERMANENTEMENTE al usuario "${userEmail}"?\n\nEsta acción NO se puede deshacer.`)) {
+      return;
+    }
+
+    // Confirmación adicional
+    if (!confirm('Esta es tu última oportunidad. ¿Confirmas que quieres eliminar este usuario PERMANENTEMENTE?')) {
+      return;
+    }
+
+    setIsDeletingUser(userId);
+
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      // Recargar usuarios y estadísticas
+      await loadUsers();
+      await loadStats();
+
+      alert('Usuario eliminado correctamente');
+
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Error al eliminar el usuario');
+    } finally {
+      setIsDeletingUser(null);
+    }
+  };
+
+  const toggleUserBlock = async (userId: string, isCurrentlyBlocked: boolean, userEmail: string) => {
+    // Solo admins pueden bloquear/desbloquear usuarios
+    if (!isAdmin) {
+      alert('Solo los administradores pueden bloquear/desbloquear usuarios.');
+      return;
+    }
+
+    const action = isCurrentlyBlocked ? 'desbloquear' : 'bloquear';
+    if (!confirm(`¿Estás seguro de que quieres ${action} al usuario "${userEmail}"?`)) {
+      return;
+    }
+
+    setIsToggleBlocking(userId);
+
+    try {
+      // Obtener las preferencias actuales del usuario
+      const { data: currentUser, error: fetchError } = await supabase
+        .from('user_profiles')
+        .select('preferences')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Actualizar las preferencias
+      const newPreferences = {
+        ...currentUser.preferences,
+        blocked: !isCurrentlyBlocked
+      };
+
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ 
+          preferences: newPreferences,
+          updated_at: new Date().toISOString() 
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      // Recargar usuarios y estadísticas
+      await loadUsers();
+      await loadStats();
+
+      alert(`Usuario ${action}do correctamente`);
+
+    } catch (error) {
+      console.error(`Error ${action}ing user:`, error);
+      alert(`Error al ${action} el usuario`);
+    } finally {
+      setIsToggleBlocking(null);
+    }
+  };
+
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin':
@@ -182,6 +290,18 @@ export default function AdminUsersPage() {
       default:
         return role;
     }
+  };
+
+  const isUserBlocked = (user: User): boolean => {
+    return user.preferences?.blocked === true;
+  };
+
+  const getUserStatusColor = (user: User): string => {
+    return isUserBlocked(user) ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800';
+  };
+
+  const getUserStatusLabel = (user: User): string => {
+    return isUserBlocked(user) ? 'Bloqueado' : 'Activo';
   };
 
   const formatDate = (dateString: string) => {
@@ -205,7 +325,7 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -237,6 +357,20 @@ export default function AdminUsersPage() {
         <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center">
             <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                <span className="text-white text-sm font-bold">🚫</span>
+              </div>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Usuarios Bloqueados</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.blockedUsers}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
               <div className="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
                 <span className="text-white text-sm font-bold">📈</span>
               </div>
@@ -251,7 +385,7 @@ export default function AdminUsersPage() {
 
       {/* Filtros y búsqueda */}
       <div className="bg-white p-6 rounded-lg shadow">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Búsqueda */}
           <div>
             <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-1">
@@ -281,6 +415,23 @@ export default function AdminUsersPage() {
               <option value="all">Todos los roles</option>
               <option value="user">Usuario</option>
               <option value="admin">Administrador</option>
+            </select>
+          </div>
+
+          {/* Filtro por estado */}
+          <div>
+            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+              Filtrar por estado
+            </label>
+            <select
+              id="status"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={state.selectedStatus}
+              onChange={(e) => setState(prev => ({ ...prev, selectedStatus: e.target.value, currentPage: 1 }))}
+            >
+              <option value="all">Todos los estados</option>
+              <option value="active">Activos</option>
+              <option value="blocked">Bloqueados</option>
             </select>
           </div>
 
@@ -332,10 +483,11 @@ export default function AdminUsersPage() {
             <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
               <div className="grid grid-cols-12 gap-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <div className="col-span-3">Usuario</div>
-                <div className="col-span-3">Email</div>
-                <div className="col-span-2">Rol</div>
+                <div className="col-span-2">Email</div>
+                <div className="col-span-1">Rol</div>
+                <div className="col-span-1">Estado</div>
                 <div className="col-span-2">Fecha registro</div>
-                <div className="col-span-2">Acciones</div>
+                <div className="col-span-3">Acciones</div>
               </div>
             </div>
 
@@ -377,7 +529,7 @@ export default function AdminUsersPage() {
                     </div>
 
                     {/* Email */}
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <div className="text-sm text-gray-900">{user.email}</div>
                       {user.phone && (
                         <div className="text-sm text-gray-500">{user.phone}</div>
@@ -385,9 +537,16 @@ export default function AdminUsersPage() {
                     </div>
 
                     {/* Rol */}
-                    <div className="col-span-2">
+                    <div className="col-span-1">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
                         {getRoleLabel(user.role)}
+                      </span>
+                    </div>
+
+                    {/* Estado */}
+                    <div className="col-span-1">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getUserStatusColor(user)}`}>
+                        {getUserStatusLabel(user)}
                       </span>
                     </div>
 
@@ -397,9 +556,10 @@ export default function AdminUsersPage() {
                     </div>
 
                     {/* Acciones */}
-                    <div className="col-span-2">
+                    <div className="col-span-3">
                       {isAdmin && (
-                        <div className="flex space-x-2">
+                        <div className="flex flex-wrap gap-1">
+                          {/* Select de rol */}
                           <select
                             className="text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             value={user.role}
@@ -409,7 +569,31 @@ export default function AdminUsersPage() {
                             <option value="user">Usuario</option>
                             <option value="admin">Admin</option>
                           </select>
-                          {isUpdatingRole === user.id && (
+
+                          {/* Botón Bloquear/Desbloquear */}
+                          <button
+                            onClick={() => toggleUserBlock(user.id, isUserBlocked(user), user.email)}
+                            disabled={isToggleBlocking === user.id}
+                            className={`px-2 py-1 text-xs rounded ${
+                              isUserBlocked(user)
+                                ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                            } disabled:opacity-50`}
+                          >
+                            {isUserBlocked(user) ? '✓ Desbloquear' : '🚫 Bloquear'}
+                          </button>
+
+                          {/* Botón Eliminar */}
+                          <button
+                            onClick={() => deleteUser(user.id, user.email)}
+                            disabled={isDeletingUser === user.id}
+                            className="px-2 py-1 text-xs bg-red-100 text-red-800 rounded hover:bg-red-200 disabled:opacity-50"
+                          >
+                            🗑️ Eliminar
+                          </button>
+
+                          {/* Indicadores de carga */}
+                          {(isUpdatingRole === user.id || isToggleBlocking === user.id || isDeletingUser === user.id) && (
                             <div className="flex items-center">
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
                             </div>

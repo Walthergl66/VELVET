@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 
 export function useRole() {
   const { user, loading } = useAuth();
-  const [role, setRole] = useState<'user' | 'admin' | 'super_admin' | null>(null);
+  const [role, setRole] = useState<'user' | 'admin' | null>(null);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
 
   useEffect(() => {
@@ -72,13 +72,11 @@ export function useRole() {
     }
   }, [user, loading]);
 
-  const isAdmin = role === 'admin' || role === 'super_admin';
-  const isSuperAdmin = role === 'super_admin';
+  const isAdmin = role === 'admin';
 
   return {
     role,
     isAdmin,
-    isSuperAdmin,
     isLoading: loading || isLoadingRole,
   };
 }
