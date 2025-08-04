@@ -40,3 +40,37 @@ div[class*="aspect-square"] {
     display: block !important;
   }
 }
+
+/* Mejoras para inputs y formularios */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+select,
+textarea {
+  color: #1f2937 !important; /* Texto más oscuro */
+  font-weight: 500 !important; /* Texto más bold */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important; /* Placeholder más visible */
+  opacity: 1 !important;
+}
+
+/* Estados de focus para mejor visibilidad */
+input:focus,
+select:focus,
+textarea:focus {
+  color: #111827 !important; /* Texto aún más oscuro al hacer focus */
+  font-weight: 600 !important;
+}
+
+/* Labels más visibles */
+label {
+  color: #374151 !important;
+  font-weight: 600 !important;
+}
