@@ -28,10 +28,29 @@ interface ProductForm {
   weight: number | null;
   tags: string[];
   images: string[];
+  sizes: string[];
+  colors: string[];
 }
 
-interface ProductOptions {
-  [optionTitle: string]: string[];
+interface ProductOption {
+  name: string;
+  type: 'select' | 'color' | 'size' | 'text';
+  values: ProductOptionValue[];
+}
+
+interface ProductOptionValue {
+  value: string;
+  color_hex?: string;
+  image_url?: string;
+}
+
+interface ProductVariant {
+  sku: string;
+  price: number;
+  stock: number;
+  weight?: number;
+  image_url?: string;
+  options: { [optionName: string]: string };
 }
 
 export default function NewProductPage() {
@@ -53,13 +72,26 @@ export default function NewProductPage() {
     sku: '',
     weight: null,
     tags: [],
-    images: []
+    images: [],
+    sizes: [],
+    colors: []
   });
 
-  const [productOptions, setProductOptions] = useState<ProductOptions>({
-    'Talla': [],
-    'Color': []
-  });
+  const [productOptions, setProductOptions] = useState<ProductOption[]>([
+    {
+      name: 'Talla',
+      type: 'size',
+      values: []
+    },
+    {
+      name: 'Color',
+      type: 'color',
+      values: []
+    }
+  ]);
+
+  const [productVariants, setProductVariants] = useState<ProductVariant[]>([]);
+  const [showVariantsSection, setShowVariantsSection] = useState(false);
 
   const [newTag, setNewTag] = useState('');
   const [newOptionTitle, setNewOptionTitle] = useState('');
@@ -127,37 +159,109 @@ export default function NewProductPage() {
 
   const addOption = () => {
     if (newOptionTitle.trim()) {
-      setProductOptions(prev => ({
-        ...prev,
-        [newOptionTitle.trim()]: []
-      }));
+      const newOption: ProductOption = {
+        name: newOptionTitle.trim(),
+        type: 'select',
+        values: []
+      };
+      setProductOptions(prev => [...prev, newOption]);
       setNewOptionTitle('');
     }
   };
 
-  const addOptionValue = (optionTitle: string) => {
-    if (newOptionValue.trim() && !productOptions[optionTitle].includes(newOptionValue.trim())) {
-      setProductOptions(prev => ({
-        ...prev,
-        [optionTitle]: [...prev[optionTitle], newOptionValue.trim()]
-      }));
+  const addOptionValue = (optionIndex: number, value: string, colorHex?: string) => {
+    if (value.trim()) {
+      const newValue: ProductOptionValue = {
+        value: value.trim(),
+        color_hex: colorHex
+      };
+      
+      setProductOptions(prev => 
+        prev.map((option, index) => 
+          index === optionIndex 
+            ? { ...option, values: [...option.values, newValue] }
+            : option
+        )
+      );
       setNewOptionValue('');
     }
   };
 
-  const removeOptionValue = (optionTitle: string, valueIndex: number) => {
-    setProductOptions(prev => ({
-      ...prev,
-      [optionTitle]: prev[optionTitle].filter((_, i) => i !== valueIndex)
-    }));
+  const removeOptionValue = (optionIndex: number, valueIndex: number) => {
+    setProductOptions(prev => 
+      prev.map((option, index) => 
+        index === optionIndex 
+          ? { ...option, values: option.values.filter((_, i) => i !== valueIndex) }
+          : option
+      )
+    );
   };
 
-  const removeOption = (optionTitle: string) => {
-    setProductOptions(prev => {
-      const newOptions = { ...prev };
-      delete newOptions[optionTitle];
-      return newOptions;
-    });
+  const removeOption = (optionIndex: number) => {
+    setProductOptions(prev => prev.filter((_, index) => index !== optionIndex));
+  };
+
+  const updateOptionType = (optionIndex: number, type: ProductOption['type']) => {
+    setProductOptions(prev => 
+      prev.map((option, index) => 
+        index === optionIndex 
+          ? { ...option, type }
+          : option
+      )
+    );
+  };
+
+  const generateVariants = () => {
+    const optionsWithValues = productOptions.filter(option => option.values.length > 0);
+    
+    if (optionsWithValues.length === 0) {
+      setProductVariants([{
+        sku: formData.sku || `${formData.name.slice(0, 3).toUpperCase()}-001`,
+        price: formData.price,
+        stock: formData.stock,
+        weight: formData.weight || undefined,
+        options: {}
+      }]);
+      return;
+    }
+
+    const combinations: ProductVariant[] = [];
+    
+    function generateCombinations(optionIndex: number, currentCombination: { [key: string]: string }) {
+      if (optionIndex === optionsWithValues.length) {
+        const sku = `${formData.sku || formData.name.slice(0, 3).toUpperCase()}-${combinations.length + 1}`;
+        combinations.push({
+          sku,
+          price: formData.price,
+          stock: Math.floor(formData.stock / (combinations.length + 1)) || 0,
+          weight: formData.weight || undefined,
+          options: { ...currentCombination }
+        });
+        return;
+      }
+
+      const option = optionsWithValues[optionIndex];
+      option.values.forEach(value => {
+        generateCombinations(optionIndex + 1, {
+          ...currentCombination,
+          [option.name]: value.value
+        });
+      });
+    }
+
+    generateCombinations(0, {});
+    setProductVariants(combinations);
+    setShowVariantsSection(true);
+  };
+
+  const updateVariant = (variantIndex: number, field: keyof ProductVariant, value: any) => {
+    setProductVariants(prev => 
+      prev.map((variant, index) => 
+        index === variantIndex 
+          ? { ...variant, [field]: value }
+          : variant
+      )
+    );
   };
 
   const validateForm = (): string | null => {
@@ -217,6 +321,8 @@ export default function NewProductPage() {
         weight: formData.weight ? Number(formData.weight) : null,
         tags: formData.tags || [],
         images: formData.images || [],
+        sizes: formData.sizes || [],
+        colors: formData.colors || [],
         active: true
       };
 
@@ -236,15 +342,17 @@ export default function NewProductPage() {
         throw productError;
       }
 
-      // Crear las opciones del producto
-      for (const [optionTitle, values] of Object.entries(productOptions)) {
-        if (values.length > 0) {
+      // Crear las opciones del producto con sus valores
+      for (const [optionIndex, option] of productOptions.entries()) {
+        if (option.values.length > 0) {
           // Crear la opción
-          const { data: option, error: optionError } = await supabase
+          const { data: createdOption, error: optionError } = await supabase
             .from('product_options')
             .insert([{
               product_id: product.id,
-              title: optionTitle
+              name: option.name,
+              type: option.type,
+              position: optionIndex
             }])
             .select()
             .single();
@@ -252,9 +360,12 @@ export default function NewProductPage() {
           if (optionError) throw optionError;
 
           // Crear los valores de la opción
-          const optionValues = values.map(value => ({
-            option_id: option.id,
-            value
+          const optionValues = option.values.map((value, valueIndex) => ({
+            option_id: createdOption.id,
+            value: value.value,
+            color_hex: value.color_hex || null,
+            image_url: value.image_url || null,
+            position: valueIndex
           }));
 
           const { error: valuesError } = await supabase
@@ -265,8 +376,57 @@ export default function NewProductPage() {
         }
       }
 
-      // Crear variantes básicas (una por cada combinación de opciones)
-      await createProductVariants(product.id);
+      // Crear las variantes del producto
+      if (productVariants.length > 0) {
+        for (const variant of productVariants) {
+          const { data: createdVariant, error: variantError } = await supabase
+            .from('product_variants')
+            .insert([{
+              product_id: product.id,
+              sku: variant.sku,
+              price: variant.price,
+              stock: variant.stock,
+              weight: variant.weight || null,
+              image_url: variant.image_url || null,
+              active: true
+            }])
+            .select()
+            .single();
+
+          if (variantError) throw variantError;
+
+          // Asociar los valores de opciones con la variante
+          for (const [optionName, optionValue] of Object.entries(variant.options)) {
+            // Buscar el option_value_id correspondiente
+            const { data: optionValueData, error: optionValueError } = await supabase
+              .from('product_option_values')
+              .select('id')
+              .eq('value', optionValue)
+              .single();
+
+            if (!optionValueError && optionValueData) {
+              await supabase
+                .from('variant_option_values')
+                .insert([{
+                  variant_id: createdVariant.id,
+                  option_value_id: optionValueData.id
+                }]);
+            }
+          }
+        }
+      } else {
+        // Crear una variante básica si no hay opciones
+        await supabase
+          .from('product_variants')
+          .insert([{
+            product_id: product.id,
+            sku: sku,
+            price: formData.price,
+            stock: formData.stock,
+            weight: formData.weight,
+            active: true
+          }]);
+      }
 
       alert('Producto creado exitosamente');
       router.push('/admin/products');
@@ -304,20 +464,6 @@ export default function NewProductPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const createProductVariants = async (productId: string) => {
-    // Crear al menos una variante base
-    const { error } = await supabase
-      .from('product_variants')
-      .insert([{
-        product_id: productId,
-        price: formData.price,
-        stock: formData.stock,
-        weight: formData.weight
-      }]);
-
-    if (error) throw error;
   };
 
   const selectedCategory = categories.find(cat => cat.id === formData.category_id);
@@ -539,7 +685,7 @@ export default function NewProductPage() {
 
         {/* Detalles adicionales */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-6">Detalles Adicionales</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-6">Detalles Adicionales <span className="text-sm text-gray-500 font-normal">(Opcional)</span></h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -583,6 +729,9 @@ export default function NewProductPage() {
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                 placeholder="0"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                Útil para cálculos de envío
+              </p>
             </div>
 
             <div className="md:col-span-2">
@@ -595,7 +744,7 @@ export default function NewProductPage() {
                 onChange={handleInputChange}
                 rows={3}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                placeholder="Ej: Lavar a máquina en agua fría, no usar cloro..."
+                placeholder="Ej: Lavar a máquina en agua fría, no usar cloro, secar a la sombra..."
               />
             </div>
           </div>
@@ -650,31 +799,59 @@ export default function NewProductPage() {
         <div className="bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-6">Opciones del Producto</h2>
           
-          {Object.entries(productOptions).map(([optionTitle, values]) => (
-            <div key={optionTitle} className="mb-6 p-4 border border-gray-200 rounded-lg">
+          {productOptions.map((option, optionIndex) => (
+            <div key={optionIndex} className="mb-6 p-4 border border-gray-200 rounded-lg">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-gray-900">{optionTitle}</h3>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="text"
+                    value={option.name}
+                    onChange={(e) => setProductOptions(prev => 
+                      prev.map((opt, idx) => 
+                        idx === optionIndex ? { ...opt, name: e.target.value } : opt
+                      )
+                    )}
+                    className="text-sm font-medium text-gray-900 border border-gray-300 rounded px-2 py-1"
+                    placeholder="Nombre de la opción"
+                  />
+                  <select
+                    value={option.type}
+                    onChange={(e) => updateOptionType(optionIndex, e.target.value as ProductOption['type'])}
+                    className="text-sm border border-gray-300 rounded px-2 py-1"
+                  >
+                    <option value="select">Selección</option>
+                    <option value="color">Color</option>
+                    <option value="size">Talla</option>
+                    <option value="text">Texto</option>
+                  </select>
+                </div>
                 <button
                   type="button"
-                  onClick={() => removeOption(optionTitle)}
+                  onClick={() => removeOption(optionIndex)}
                   className="text-red-600 hover:text-red-800 text-sm"
                 >
                   Eliminar opción
                 </button>
               </div>
               
-              {values.length > 0 && (
+              {option.values.length > 0 && (
                 <div className="mb-3">
                   <div className="flex flex-wrap gap-2">
-                    {values.map((value, index) => (
+                    {option.values.map((value, valueIndex) => (
                       <span
-                        key={index}
+                        key={valueIndex}
                         className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
                       >
-                        {value}
+                        {option.type === 'color' && value.color_hex && (
+                          <span 
+                            className="w-3 h-3 rounded-full mr-2 border border-gray-300"
+                            style={{ backgroundColor: value.color_hex }}
+                          />
+                        )}
+                        {value.value}
                         <button
                           type="button"
-                          onClick={() => removeOptionValue(optionTitle, index)}
+                          onClick={() => removeOptionValue(optionIndex, valueIndex)}
                           className="ml-2 text-blue-600 hover:text-blue-800"
                         >
                           ✕
@@ -690,13 +867,30 @@ export default function NewProductPage() {
                   type="text"
                   value={newOptionValue}
                   onChange={(e) => setNewOptionValue(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addOptionValue(optionTitle))}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addOptionValue(optionIndex, newOptionValue))}
                   className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                   placeholder="Agregar valor"
                 />
+                {option.type === 'color' && (
+                  <input
+                    type="color"
+                    value="#000000"
+                    onChange={(e) => {
+                      // Temporal storage for color
+                      const colorInput = e.target;
+                      colorInput.dataset.colorValue = e.target.value;
+                    }}
+                    className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                    title="Seleccionar color"
+                  />
+                )}
                 <button
                   type="button"
-                  onClick={() => addOptionValue(optionTitle)}
+                  onClick={() => {
+                    const colorInput = document.querySelector('input[type="color"]') as HTMLInputElement;
+                    const colorHex = option.type === 'color' && colorInput ? colorInput.dataset.colorValue : undefined;
+                    addOptionValue(optionIndex, newOptionValue, colorHex);
+                  }}
                   className="bg-blue-100 text-blue-700 px-3 py-2 rounded-md text-sm hover:bg-blue-200 transition-colors"
                 >
                   Agregar
@@ -722,7 +916,101 @@ export default function NewProductPage() {
               Nueva Opción
             </button>
           </div>
+
+          {productOptions.some(option => option.values.length > 0) && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={generateVariants}
+                className="bg-green-100 text-green-700 px-4 py-2 rounded-md hover:bg-green-200 transition-colors"
+              >
+                Generar Variantes ({productOptions.reduce((acc, opt) => acc * Math.max(opt.values.length, 1), 1)} combinaciones)
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* Variantes del producto */}
+        {showVariantsSection && productVariants.length > 0 && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-lg font-medium text-gray-900 mb-6">Variantes del Producto</h2>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      SKU
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Opciones
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Precio
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Stock
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Peso (g)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {productVariants.map((variant, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="text"
+                          value={variant.sku}
+                          onChange={(e) => updateVariant(index, 'sku', e.target.value)}
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(variant.options).map(([optionName, optionValue]) => (
+                            <span key={optionName} className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                              {optionName}: {optionValue}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="number"
+                          value={variant.price}
+                          onChange={(e) => updateVariant(index, 'price', Number(e.target.value))}
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          min="0"
+                          step="0.01"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="number"
+                          value={variant.stock}
+                          onChange={(e) => updateVariant(index, 'stock', Number(e.target.value))}
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          min="0"
+                        />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="number"
+                          value={variant.weight || ''}
+                          onChange={(e) => updateVariant(index, 'weight', e.target.value ? Number(e.target.value) : undefined)}
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          min="0"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* Botones de acción */}
         <div className="flex justify-end space-x-4">

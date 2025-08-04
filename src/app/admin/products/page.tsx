@@ -18,6 +18,7 @@ interface ProductsPageState {
   loading: boolean;
   searchTerm: string;
   selectedCategory: string;
+  selectedStatus: string; // 'all', 'active', 'inactive'
   sortBy: string;
   currentPage: number;
   totalPages: number;
@@ -31,6 +32,7 @@ export default function AdminProductsPage() {
     loading: true,
     searchTerm: '',
     selectedCategory: '',
+    selectedStatus: 'all', // Mostrar todos por defecto
     sortBy: 'created_at',
     currentPage: 1,
     totalPages: 1
@@ -41,7 +43,7 @@ export default function AdminProductsPage() {
   useEffect(() => {
     loadProducts();
     loadCategories();
-  }, [state.currentPage, state.searchTerm, state.selectedCategory, state.sortBy]);
+  }, [state.currentPage, state.searchTerm, state.selectedCategory, state.selectedStatus, state.sortBy]);
 
   const loadCategories = async () => {
     try {
@@ -65,12 +67,13 @@ export default function AdminProductsPage() {
         .from('products')
         .select(`
           *,
-          categories (
+          categories!products_category_id_fkey (
             id,
             name,
             slug
           )
         `, { count: 'exact' });
+        // NO filtrar por active: los admins deben ver todos los productos
 
       // Aplicar filtros
       if (state.searchTerm) {
@@ -80,6 +83,14 @@ export default function AdminProductsPage() {
       if (state.selectedCategory) {
         query = query.eq('category_id', state.selectedCategory);
       }
+
+      // Filtro por estado (activo/inactivo)
+      if (state.selectedStatus === 'active') {
+        query = query.eq('active', true);
+      } else if (state.selectedStatus === 'inactive') {
+        query = query.eq('active', false);
+      }
+      // Si es 'all', no aplicar filtro por estado
 
       // Aplicar ordenamiento
       const ascending = state.sortBy === 'name';
@@ -124,18 +135,63 @@ export default function AdminProductsPage() {
     }));
   };
 
+  const handleStatusFilter = (status: string) => {
+    setState(prev => ({
+      ...prev,
+      selectedStatus: status,
+      currentPage: 1
+    }));
+  };
+
   const handleSort = (sortBy: string) => {
     setState(prev => ({ ...prev, sortBy, currentPage: 1 }));
   };
 
   const toggleProductStatus = async (productId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
-        .from('products')
-        .update({ active: !currentStatus })
-        .eq('id', productId);
+      // Método 1: Intentar usando RPC
+      try {
+        const { data, error } = await supabase.rpc('toggle_product_status', {
+          product_id: productId,
+          new_status: !currentStatus
+        });
 
-      if (error) throw error;
+        if (!error) {
+          // Actualizar estado local y recargar
+          setState(prev => ({
+            ...prev,
+            products: prev.products.map(product =>
+              product.id === productId
+                ? { ...product, active: !currentStatus }
+                : product
+            )
+          }));
+          await loadProducts();
+          alert(`Producto ${!currentStatus ? 'activado' : 'desactivado'} correctamente`);
+          return;
+        }
+      } catch (rpcError) {
+        console.log('RPC not available, trying alternative method:', rpcError);
+      }
+
+      // Método 2: Actualizar directamente
+      const { data: updateData, error: updateError } = await supabase
+        .from('products')
+        .update({ 
+          active: !currentStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', productId)
+        .select('id, active');
+
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw new Error(`Error de base de datos: ${updateError.message}`);
+      }
+
+      if (!updateData || updateData.length === 0) {
+        throw new Error('No se pudo actualizar el producto. Las políticas RLS están bloqueando la actualización.');
+      }
 
       // Actualizar el estado local
       setState(prev => ({
@@ -146,9 +202,18 @@ export default function AdminProductsPage() {
             : product
         )
       }));
+
+      // Recargar productos para confirmar
+      await loadProducts();
+      alert(`Producto ${!currentStatus ? 'activado' : 'desactivado'} correctamente`);
+
     } catch (error) {
       console.error('Error updating product status:', error);
-      alert('Error al actualizar el estado del producto');
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      alert(`Error: ${errorMessage}`);
+      
+      // Recargar productos para mostrar el estado real
+      await loadProducts();
     }
   };
 
@@ -158,18 +223,41 @@ export default function AdminProductsPage() {
     }
 
     try {
+      // Método 1: Intentar usando RPC si está disponible
+      try {
+        const { data, error } = await supabase.rpc('delete_product', {
+          product_id: productId
+        });
+
+        if (!error) {
+          alert('Producto eliminado correctamente');
+          await loadProducts();
+          return;
+        }
+      } catch (rpcError) {
+        console.log('RPC delete not available, trying direct delete:', rpcError);
+      }
+
+      // Método 2: Eliminación directa
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', productId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw new Error(`Error de base de datos: ${error.message}`);
+      }
 
-      // Recargar productos
-      loadProducts();
+      alert('Producto eliminado correctamente');
+      await loadProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Error al eliminar el producto');
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      alert(`Error al eliminar el producto: ${errorMessage}`);
+      
+      // Recargar productos para mostrar el estado real
+      await loadProducts();
     }
   };
 
@@ -232,6 +320,19 @@ export default function AdminProductsPage() {
                 {category.name}
               </option>
             ))}
+          </select>
+        </div>
+
+        {/* Filtro por estado */}
+        <div className="md:w-48">
+          <select
+            value={state.selectedStatus}
+            onChange={(e) => handleStatusFilter(e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+          >
+            <option value="all">Todos los estados</option>
+            <option value="active">Solo activos</option>
+            <option value="inactive">Solo inactivos</option>
           </select>
         </div>
 
@@ -368,6 +469,7 @@ export default function AdminProductsPage() {
                   <button
                     onClick={() => deleteProduct(product.id)}
                     className="bg-red-100 text-red-700 py-2 px-3 rounded text-sm font-medium hover:bg-red-200 transition-colors"
+                    title="Eliminar producto"
                   >
                     🗑️
                   </button>

@@ -86,8 +86,8 @@ export const getProducts = async (filters: {
     .from('products')
     .select(`
       *,
-      category:categories!category_id(id, name, slug),
-      subcategory:categories!subcategory_id(id, name, slug)
+      category:categories!products_category_id_fkey(id, name, slug),
+      subcategory:categories!products_subcategory_id_fkey(id, name, slug)
     `, { count: 'exact' })
     .eq('active', true);
 
@@ -133,8 +133,8 @@ export const getProductsWithVariants = async (filters: {
     .from('products')
     .select(`
       *,
-      category:categories!category_id(id, name, slug),
-      subcategory:categories!subcategory_id(id, name, slug),
+      category:categories!products_category_id_fkey(id, name, slug),
+      subcategory:categories!products_subcategory_id_fkey(id, name, slug),
       variants:product_variants(id, sku, price, stock, weight, image_url, active),
       options:product_options(
         id, 
@@ -169,8 +169,8 @@ export const getProductById = async (id: string) => {
     .from('products')
     .select(`
       *,
-      category:categories!category_id(id, name, slug),
-      subcategory:categories!subcategory_id(id, name, slug),
+      category:categories!products_category_id_fkey(id, name, slug),
+      subcategory:categories!products_subcategory_id_fkey(id, name, slug),
       variants:product_variants(id, sku, price, stock, weight, image_url, active),
       options:product_options(
         id, 

@@ -27,7 +27,6 @@ export function useRole() {
           .single();
 
         console.log('Datos del perfil obtenidos:', data);
-        console.log('Error en consulta de perfil:', error);
 
         if (error) {
           console.error('Error fetching user role:', error);

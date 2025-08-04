@@ -33,7 +33,7 @@ export default function EditProductPage() {
         .from('products')
         .select(`
           *,
-          categories (
+          categories!products_category_id_fkey (
             id,
             name,
             slug
