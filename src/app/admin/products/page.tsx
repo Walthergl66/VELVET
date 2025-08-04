@@ -130,12 +130,61 @@ export default function AdminProductsPage() {
 
   const toggleProductStatus = async (productId: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
-        .from('products')
-        .update({ active: !currentStatus })
-        .eq('id', productId);
+      console.log('Toggling product status:', { productId, currentStatus, newStatus: !currentStatus });
+      
+      // Método 1: Intentar usando RPC
+      try {
+        const { data, error } = await supabase.rpc('toggle_product_status', {
+          product_id: productId,
+          new_status: !currentStatus
+        });
 
-      if (error) throw error;
+        if (!error) {
+          console.log('RPC update successful:', data);
+          // Actualizar estado local y recargar
+          setState(prev => ({
+            ...prev,
+            products: prev.products.map(product =>
+              product.id === productId
+                ? { ...product, active: !currentStatus }
+                : product
+            )
+          }));
+          await loadProducts();
+          alert(`Producto ${!currentStatus ? 'activado' : 'desactivado'} correctamente`);
+          return;
+        } else {
+          console.log('RPC failed, trying alternative method:', error);
+        }
+      } catch (rpcError) {
+        console.log('RPC not available, trying alternative method:', rpcError);
+      }
+
+      // Método 2: Actualizar directamente con session bypass
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log('Current session:', sessionData?.session?.user?.email);
+
+      // Intentar actualización con configuración especial
+      const { data: updateData, error: updateError } = await supabase
+        .from('products')
+        .update({ 
+          active: !currentStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', productId)
+        .select('id, active');
+
+      if (updateError) {
+        console.error('Update error:', updateError);
+        throw new Error(`Error de base de datos: ${updateError.message}`);
+      }
+
+      if (!updateData || updateData.length === 0) {
+        // Método 3: Intentar como admin usando service key (si está disponible)
+        throw new Error('No se pudo actualizar el producto. Las políticas RLS están bloqueando la actualización. Necesitas configurar permisos de admin en Supabase.');
+      }
+
+      console.log('Update successful:', updateData);
 
       // Actualizar el estado local
       setState(prev => ({
@@ -146,9 +195,18 @@ export default function AdminProductsPage() {
             : product
         )
       }));
+
+      // Recargar productos para confirmar
+      await loadProducts();
+      alert(`Producto ${!currentStatus ? 'activado' : 'desactivado'} correctamente`);
+
     } catch (error) {
       console.error('Error updating product status:', error);
-      alert('Error al actualizar el estado del producto');
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      alert(`Error: ${errorMessage}`);
+      
+      // Recargar productos para mostrar el estado real
+      await loadProducts();
     }
   };
 
