@@ -18,6 +18,7 @@ interface ProductsPageState {
   loading: boolean;
   searchTerm: string;
   selectedCategory: string;
+  selectedStatus: string; // 'all', 'active', 'inactive'
   sortBy: string;
   currentPage: number;
   totalPages: number;
@@ -31,6 +32,7 @@ export default function AdminProductsPage() {
     loading: true,
     searchTerm: '',
     selectedCategory: '',
+    selectedStatus: 'all', // Mostrar todos por defecto
     sortBy: 'created_at',
     currentPage: 1,
     totalPages: 1
@@ -41,7 +43,7 @@ export default function AdminProductsPage() {
   useEffect(() => {
     loadProducts();
     loadCategories();
-  }, [state.currentPage, state.searchTerm, state.selectedCategory, state.sortBy]);
+  }, [state.currentPage, state.searchTerm, state.selectedCategory, state.selectedStatus, state.sortBy]);
 
   const loadCategories = async () => {
     try {
@@ -71,6 +73,7 @@ export default function AdminProductsPage() {
             slug
           )
         `, { count: 'exact' });
+        // NO filtrar por active: los admins deben ver todos los productos
 
       // Aplicar filtros
       if (state.searchTerm) {
@@ -80,6 +83,18 @@ export default function AdminProductsPage() {
       if (state.selectedCategory) {
         query = query.eq('category_id', state.selectedCategory);
       }
+
+      // Filtro por estado (activo/inactivo)
+      if (state.selectedStatus === 'active') {
+        console.log('🟢 Filtering for ACTIVE products only');
+        query = query.eq('active', true);
+      } else if (state.selectedStatus === 'inactive') {
+        console.log('🔴 Filtering for INACTIVE products only');
+        query = query.eq('active', false);
+      } else {
+        console.log('🔵 Showing ALL products (no filter by status)');
+      }
+      // Si es 'all', no aplicar filtro por estado
 
       // Aplicar ordenamiento
       const ascending = state.sortBy === 'name';
@@ -93,6 +108,17 @@ export default function AdminProductsPage() {
       const { data, error, count } = await query;
 
       if (error) throw error;
+
+      console.log('📊 Query results:', {
+        selectedStatus: state.selectedStatus,
+        totalCount: count,
+        productsReturned: data?.length || 0,
+        products: data?.map(p => ({ 
+          name: p.name, 
+          active: p.active,
+          status: p.active ? 'ACTIVO' : 'INACTIVO' 
+        })) || []
+      });
 
       const totalPages = Math.ceil((count || 0) / itemsPerPage);
 
@@ -120,6 +146,15 @@ export default function AdminProductsPage() {
     setState(prev => ({
       ...prev,
       selectedCategory: categoryId,
+      currentPage: 1
+    }));
+  };
+
+  const handleStatusFilter = (status: string) => {
+    console.log('Changing status filter from', state.selectedStatus, 'to', status);
+    setState(prev => ({
+      ...prev,
+      selectedStatus: status,
       currentPage: 1
     }));
   };
@@ -290,6 +325,19 @@ export default function AdminProductsPage() {
                 {category.name}
               </option>
             ))}
+          </select>
+        </div>
+
+        {/* Filtro por estado */}
+        <div className="md:w-48">
+          <select
+            value={state.selectedStatus}
+            onChange={(e) => handleStatusFilter(e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+          >
+            <option value="all">Todos los estados</option>
+            <option value="active">Solo activos</option>
+            <option value="inactive">Solo inactivos</option>
           </select>
         </div>
 
