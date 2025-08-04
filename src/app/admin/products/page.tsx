@@ -86,13 +86,9 @@ export default function AdminProductsPage() {
 
       // Filtro por estado (activo/inactivo)
       if (state.selectedStatus === 'active') {
-        console.log('🟢 Filtering for ACTIVE products only');
         query = query.eq('active', true);
       } else if (state.selectedStatus === 'inactive') {
-        console.log('🔴 Filtering for INACTIVE products only');
         query = query.eq('active', false);
-      } else {
-        console.log('🔵 Showing ALL products (no filter by status)');
       }
       // Si es 'all', no aplicar filtro por estado
 
@@ -108,17 +104,6 @@ export default function AdminProductsPage() {
       const { data, error, count } = await query;
 
       if (error) throw error;
-
-      console.log('📊 Query results:', {
-        selectedStatus: state.selectedStatus,
-        totalCount: count,
-        productsReturned: data?.length || 0,
-        products: data?.map(p => ({ 
-          name: p.name, 
-          active: p.active,
-          status: p.active ? 'ACTIVO' : 'INACTIVO' 
-        })) || []
-      });
 
       const totalPages = Math.ceil((count || 0) / itemsPerPage);
 
@@ -151,7 +136,6 @@ export default function AdminProductsPage() {
   };
 
   const handleStatusFilter = (status: string) => {
-    console.log('Changing status filter from', state.selectedStatus, 'to', status);
     setState(prev => ({
       ...prev,
       selectedStatus: status,
@@ -165,8 +149,6 @@ export default function AdminProductsPage() {
 
   const toggleProductStatus = async (productId: string, currentStatus: boolean) => {
     try {
-      console.log('Toggling product status:', { productId, currentStatus, newStatus: !currentStatus });
-      
       // Método 1: Intentar usando RPC
       try {
         const { data, error } = await supabase.rpc('toggle_product_status', {
@@ -175,7 +157,6 @@ export default function AdminProductsPage() {
         });
 
         if (!error) {
-          console.log('RPC update successful:', data);
           // Actualizar estado local y recargar
           setState(prev => ({
             ...prev,
@@ -188,18 +169,12 @@ export default function AdminProductsPage() {
           await loadProducts();
           alert(`Producto ${!currentStatus ? 'activado' : 'desactivado'} correctamente`);
           return;
-        } else {
-          console.log('RPC failed, trying alternative method:', error);
         }
       } catch (rpcError) {
         console.log('RPC not available, trying alternative method:', rpcError);
       }
 
-      // Método 2: Actualizar directamente con session bypass
-      const { data: sessionData } = await supabase.auth.getSession();
-      console.log('Current session:', sessionData?.session?.user?.email);
-
-      // Intentar actualización con configuración especial
+      // Método 2: Actualizar directamente
       const { data: updateData, error: updateError } = await supabase
         .from('products')
         .update({ 
@@ -215,11 +190,8 @@ export default function AdminProductsPage() {
       }
 
       if (!updateData || updateData.length === 0) {
-        // Método 3: Intentar como admin usando service key (si está disponible)
-        throw new Error('No se pudo actualizar el producto. Las políticas RLS están bloqueando la actualización. Necesitas configurar permisos de admin en Supabase.');
+        throw new Error('No se pudo actualizar el producto. Las políticas RLS están bloqueando la actualización.');
       }
-
-      console.log('Update successful:', updateData);
 
       // Actualizar el estado local
       setState(prev => ({
