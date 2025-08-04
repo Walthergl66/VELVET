@@ -223,18 +223,41 @@ export default function AdminProductsPage() {
     }
 
     try {
+      // Método 1: Intentar usando RPC si está disponible
+      try {
+        const { data, error } = await supabase.rpc('delete_product', {
+          product_id: productId
+        });
+
+        if (!error) {
+          alert('Producto eliminado correctamente');
+          await loadProducts();
+          return;
+        }
+      } catch (rpcError) {
+        console.log('RPC delete not available, trying direct delete:', rpcError);
+      }
+
+      // Método 2: Eliminación directa
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', productId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw new Error(`Error de base de datos: ${error.message}`);
+      }
 
-      // Recargar productos
-      loadProducts();
+      alert('Producto eliminado correctamente');
+      await loadProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
-      alert('Error al eliminar el producto');
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      alert(`Error al eliminar el producto: ${errorMessage}`);
+      
+      // Recargar productos para mostrar el estado real
+      await loadProducts();
     }
   };
 
@@ -446,6 +469,7 @@ export default function AdminProductsPage() {
                   <button
                     onClick={() => deleteProduct(product.id)}
                     className="bg-red-100 text-red-700 py-2 px-3 rounded text-sm font-medium hover:bg-red-200 transition-colors"
+                    title="Eliminar producto"
                   >
                     🗑️
                   </button>
