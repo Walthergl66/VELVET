@@ -274,9 +274,9 @@ export default function OrderDetailPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-MX', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'MXN'
+      currency: 'USD'
     }).format(amount);
   };
 

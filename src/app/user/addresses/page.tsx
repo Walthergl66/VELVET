@@ -229,15 +229,13 @@ export default function AddressesPage() {
     }
   };
 
-  // Estados mexicanos para el dropdown
-  const mexicanStates = [
-    'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche',
-    'Chiapas', 'Chihuahua', 'CDMX', 'Coahuila', 'Colima', 'Durango',
-    'Estado de México', 'Guanajuato', 'Guerrero', 'Hidalgo', 'Jalisco',
-    'Michoacán', 'Morelos', 'Nayarit', 'Nuevo León', 'Oaxaca',
-    'Puebla', 'Querétaro', 'Quintana Roo', 'San Luis Potosí', 'Sinaloa',
-    'Sonora', 'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz',
-    'Yucatán', 'Zacatecas'
+  // Provincias de Ecuador para el dropdown
+  const ecuadorianProvinces = [
+    'Azuay', 'Bolívar', 'Cañar', 'Carchi', 'Chimborazo', 'Cotopaxi',
+    'El Oro', 'Esmeraldas', 'Galápagos', 'Guayas', 'Imbabura', 'Loja',
+    'Los Ríos', 'Manabí', 'Morona Santiago', 'Napo', 'Orellana', 'Pastaza',
+    'Pichincha', 'Santa Elena', 'Santo Domingo de los Tsáchilas', 'Sucumbíos',
+    'Tungurahua', 'Zamora Chinchipe'
   ];
 
   return (
@@ -350,9 +348,9 @@ export default function AddressesPage() {
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   >
-                    <option value="">Selecciona un estado</option>
-                    {mexicanStates.map(state => (
-                      <option key={state} value={state}>{state}</option>
+                    <option value="">Selecciona una provincia</option>
+                    {ecuadorianProvinces.map(province => (
+                      <option key={province} value={province}>{province}</option>
                     ))}
                   </select>
                 </div>

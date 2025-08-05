@@ -2,8 +2,16 @@
  * Utilidades comunes para la aplicación VELVET
  */
 
-export const formatPrice = (price: number, currency = 'EUR'): string => {
-  // Formatear el número con 2 decimales
+export const formatPrice = (price: number, currency = 'USD'): string => {
+  // Para USD usamos el formato estándar estadounidense
+  if (currency === 'USD') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(price);
+  }
+  
+  // Fallback para otras monedas (mantenemos el formato original)
   const formattedNumber = Math.abs(price).toFixed(2).replace('.', ',');
   
   // Agregar separadores de miles si es necesario
@@ -14,11 +22,10 @@ export const formatPrice = (price: number, currency = 'EUR'): string => {
   
   // Manejar diferentes monedas
   switch (currency) {
-    case 'USD':
-      return `$${finalNumber}`;
     case 'EUR':
-    default:
       return `${finalNumber} €`;
+    default:
+      return `$${finalNumber}`;
   }
 };
 

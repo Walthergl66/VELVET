@@ -43,8 +43,9 @@ const CheckoutPage = () => {
     const price = item.product?.price || 0;
     return sum + (price * item.quantity);
   }, 0);
-  const shipping = subtotal > 1000 ? 0 : 100;
-  const tax = subtotal * 0.16;
+  // Ajuste para Ecuador: envío gratis en compras mayores a $100 USD
+  const shipping = subtotal > 100 ? 0 : 15; // $15 USD envío estándar en Ecuador
+  const tax = subtotal * 0.12; // IVA 12% en Ecuador
   const total = subtotal + shipping + tax;
 
   useEffect(() => {

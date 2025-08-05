@@ -44,8 +44,8 @@ export default function FAQPage() {
     { id: 7, category: 'pedidos', question: '¿Cuánto tiempo tarda en procesarse un pedido?', answer: 'Los pedidos se procesan en un plazo de 1-2 días hábiles. Una vez procesado, recibirás la información de envío.' },
     
     // Envíos
-    { id: 8, category: 'envios', question: '¿Cuáles son los costos de envío?', answer: 'Los costos de envío varían según el destino y peso del paquete. El envío estándar dentro de CDMX cuesta $150, y a otras ciudades desde $200. Envíos gratuitos en compras mayores a $1,500.' },
-    { id: 9, category: 'envios', question: '¿Cuánto tiempo tarda la entrega?', answer: 'Dentro de CDMX: 1-2 días hábiles. Otras ciudades: 3-5 días hábiles. Zonas rurales: 5-7 días hábiles.' },
+    { id: 8, category: 'envios', question: '¿Cuáles son los costos de envío?', answer: 'Los costos de envío varían según el destino y peso del paquete. El envío estándar dentro de Ecuador cuesta $15 USD, y a zonas rurales desde $25 USD. Envíos gratuitos en compras mayores a $100 USD.' },
+    { id: 9, category: 'envios', question: '¿Cuánto tiempo tarda la entrega?', answer: 'Ciudades principales (Quito, Guayaquil, Cuenca): 1-2 días hábiles. Otras ciudades: 3-5 días hábiles. Zonas rurales: 5-7 días hábiles.' },
     { id: 10, category: 'envios', question: '¿Hacen entregas los fines de semana?', answer: 'Las entregas se realizan de lunes a viernes. Los fines de semana no hay entregas, excepto en casos especiales que se coordinan previamente.' },
     { id: 11, category: 'envios', question: '¿Puedo cambiar la dirección de entrega?', answer: 'Sí, puedes cambiar la dirección antes de que el paquete sea enviado. Una vez en tránsito, el cambio dependerá de la paquetería.' },
     
