@@ -293,9 +293,9 @@ export default function ServicioClientePage() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">WhatsApp</p>
-                    <p className="text-gray-600">+593 99 901 9074</p>
+                    <p className="text-gray-600">+593 99 801 67703</p>
                     <a 
-                      href="https://wa.me/593999019074?text=Hola%2C%20tengo%20una%20consulta%20sobre%20VELVET"
+                      href="https://wa.me/593980167703?text=Hola%2C%20tengo%20una%20consulta%20sobre%20VELVET"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center mt-2 px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-200"
