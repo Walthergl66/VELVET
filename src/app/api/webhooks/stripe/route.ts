@@ -71,7 +71,7 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
       payment_method: 'stripe',
       payment_status: 'paid',
       status: 'confirmed',
-      total: paymentIntent.amount / 100, // Convertir de centavos a pesos
+      total: paymentIntent.amount / 100, // Convertir de centavos a dólares
       subtotal: parseFloat(metadata.subtotal || '0'),
       tax: parseFloat(metadata.tax || '0'),
       shipping: parseFloat(metadata.shipping || '0'),

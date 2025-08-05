@@ -243,7 +243,7 @@ export default function UserProfile() {
                   Miembro desde
                 </label>
                 <div id="member-since" className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
-                  {user?.created_at ? new Date(user.created_at).toLocaleDateString('es-MX', {
+                  {user?.created_at ? new Date(user.created_at).toLocaleDateString('es-EC', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'

@@ -262,14 +262,14 @@ export default function AdminProductsPage() {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-MX', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'MXN'
+      currency: 'USD'
     }).format(price);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-MX');
+    return new Date(dateString).toLocaleDateString('es-EC');
   };
 
   return (

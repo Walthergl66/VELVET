@@ -353,7 +353,7 @@ export default function ServicioClientePage() {
                     ¿Cuánto tarda el envío?
                   </h4>
                   <p className="text-sm text-gray-600">
-                    2-5 días hábiles en la República Mexicana.
+                    2-5 días hábiles en Ecuador.
                   </p>
                 </div>
                 
