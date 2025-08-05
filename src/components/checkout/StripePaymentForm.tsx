@@ -12,7 +12,7 @@ interface StripePaymentFormProps {
     email: string;
     address: string;
     city: string;
-    state: string;
+    // state: string;
     zipCode: string;
     country: string;
   };
@@ -62,7 +62,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
             address: {
               line1: shippingInfo.address,
               city: shippingInfo.city,
-              state: shippingInfo.state,
+              // state: shippingInfo.state,
               postal_code: shippingInfo.zipCode,
               country: shippingInfo.country === 'Ecuador' ? 'EC' : shippingInfo.country,
             },
@@ -143,7 +143,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
             <p>{shippingInfo.firstName} {shippingInfo.lastName}</p>
             <p>{shippingInfo.email}</p>
             <p>{shippingInfo.address}</p>
-            <p>{shippingInfo.city}, {shippingInfo.state} {shippingInfo.zipCode}</p>
+            <p>{shippingInfo.city}, {shippingInfo.zipCode}</p>
             <p>{shippingInfo.country}</p>
           </div>
         </div>

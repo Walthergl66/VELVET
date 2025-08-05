@@ -2,26 +2,38 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-07-30.basil',
+  apiVersion: '2025-07-30.basil', // Usa la versión requerida por el tipo.
 });
 
 export async function POST(request: NextRequest) {
   try {
     const { amount, currency = 'usd', metadata = {} } = await request.json();
 
-    // Validar que el monto sea válido
-    if (!amount || amount < 50) { // Mínimo $0.50 USD
+    if (!amount || amount < 50) {
       return NextResponse.json(
         { error: 'El monto debe ser al menos $0.50 USD' },
         { status: 400 }
       );
     }
 
-    // Crear el Payment Intent
+    // Convertir metadata a strings planas
+    const flattenedMetadata: Record<string, string> = {};
+    if (metadata && typeof metadata === 'object') {
+      Object.entries(metadata).forEach(([key, value]) => {
+        if (typeof value === 'object' && value !== null) {
+          Object.entries(value).forEach(([subKey, subValue]) => {
+            flattenedMetadata[`${key}_${subKey}`] = String(subValue);
+          });
+        } else {
+          flattenedMetadata[key] = String(value);
+        }
+      });
+    }
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Stripe usa centavos
+      amount: Math.round(amount * 100),
       currency,
-      metadata,
+      metadata: flattenedMetadata,
       automatic_payment_methods: {
         enabled: true,
       },
@@ -30,6 +42,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
     });
+
   } catch (error) {
     console.error('Error creando Payment Intent:', error);
     return NextResponse.json(
