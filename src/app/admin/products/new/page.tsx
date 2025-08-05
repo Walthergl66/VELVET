@@ -270,7 +270,7 @@ export default function NewProductPage() {
     if (formData.price <= 0) return 'El precio debe ser mayor a 0';
     if (!formData.category_id) return 'La categoría es requerida';
     if (formData.stock < 0) return 'El stock no puede ser negativo';
-    if (formData.images.length === 0) return 'Al menos una imagen es requerida';
+    if (formData.images.length === 0) return 'Debes subir al menos una imagen del producto';
     
     return null;
   };
@@ -642,7 +642,16 @@ export default function NewProductPage() {
 
         {/* Imágenes */}
         <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-6">Imágenes del Producto</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-medium text-gray-900">Imágenes del Producto</h2>
+            <span className="text-sm text-gray-500">
+              {formData.images.length === 0 ? (
+                <span className="text-red-600 font-medium">* Al menos 1 imagen requerida</span>
+              ) : (
+                <span className="text-green-600 font-medium">✓ {formData.images.length} imagen{formData.images.length > 1 ? 'es' : ''} agregada{formData.images.length > 1 ? 's' : ''}</span>
+              )}
+            </span>
+          </div>
           
           {/* Imágenes existentes */}
           {formData.images.length > 0 && (
@@ -681,6 +690,29 @@ export default function NewProductPage() {
             existingImages={formData.images}
             folder="products"
           />
+          
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">
+                  Instrucciones para agregar imágenes:
+                </h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>Selecciona las imágenes desde tu computadora</li>
+                    <li>Verifica que se muestren en la vista previa</li>
+                    <li><strong>Haz clic en "Subir" para confirmar las imágenes</strong></li>
+                    <li>Las imágenes aparecerán en la sección "Imágenes agregadas"</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Detalles adicionales */}
@@ -1025,6 +1057,14 @@ export default function NewProductPage() {
             type="submit"
             disabled={loading}
             className="bg-black text-white px-6 py-2 rounded-md font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={(e) => {
+              const validationError = validateForm();
+              if (validationError) {
+                e.preventDefault();
+                alert(`Error de validación: ${validationError}`);
+                return;
+              }
+            }}
           >
             {loading ? 'Creando...' : 'Crear Producto'}
           </button>
