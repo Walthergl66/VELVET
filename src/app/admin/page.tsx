@@ -162,9 +162,9 @@ export default function AdminDashboard() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-MX', {
+    return new Intl.NumberFormat('es-EC', {
       style: 'currency',
-      currency: 'MXN'
+      currency: 'ECU'
     }).format(amount);
   };
 
@@ -234,9 +234,9 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Panel de control</h1>
           <p className="text-gray-600">
-            Resumen de ventas y estadísticas {role === 'super_admin' && '(Super Admin)'}
+            Resumen de ventas y estadísticas {role === 'admin' && ''}
           </p>
         </div>
         

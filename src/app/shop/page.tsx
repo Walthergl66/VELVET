@@ -149,9 +149,9 @@ export default function ShopPage() {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('es-MX', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'MXN',
+      currency: 'USD',
     }).format(price);
   };
 

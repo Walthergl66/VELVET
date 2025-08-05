@@ -34,8 +34,8 @@ export default function FAQPage() {
   const faqItems: FAQItem[] = [
     // General
     { id: 1, category: 'general', question: '¿Cuáles son los horarios de atención?', answer: 'Nuestro horario de atención es de lunes a viernes de 9:00 a 18:00, sábados de 10:00 a 16:00. Los domingos permanecemos cerrados.' },
-    { id: 2, category: 'general', question: '¿Cómo puedo contactar al servicio al cliente?', answer: 'Puedes contactarnos por email a contacto@velvet.com, por teléfono al +52 55 1234 5678, o a través del formulario de contacto en nuestra página web.' },
-    { id: 3, category: 'general', question: '¿Tienen tienda física?', answer: 'Actualmente somos una tienda en línea. Sin embargo, planeamos abrir una tienda física en Ciudad de México próximamente.' },
+    { id: 2, category: 'general', question: '¿Cómo puedo contactar al servicio al cliente?', answer: 'Puedes contactarnos por email a contacto@velvet.com, por teléfono al +593 99 901 9074, o a través del formulario de contacto en nuestra página web.' },
+    { id: 3, category: 'general', question: '¿Tienen tienda física?', answer: 'Actualmente somos una tienda en línea. Sin embargo, planeamos abrir una tienda física en ciudad de manta próximamente.' },
     
     // Pedidos
     { id: 4, category: 'pedidos', question: '¿Cómo realizo un pedido?', answer: 'Para realizar un pedido, navega por nuestros productos, añade los artículos deseados al carrito y procede al checkout. Necesitarás crear una cuenta o iniciar sesión.' },
@@ -49,17 +49,12 @@ export default function FAQPage() {
     { id: 10, category: 'envios', question: '¿Hacen entregas los fines de semana?', answer: 'Las entregas se realizan de lunes a viernes. Los fines de semana no hay entregas, excepto en casos especiales que se coordinan previamente.' },
     { id: 11, category: 'envios', question: '¿Puedo cambiar la dirección de entrega?', answer: 'Sí, puedes cambiar la dirección antes de que el paquete sea enviado. Una vez en tránsito, el cambio dependerá de la paquetería.' },
     
-    // Devoluciones
-    { id: 12, category: 'devoluciones', question: '¿Cuál es la política de devoluciones?', answer: 'Aceptamos devoluciones dentro de 30 días posteriores a la compra. El producto debe estar en estado original, con etiquetas y empaque.' },
-    { id: 13, category: 'devoluciones', question: '¿Quién paga el envío de devolución?', answer: 'Si el producto tiene defecto o error de nuestra parte, cubrimos el costo. Si es por cambio de opinión, el cliente cubre el envío.' },
-    { id: 14, category: 'devoluciones', question: '¿Cuánto tardan los reembolsos?', answer: 'Los reembolsos se procesan en 5-7 días hábiles una vez que recibimos y verificamos el producto devuelto.' },
-    { id: 15, category: 'devoluciones', question: '¿Puedo cambiar por otra talla?', answer: 'Sí, ofrecemos cambios por talla diferente sujeto a disponibilidad. El proceso es similar a una devolución.' },
     
     // Pagos
-    { id: 16, category: 'pagos', question: '¿Qué métodos de pago aceptan?', answer: 'Aceptamos tarjetas de crédito y débito (Visa, MasterCard, American Express), PayPal, transferencias bancarias y pagos en efectivo en tiendas OXXO.' },
+    { id: 16, category: 'pagos', question: '¿Qué métodos de pago aceptan?', answer: 'Aceptamos pagos de Stripe y Paypal.' },
     { id: 17, category: 'pagos', question: '¿Es seguro comprar en su sitio?', answer: 'Sí, nuestro sitio utiliza encriptación SSL y procesamos los pagos a través de plataformas seguras certificadas.' },
-    { id: 18, category: 'pagos', question: '¿Puedo pagar a meses sin intereses?', answer: 'Sí, ofrecemos pagos a 3, 6 y 12 meses sin intereses con tarjetas participantes de bancos afiliados.' },
-    { id: 19, category: 'pagos', question: '¿Emiten factura?', answer: 'Sí, podemos emitir facturas fiscales. Solicítala durante el proceso de compra o contacta a nuestro servicio al cliente.' },
+    //{ id: 18, category: 'pagos', question: '¿Puedo pagar a meses sin intereses?', answer: 'Sí, ofrecemos pagos a 3, 6 y 12 meses sin intereses con tarjetas participantes de bancos afiliados.' },
+    //{ id: 19, category: 'pagos', question: '¿Emiten factura?', answer: 'Sí, podemos emitir facturas fiscales. Solicítala durante el proceso de compra o contacta a nuestro servicio al cliente.' },
     
     // Productos
     { id: 20, category: 'productos', question: '¿Cómo sé qué talla elegir?', answer: 'Consulta nuestra guía de tallas en cada producto o en la sección de servicio al cliente. También puedes contactarnos para asesoría personalizada.' },
@@ -105,7 +100,7 @@ export default function FAQPage() {
               href="/servicio-al-cliente/devoluciones" 
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
             >
-              Devoluciones
+             
             </Link>
             <Link 
               href="/servicio-al-cliente/guia-tallas" 

@@ -64,12 +64,12 @@ export default function EnviosPage() {
       // Datos simulados de seguimiento
       setTrackingResult({
         status: 'En tránsito',
-        location: 'Centro de distribución CDMX',
+        location: 'Centro de distribución Quito',
         estimatedDelivery: '4 de agosto, 2025',
         history: [
-          { date: '1 de agosto', status: 'Pedido confirmado', location: 'Almacén VELVET' },
-          { date: '2 de agosto', status: 'Empaquetado', location: 'Almacén VELVET' },
-          { date: '3 de agosto', status: 'En tránsito', location: 'Centro de distribución CDMX' }
+          { date: '1 de agosto', status: 'Pedido confirmado', location: 'Almacén VELVET - Manta' },
+          { date: '2 de agosto', status: 'Empaquetado', location: 'Almacén VELVET - Manta' },
+          { date: '3 de agosto', status: 'En tránsito', location: 'Centro de distribución Quito' }
         ]
       });
     } catch (err) {
@@ -87,11 +87,30 @@ export default function EnviosPage() {
       // Simular cálculo de envío
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Cálculo básico simulado
-      const baseCost = 150;
-      const weightCost = shippingData.weight * 10;
-      const destinationMultiplier = shippingData.destination.includes('CDMX') ? 1 : 1.5;
+      // Cálculo básico simulado para Ecuador
+      const baseCost = 3; // Costo base en USD
+      const weightCost = shippingData.weight * 1.5; // Costo por kg
       
+      // Multiplicador según provincia
+      let destinationMultiplier = 1.5; // Valor por defecto
+      
+      // Provincias principales (menor costo)
+      if (['Pichincha', 'Guayas', 'Manabí'].includes(shippingData.destination)) {
+        destinationMultiplier = 1;
+      }
+      // Provincias intermedias
+      else if (['Azuay', 'Tungurahua', 'Imbabura', 'El Oro', 'Los Ríos', 'Santo Domingo de los Tsáchilas', 'Santa Elena'].includes(shippingData.destination)) {
+        destinationMultiplier = 1.3;
+      }
+      // Provincias amazónicas y de difícil acceso
+      else if (['Morona Santiago', 'Pastaza', 'Napo', 'Orellana', 'Sucumbíos', 'Zamora Chinchipe'].includes(shippingData.destination)) {
+        destinationMultiplier = 2;
+      }
+      // Galápagos (envío especial)
+      else if (shippingData.destination === 'Galápagos') {
+        destinationMultiplier = 3;
+      }
+
       setShippingCost((baseCost + weightCost) * destinationMultiplier);
     } catch (err) {
       console.error('Error al calcular envío:', err);
@@ -129,12 +148,12 @@ export default function EnviosPage() {
               href="/servicio-al-cliente/devoluciones" 
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
             >
-              Devoluciones
+              {/* Devoluciones
             </Link>
             <Link 
               href="/servicio-al-cliente/guia-tallas" 
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-            >
+            > */}
               Guía de Tallas
             </Link>
             <Link 
@@ -219,8 +238,8 @@ export default function EnviosPage() {
                 <div className="mt-4">
                   <h4 className="font-medium text-blue-900 mb-2">Historial:</h4>
                   <div className="space-y-2">
-                    {trackingResult.history.map((item: TrackingHistoryItem, index: number) => (
-                      <div key={index} className="flex justify-between text-sm">
+                    {trackingResult.history.map((item: TrackingHistoryItem) => (
+                      <div key={`${item.date}-${item.status}`} className="flex justify-between text-sm">
                         <span>{item.date}</span>
                         <span>{item.status}</span>
                         <span className="text-gray-600">{item.location}</span>
@@ -253,12 +272,31 @@ export default function EnviosPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   required
                 >
-                  <option value="">Selecciona tu estado</option>
-                  <option value="CDMX">Ciudad de México</option>
-                  <option value="Estado de México">Estado de México</option>
-                  <option value="Guadalajara">Guadalajara</option>
-                  <option value="Monterrey">Monterrey</option>
-                  <option value="Otros">Otros estados</option>
+                  <option value="">Selecciona tu provincia</option>
+                  <option value="Azuay">Azuay</option>
+                  <option value="Bolívar">Bolívar</option>
+                  <option value="Cañar">Cañar</option>
+                  <option value="Carchi">Carchi</option>
+                  <option value="Chimborazo">Chimborazo</option>
+                  <option value="Cotopaxi">Cotopaxi</option>
+                  <option value="El Oro">El Oro</option>
+                  <option value="Esmeraldas">Esmeraldas</option>
+                  <option value="Galápagos">Galápagos</option>
+                  <option value="Guayas">Guayas</option>
+                  <option value="Imbabura">Imbabura</option>
+                  <option value="Loja">Loja</option>
+                  <option value="Los Ríos">Los Ríos</option>
+                  <option value="Manabí">Manabí</option>
+                  <option value="Morona Santiago">Morona Santiago</option>
+                  <option value="Napo">Napo</option>
+                  <option value="Orellana">Orellana</option>
+                  <option value="Pastaza">Pastaza</option>
+                  <option value="Pichincha">Pichincha</option>
+                  <option value="Santa Elena">Santa Elena</option>
+                  <option value="Santo Domingo de los Tsáchilas">Santo Domingo de los Tsáchilas</option>
+                  <option value="Sucumbíos">Sucumbíos</option>
+                  <option value="Tungurahua">Tungurahua</option>
+                  <option value="Zamora Chinchipe">Zamora Chinchipe</option>
                 </select>
               </div>
 
@@ -297,7 +335,7 @@ export default function EnviosPage() {
               <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
                 <h3 className="font-semibold text-green-900 mb-2">Costo de Envío</h3>
                 <div className="text-2xl font-bold text-green-600">
-                  ${shippingCost.toFixed(2)} MXN
+                  ${shippingCost.toFixed(2)} USD
                 </div>
                 <p className="text-sm text-green-700 mt-2">
                   Tiempo estimado de entrega: 2-5 días hábiles
@@ -319,21 +357,25 @@ export default function EnviosPage() {
             </h3>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">CDMX y Área Metropolitana</span>
-                <span className="font-medium text-green-600">$150</span>
+                <span className="text-gray-600">Quito, Guayaquil, Manta</span>
+                <span className="font-medium text-green-600">$3-5</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Interior de la República</span>
-                <span className="font-medium text-blue-600">$200-300</span>
+                <span className="text-gray-600">Costa y Sierra</span>
+                <span className="font-medium text-blue-600">$4-7</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Envío express (24h)</span>
-                <span className="font-medium text-red-600">$400</span>
+                <span className="text-gray-600">Amazonía</span>
+                <span className="font-medium text-orange-600">$6-10</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Galápagos</span>
+                <span className="font-medium text-red-600">$15-25</span>
               </div>
             </div>
             <div className="mt-4 p-3 bg-green-50 rounded-lg">
               <p className="text-sm text-green-700">
-                <strong>🆓 Envío gratis</strong> en compras mayores a $1,000 MXN
+                <strong>🆓 Envío gratis</strong> en compras mayores a $50 USD
               </p>
             </div>
           </div>

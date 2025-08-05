@@ -271,7 +271,7 @@ export default function Home() {
                 </svg>
               </div>
               <h3 className="text-xl font-semibold mb-4 text-[#19171b]">Envío Gratis</h3>
-              <p className="text-[#666] font-light">En compras mayores a $1,000 MXN</p>
+              <p className="text-[#666] font-light">En compras mayores a $100 USD</p>
             </div>
 
             <div className="text-center px-6">

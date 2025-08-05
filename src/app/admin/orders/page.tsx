@@ -253,9 +253,9 @@ export default function OrdersPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-MX', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'MXN'
+      currency: 'USD'
     }).format(amount);
   };
 
@@ -459,7 +459,7 @@ export default function OrdersPage() {
                 <option value="shipped">Marcar como enviado</option>
                 <option value="delivered">Marcar como entregado</option>
                 <option value="cancelled">Marcar como cancelado</option>
-                {role === 'super_admin' && <option value="delete">Eliminar</option>}
+                {role === 'admin' && <option value="delete">Eliminar</option>}
               </select>
               <button
                 onClick={handleBulkAction}
@@ -629,7 +629,7 @@ export default function OrdersPage() {
                       >
                         Ver detalles
                       </Link>
-                      {role === 'super_admin' && (
+                      {role === 'admin' && (
                         <button
                           onClick={() => {
                             if (confirm('¿Estás seguro de que quieres eliminar este pedido?')) {

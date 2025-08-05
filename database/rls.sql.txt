@@ -1,0 +1,261 @@
+-- Script completo de políticas RLS para VELVET
+-- Ejecutar en Supabase Dashboard -> SQL Editor
+
+-- Habilitar RLS en todas las tablas
+ALTER TABLE addresses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cart_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_variants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wishlist_items ENABLE ROW LEVEL SECURITY;
+
+-- Función auxiliar para verificar admin (necesaria para evitar recursión)
+CREATE OR REPLACE FUNCTION is_admin_user()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM user_profiles 
+    WHERE id = auth.uid() 
+    AND role = 'admin'
+  );
+$$;
+
+-- ADDRESSES
+CREATE POLICY "Users can manage own addresses"
+ON addresses
+FOR ALL
+TO public
+USING (auth.uid() = user_id);
+
+-- CART_ITEMS
+CREATE POLICY "Users can manage own cart"
+ON cart_items
+FOR ALL
+TO public
+USING (auth.uid() = user_id);
+
+-- CATEGORIES
+CREATE POLICY "Anyone can view categories"
+ON categories
+FOR SELECT
+TO public
+USING (true);
+
+CREATE POLICY "Admins can manage categories"
+ON categories
+FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM user_profiles
+    WHERE user_profiles.id = auth.uid() 
+    AND user_profiles.role = 'admin'::user_role
+  )
+);
+
+-- COUPONS
+CREATE POLICY "Allow all authenticated read coupons"
+ON coupons
+FOR SELECT
+TO authenticated
+USING (is_active = true);
+
+-- NEWSLETTER_SUBSCRIBERS
+CREATE POLICY "Users can subscribe with email"
+ON newsletter_subscribers
+FOR INSERT
+TO public
+WITH CHECK (true);
+
+CREATE POLICY "Users can update subscription"
+ON newsletter_subscribers
+FOR UPDATE
+TO public
+USING (true);
+
+-- ORDER_ITEMS
+CREATE POLICY "Users can view own order items"
+ON order_items
+FOR SELECT
+TO public
+USING (
+  EXISTS (
+    SELECT 1 FROM orders
+    WHERE orders.id = order_items.order_id 
+    AND orders.user_id = auth.uid()
+  )
+);
+
+-- ORDERS
+CREATE POLICY "Users can create own orders"
+ON orders
+FOR INSERT
+TO public
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can view own orders"
+ON orders
+FOR SELECT
+TO public
+USING (auth.uid() = user_id);
+
+-- PRODUCT_VARIANTS
+CREATE POLICY "Admins can insert product variants"
+ON product_variants
+FOR INSERT
+TO public
+WITH CHECK (
+  auth.role() = 'authenticated' AND
+  EXISTS (
+    SELECT 1 FROM user_profiles
+    WHERE user_profiles.id = auth.uid() 
+    AND user_profiles.role = ANY (ARRAY['admin'::user_role, 'super_admin'::user_role])
+  )
+);
+
+-- PRODUCTS
+CREATE POLICY "Anyone can view active products"
+ON products
+FOR SELECT
+TO public
+USING (active = true);
+
+CREATE POLICY "admin_can_view_all_products"
+ON products
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM user_profiles
+    WHERE user_profiles.id = auth.uid() 
+    AND user_profiles.role = 'admin'::user_role
+  ) OR active = true
+);
+
+CREATE POLICY "Admins can insert products"
+ON products
+FOR INSERT
+TO public
+WITH CHECK (
+  auth.role() = 'authenticated' AND
+  EXISTS (
+    SELECT 1 FROM user_profiles
+    WHERE user_profiles.id = auth.uid() 
+    AND user_profiles.role = ANY (ARRAY['admin'::user_role, 'super_admin'::user_role])
+  )
+);
+
+CREATE POLICY "admin_can_update_products"
+ON products
+FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM user_profiles
+    WHERE user_profiles.id = auth.uid() 
+    AND user_profiles.role = 'admin'::user_role
+  )
+);
+
+CREATE POLICY "Admins can delete products"
+ON products
+FOR DELETE
+TO public
+USING (
+  EXISTS (
+    SELECT 1 FROM user_profiles
+    WHERE user_profiles.id = auth.uid() 
+    AND user_profiles.role = 'admin'::user_role
+  )
+);
+
+-- REVIEWS
+CREATE POLICY "Users can view all reviews"
+ON reviews
+FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Users can create own reviews"
+ON reviews
+FOR INSERT
+TO public
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own reviews"
+ON reviews
+FOR UPDATE
+TO public
+USING (auth.uid() = user_id);
+
+-- USER_PROFILES
+CREATE POLICY "Admin full access to user profiles"
+ON user_profiles
+FOR ALL
+TO authenticated
+USING (is_admin_user() OR auth.uid() = id);
+
+CREATE POLICY "Allow profile creation"
+ON user_profiles
+FOR INSERT
+TO public
+WITH CHECK (
+  auth.uid() = id OR 
+  auth.role() = 'service_role' OR 
+  auth.uid() IS NULL
+);
+
+CREATE POLICY "Enable insert for authentication users only"
+ON user_profiles
+FOR INSERT
+TO public
+WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile"
+ON user_profiles
+FOR INSERT
+TO public
+WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can view own profile only"
+ON user_profiles
+FOR SELECT
+TO authenticated
+USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile only"
+ON user_profiles
+FOR UPDATE
+TO authenticated
+USING (auth.uid() = id);
+
+CREATE POLICY "Admins can delete profiles"
+ON user_profiles
+FOR DELETE
+TO public
+USING (
+  EXISTS (
+    SELECT 1 FROM user_profiles user_profiles_1
+    WHERE user_profiles_1.id = auth.uid() 
+    AND user_profiles_1.role = ANY (ARRAY['admin'::user_role, 'super_admin'::user_role])
+  ) AND id <> auth.uid()
+);
+
+-- WISHLIST_ITEMS
+CREATE POLICY "Users can manage own wishlist"
+ON wishlist_items
+FOR ALL
+TO public
+USING (auth.uid() = user_id);
+
+-- Conceder permisos para la función auxiliar
+GRANT EXECUTE ON FUNCTION is_admin_user() TO authenticated;

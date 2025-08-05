@@ -69,7 +69,7 @@ Una aplicación de comercio electrónico moderna y elegante desarrollada con Nex
 - **Carrito lateral (drawer)** para vista rápida
 - **Página de carrito completa** con gestión de cantidades
 - **Cálculo automático** de envío, impuestos y descuentos
-- **Envío gratis** en compras mayores a $1,000 MXN
+- **Envío gratis** en compras mayores a $100 USD
 - **Múltiples métodos de pago** (preparado para integración)
 
 ### 📱 Experiencia de Usuario
