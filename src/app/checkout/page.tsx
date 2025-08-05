@@ -64,6 +64,17 @@ const CheckoutPage = () => {
       setLoading(true);
       setError('');
 
+      // Preparar información de items del carrito
+      const cartItems = cart.items.map(item => ({
+        productId: item.product_id,
+        name: item.product?.name || 'Producto',
+        price: item.product?.price || 0,
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+        total: (item.product?.price || 0) * item.quantity
+      }));
+
       const response = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: {
@@ -71,17 +82,13 @@ const CheckoutPage = () => {
         },
         body: JSON.stringify({
           amount: total,
-          currency: 'mxn',
+          currency: 'usd',
           metadata: {
             orderId: `order_${Date.now()}`,
             userId: user?.id || 'guest',
-            items: cart.items.map(item => ({
-              productId: item.product_id,
-              quantity: item.quantity,
-              size: item.size,
-              color: item.color
-            }))
-          }
+          },
+          shippingInfo: shippingInfo,
+          cartItems: cartItems
         }),
       });
 
@@ -111,6 +118,10 @@ const CheckoutPage = () => {
   const handlePaymentSuccess = async (paymentIntent: any) => {
     try {
       console.log('Pago exitoso:', paymentIntent);
+      
+      // El webhook de Stripe se encargará de crear la orden en la base de datos
+      // Aquí solo limpiamos el carrito y redirigimos
+      
       await clearCart();
       router.push(`/checkout/success?payment_intent=${paymentIntent.id}`);
     } catch (err) {
