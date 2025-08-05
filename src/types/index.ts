@@ -221,7 +221,7 @@ export interface Database {
           avatar_url: string | null;
           date_of_birth: string | null;
           gender: string | null;
-          role: 'user' | 'admin' | 'super_admin';
+          role: 'user' | 'admin';
           preferences: any;
           created_at: string;
           updated_at: string;
@@ -235,7 +235,7 @@ export interface Database {
           avatar_url?: string | null;
           date_of_birth?: string | null;
           gender?: string | null;
-          role?: 'user' | 'admin' | 'super_admin';
+          role?: 'user' | 'admin';
           preferences?: any;
           created_at?: string;
           updated_at?: string;
@@ -249,7 +249,7 @@ export interface Database {
           avatar_url?: string | null;
           date_of_birth?: string | null;
           gender?: string | null;
-          role?: 'user' | 'admin' | 'super_admin';
+          role?: 'user' | 'admin';
           preferences?: any;
           created_at?: string;
           updated_at?: string;

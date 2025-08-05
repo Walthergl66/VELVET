@@ -10,7 +10,7 @@ import Link from 'next/link';
  */
 
 export default function UserRoleInfo() {
-  const { role, isAdmin, isSuperAdmin, isLoading } = useRole();
+  const { role, isAdmin, isLoading } = useRole();
 
   if (isLoading) {
     return (
@@ -25,13 +25,6 @@ export default function UserRoleInfo() {
 
   const getRoleDisplay = () => {
     switch (role) {
-      case 'super_admin':
-        return {
-          name: 'Super Administrador',
-          color: 'bg-red-100 text-red-800',
-          icon: '👑',
-          description: 'Acceso completo al sistema'
-        };
       case 'admin':
         return {
           name: 'Administrador',
@@ -93,14 +86,12 @@ export default function UserRoleInfo() {
             >
               📦 Gestión de Pedidos
             </Link>
-            {isSuperAdmin && (
-              <Link
-                href="/admin/users"
-                className="block text-sm text-blue-600 hover:text-blue-700"
-              >
-                👥 Gestión de Usuarios
-              </Link>
-            )}
+            <Link
+              href="/admin/users"
+              className="block text-sm text-blue-600 hover:text-blue-700"
+            >
+              👥 Gestión de Usuarios
+            </Link>
           </div>
         </div>
       )}
