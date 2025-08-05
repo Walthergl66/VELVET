@@ -89,12 +89,12 @@ const Footer: React.FC = () => {
           <h3 className="text-lg font-semibold tracking-wider text-white/90">Servicio</h3>
           <ul className="space-y-3">
             {[
-              { name: 'Contacto', href: '/contacto' },
-              { name: 'Envíos & Devoluciones', href: '/envios-devoluciones' },
-              { name: 'Mi Cuenta', href: '/mi-cuenta' },
-              { name: 'Guía de Tallas', href: '/guia-tallas' },
-              { name: 'Cuidado de Prendas', href: '/cuidado-prendas' },
-              { name: 'Preguntas Frecuentes', href: '/faq' }
+              { name: 'Contacto', href: '/servicio-al-cliente/contact' },
+              { name: 'Envíos', href: '/servicio-al-cliente/envios' },
+              //{ name: 'Devoluciones', href: '/servicio-al-cliente/devoluciones' },
+              { name: 'Guía de Tallas', href: '/servicio-al-cliente/guia-tallas' },
+              //{ name: 'Cuidado de Prendas', href: '/servicio-al-cliente/cuidado-prendas' },
+              { name: 'Preguntas Frecuentes', href: '/servicio-al-cliente/faq' }
             ].map((item) => (
               <li key={item.name}>
                 <Link 

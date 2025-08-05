@@ -77,7 +77,7 @@ export default function ServicioClientePage() {
             Servicio al Cliente
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Estamos aquí para ayudarte. Contacta con nuestro equipo para cualquier consulta sobre productos, pedidos o devoluciones.
+            Estamos aquí para ayudarte. Contacta con nuestro equipo para cualquier consulta sobre productos y pedidos.
           </p>
         </div>
 
@@ -259,7 +259,7 @@ export default function ServicioClientePage() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Dirección</p>
-                    <p className="text-gray-600">Ciudad de México, México</p>
+                    <p className="text-gray-600">Ciudadela universitaria-Manta</p>
                   </div>
                 </div>
               </div>
