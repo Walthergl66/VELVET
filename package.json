@@ -20,6 +20,8 @@
     "test:open": "npm run test:coverage && start coverage/lcov-report/index.html"
   },
   "dependencies": {
+    "@paypal/paypal-js": "^8.2.0",
+    "@paypal/react-paypal-js": "^8.8.3",
     "@stripe/react-stripe-js": "^3.9.0",
     "@stripe/stripe-js": "^7.8.0",
     "@supabase/supabase-js": "^2.52.1",

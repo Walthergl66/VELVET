@@ -4,8 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/hooks/useAuth';
-import StripeProvider from '@/components/checkout/StripeProvider';
-import StripePaymentForm from '@/components/checkout/StripePaymentForm';
+import PaymentMethodSelector from '@/components/checkout/PaymentMethodSelector';
 import Button from '@/components/ui/Button';
 
 interface ShippingInfo {
@@ -287,17 +286,13 @@ const CheckoutPage = () => {
         <h3 className="text-xl font-semibold">Información de Pago</h3>
       </div>
       
-      {clientSecret && (
-        <StripeProvider>
-          <StripePaymentForm
-            clientSecret={clientSecret}
-            amount={total}
-            shippingInfo={shippingInfo}
-            onSuccess={handlePaymentSuccess}
-            onError={handlePaymentError}
-          />
-        </StripeProvider>
-      )}
+      <PaymentMethodSelector
+        clientSecret={clientSecret}
+        amount={total}
+        shippingInfo={shippingInfo}
+        onSuccess={handlePaymentSuccess}
+        onError={handlePaymentError}
+      />
       
       <div className="flex justify-between mt-6 gap-4">
         <Button variant="outline" onClick={() => setCurrentStep(2)}>

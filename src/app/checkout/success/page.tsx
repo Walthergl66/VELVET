@@ -7,12 +7,25 @@ import Button from '@/components/ui/Button';
 const CheckoutSuccessPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [paymentIntentId, setPaymentIntentId] = useState<string>('');
+  const [transactionId, setTransactionId] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<string>('');
 
   useEffect(() => {
+    // Stripe payment intent
     const paymentIntent = searchParams.get('payment_intent');
+    // PayPal order ID o transaction ID
+    const paypalOrderId = searchParams.get('paypal_order_id');
+    const paypalTransactionId = searchParams.get('paypal_transaction_id');
+    
     if (paymentIntent) {
-      setPaymentIntentId(paymentIntent);
+      setTransactionId(paymentIntent);
+      setPaymentMethod('Stripe');
+    } else if (paypalOrderId) {
+      setTransactionId(paypalOrderId);
+      setPaymentMethod('PayPal');
+    } else if (paypalTransactionId) {
+      setTransactionId(paypalTransactionId);
+      setPaymentMethod('PayPal');
     }
   }, [searchParams]);
 
@@ -30,10 +43,12 @@ const CheckoutSuccessPage = () => {
           Tu pedido ha sido procesado correctamente y recibirás un email de confirmación pronto.
         </p>
         
-        {paymentIntentId && (
+        {transactionId && (
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-gray-600">ID de transacción:</p>
-            <p className="font-mono text-sm break-all">{paymentIntentId}</p>
+            <p className="text-sm text-gray-600">
+              ID de transacción ({paymentMethod}):
+            </p>
+            <p className="font-mono text-sm break-all">{transactionId}</p>
           </div>
         )}
         
