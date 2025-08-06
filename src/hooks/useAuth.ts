@@ -255,6 +255,45 @@ export function useAuth() {
     }
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!state.user?.email) {
+      return { success: false, error: 'No hay usuario autenticado' };
+    }
+
+    setState(prev => ({ ...prev, loading: true, error: null }));
+
+    try {
+      // Verificar la contraseña actual re-autenticando al usuario
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: state.user.email,
+        password: currentPassword
+      });
+
+      if (signInError) {
+        setState(prev => ({ ...prev, error: 'La contraseña actual es incorrecta', loading: false }));
+        return { success: false, error: 'La contraseña actual es incorrecta' };
+      }
+
+      // Actualizar la contraseña
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (updateError) {
+        setState(prev => ({ ...prev, error: updateError.message, loading: false }));
+        return { success: false, error: updateError.message };
+      }
+
+      setState(prev => ({ ...prev, loading: false }));
+      return { success: true };
+    } catch (err) {
+      console.error('Error changing password:', err);
+      const errorMessage = 'Error inesperado al cambiar la contraseña';
+      setState(prev => ({ ...prev, error: errorMessage, loading: false }));
+      return { success: false, error: errorMessage };
+    }
+  };
+
   const clearError = () => {
     setState(prev => ({ ...prev, error: null }));
   };
@@ -273,6 +312,7 @@ export function useAuth() {
     signOut,
     resetPassword,
     updateProfile,
+    changePassword,
     clearError,
   };
 }
