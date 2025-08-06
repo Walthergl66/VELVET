@@ -486,6 +486,61 @@ export const getUserOrders = async () => {
 };
 
 /**
+ * Obtiene estadísticas del usuario para el dashboard
+ */
+export const getUserStats = async () => {
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return { data: null, error: 'Usuario no autenticado' };
+  }
+
+  try {
+    // Obtener total de pedidos y suma de totales
+    const { data: orderStats, error: orderError } = await supabase
+      .from('orders')
+      .select('total, status')
+      .eq('user_id', user.id)
+      .in('status', ['confirmed', 'processing', 'shipped', 'delivered']);
+
+    if (orderError) {
+      console.error('Error obteniendo estadísticas de pedidos:', orderError);
+      return { data: null, error: orderError.message };
+    }
+
+    // Obtener número de favoritos
+    const { count: favoritesCount, error: favoritesError } = await supabase
+      .from('wishlist_items')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id);
+
+    if (favoritesError) {
+      console.error('Error obteniendo favoritos:', favoritesError);
+    }
+
+    // Calcular estadísticas
+    const totalOrders = orderStats?.length || 0;
+    const totalSpent = orderStats?.reduce((sum, order) => sum + (order.total || 0), 0) || 0;
+    const favorites = favoritesCount || 0;
+
+    return {
+      data: {
+        totalOrders,
+        totalSpent,
+        favorites
+      },
+      error: null
+    };
+  } catch (error) {
+    console.error('Error en getUserStats:', error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    };
+  }
+};
+
+/**
  * Suscribe al newsletter
  */
 export const subscribeToNewsletter = async (email: string, preferences = {

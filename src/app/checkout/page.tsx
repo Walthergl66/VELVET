@@ -353,6 +353,11 @@ const CheckoutPage = () => {
       // Limpiar el carrito y redirigir
       console.log('🧹 Limpiando carrito...');
       await clearCart();
+      
+      // Nota: Las estadísticas del usuario se actualizarán automáticamente 
+      // cuando el usuario visite la página de éxito del checkout
+      console.log('📊 Las estadísticas del usuario se actualizarán automáticamente');
+      
       console.log('🚀 Redirigiendo a página de éxito...');
       router.push(`/checkout/success?payment_intent=${paymentIntent.id}&order_id=${order.id}`);
       
