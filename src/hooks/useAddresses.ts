@@ -42,7 +42,7 @@ export function useAddresses(): UseAddressesReturn {
       const { data, error: fetchError } = await getUserAddresses();
 
       if (fetchError) {
-        throw new Error(fetchError);
+        throw new Error(typeof fetchError === 'string' ? fetchError : fetchError.message || 'Error al obtener direcciones');
       }
 
       const userAddresses = data || [];
