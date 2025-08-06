@@ -78,12 +78,6 @@ export default function GuiaTallasPage() {
             >
               Envíos
             </Link>
-            <Link 
-              href="/servicio-al-cliente/devoluciones" 
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-            >
-              Devoluciones
-            </Link>
             <span className="px-4 py-2 text-sm font-medium bg-black text-white rounded-md">
               Guía de Tallas
             </span>
