@@ -413,7 +413,20 @@ export default function ProductPage() {
                   +
                 </button>
                 <span className="text-sm text-gray-500 ml-4">
-                  {getAvailableStock()} disponibles
+                  {getAvailableStock() > 0 ? (
+                    <>
+                      {getAvailableStock()} disponibles
+                      {getAvailableStock() <= 5 && getAvailableStock() > 0 && (
+                        <span className="text-orange-500 font-medium ml-2">
+                          ⚠️ ¡Pocas unidades!
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-red-500 font-medium">
+                      ❌ Agotado
+                    </span>
+                  )}
                 </span>
               </div>
             </div>

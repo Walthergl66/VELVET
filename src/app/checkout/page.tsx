@@ -66,6 +66,43 @@ const CheckoutPage = () => {
       setLoading(true);
       setError('');
 
+      // Verificar stock antes de procesar el pago
+      console.log('🔍 Verificando disponibilidad de stock...');
+      for (const item of cart.items) {
+        if (item.product_id) {
+          const { data: product, error: productError } = await supabase
+            .from('products')
+            .select('stock, name')
+            .eq('id', item.product_id)
+            .single();
+
+          if (productError) {
+            throw new Error(`Error verificando producto: ${productError.message}`);
+          }
+
+          if (product.stock < item.quantity) {
+            throw new Error(`Stock insuficiente para "${product.name}". Stock disponible: ${product.stock}, cantidad solicitada: ${item.quantity}`);
+          }
+        }
+
+        if (item.variant_id) {
+          const { data: variant, error: variantError } = await supabase
+            .from('product_variants')
+            .select('stock')
+            .eq('id', item.variant_id)
+            .single();
+
+          if (variantError) {
+            throw new Error(`Error verificando variante: ${variantError.message}`);
+          }
+
+          if (variant.stock < item.quantity) {
+            throw new Error(`Stock insuficiente para la variante seleccionada. Stock disponible: ${variant.stock}, cantidad solicitada: ${item.quantity}`);
+          }
+        }
+      }
+      console.log('✅ Stock verificado correctamente');
+
       // Preparar información de items del carrito
       const cartItems = cart.items.map(item => ({
         productId: item.product_id,
@@ -225,6 +262,93 @@ const CheckoutPage = () => {
       }
 
       console.log('✅ Items de orden creados exitosamente:', createdItems);
+
+      // Actualizar inventario de productos y variantes
+      console.log('📦 Actualizando inventario...');
+      for (const item of cart.items) {
+        try {
+          // Actualizar stock del producto principal
+          if (item.product_id) {
+            console.log(`🔄 Actualizando stock del producto ${item.product_id}, descontando ${item.quantity} unidades`);
+            
+            // Primero verificamos el stock actual
+            const { data: currentProduct, error: fetchError } = await supabase
+              .from('products')
+              .select('stock')
+              .eq('id', item.product_id)
+              .single();
+
+            if (fetchError) {
+              console.error(`❌ Error obteniendo stock del producto ${item.product_id}:`, fetchError);
+              continue;
+            }
+
+            if (currentProduct.stock < item.quantity) {
+              console.error(`❌ Stock insuficiente para producto ${item.product_id}. Stock actual: ${currentProduct.stock}, requerido: ${item.quantity}`);
+              continue;
+            }
+
+            // Actualizar el stock
+            const { data: productUpdate, error: productError } = await supabase
+              .from('products')
+              .update({ 
+                stock: currentProduct.stock - item.quantity,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', item.product_id)
+              .select();
+
+            if (productError) {
+              console.error(`❌ Error actualizando stock del producto ${item.product_id}:`, productError);
+            } else {
+              console.log(`✅ Stock del producto ${item.product_id} actualizado. Nuevo stock: ${currentProduct.stock - item.quantity}`);
+            }
+          }
+
+          // Actualizar stock de la variante si existe
+          if (item.variant_id) {
+            console.log(`🔄 Actualizando stock de la variante ${item.variant_id}, descontando ${item.quantity} unidades`);
+            
+            // Primero verificamos el stock actual de la variante
+            const { data: currentVariant, error: fetchVariantError } = await supabase
+              .from('product_variants')
+              .select('stock')
+              .eq('id', item.variant_id)
+              .single();
+
+            if (fetchVariantError) {
+              console.error(`❌ Error obteniendo stock de la variante ${item.variant_id}:`, fetchVariantError);
+              continue;
+            }
+
+            if (currentVariant.stock < item.quantity) {
+              console.error(`❌ Stock insuficiente para variante ${item.variant_id}. Stock actual: ${currentVariant.stock}, requerido: ${item.quantity}`);
+              continue;
+            }
+
+            // Actualizar el stock de la variante
+            const { data: variantUpdate, error: variantError } = await supabase
+              .from('product_variants')
+              .update({ 
+                stock: currentVariant.stock - item.quantity,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', item.variant_id)
+              .select();
+
+            if (variantError) {
+              console.error(`❌ Error actualizando stock de la variante ${item.variant_id}:`, variantError);
+            } else {
+              console.log(`✅ Stock de la variante ${item.variant_id} actualizado. Nuevo stock: ${currentVariant.stock - item.quantity}`);
+            }
+          }
+        } catch (inventoryError) {
+          console.error(`❌ Error general actualizando inventario para item ${item.id}:`, inventoryError);
+          // Continuamos con el siguiente item
+        }
+      }
+      
+      console.log('✅ Actualización de inventario completada');
 
       // Limpiar el carrito y redirigir
       console.log('🧹 Limpiando carrito...');
