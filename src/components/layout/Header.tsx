@@ -175,13 +175,13 @@ export default function Header({
                         {/* Opciones para admin */}
                         {isAdmin && (
                           <>
-                            <Link
+                            {/* <Link
                               href="/admin"
                               onClick={() => setIsUserMenuOpen(false)}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >
                               Admin Dashboard
-                            </Link>
+                            </Link> */}
                             <Link
                               href="/admin/products"
                               onClick={() => setIsUserMenuOpen(false)}
@@ -316,9 +316,9 @@ export default function Header({
 
         {/* Click outside to close user menu */}
         {isUserMenuOpen && (
-          <button
-            className="fixed inset-0 z-10 bg-transparent border-0 cursor-default"
-            aria-label="Cerrar menú de usuario"
+          <div
+            className="fixed inset-0 z-10 bg-transparent cursor-default"
+            aria-hidden="true"
             onClick={() => setIsUserMenuOpen(false)}
             onKeyDown={(e) => {
               if (e.key === 'Escape') {
