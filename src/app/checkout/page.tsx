@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/hooks/useAuth';
+import { useAddresses } from '@/hooks/useAddresses';
 import { supabase } from '@/lib/supabase';
 import PaymentMethodSelector from '@/components/checkout/PaymentMethodSelector';
+import AddressSelector from '@/components/checkout/AddressSelector';
 import Button from '@/components/ui/Button';
 
 interface ShippingInfo {
@@ -24,10 +26,24 @@ const CheckoutPage = () => {
   const { cart, getItemCount, clearCart } = useCart();
   const { user } = useAuth();
   
+  // Hook para manejar direcciones guardadas
+  const { 
+    addresses, 
+    selectedShippingAddress, 
+    // selectedBillingAddress, // Para uso futuro
+    loading: addressesLoading,
+    setSelectedShippingAddress,
+    // setSelectedBillingAddress // Para uso futuro
+  } = useAddresses();
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [clientSecret, setClientSecret] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  
+  // Estados para controlar si usar direcciones guardadas o nueva dirección
+  const [useNewShippingAddress, setUseNewShippingAddress] = useState(false);
+  // const [useNewBillingAddress, setUseNewBillingAddress] = useState(false); // Para uso futuro
   
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     firstName: '',
@@ -126,7 +142,7 @@ const CheckoutPage = () => {
             orderId: `order_${Date.now()}`,
             userId: user?.id || 'guest',
           },
-          shippingInfo: shippingInfo,
+          shippingInfo: getCurrentShippingInfo(),
           cartItems: cartItems
         }),
       });
@@ -150,8 +166,29 @@ const CheckoutPage = () => {
   };
 
   const validateShippingInfo = () => {
+    const currentInfo = getCurrentShippingInfo();
     const required = ['firstName', 'lastName', 'email', 'address', 'city', 'zipCode', 'phone'];
-    return required.every(field => shippingInfo[field as keyof ShippingInfo].trim() !== '');
+    return required.every(field => {
+      const value = currentInfo[field as keyof ShippingInfo];
+      return value && value.trim() !== '';
+    });
+  };
+
+  // Función auxiliar para obtener la dirección actual de envío
+  const getCurrentShippingInfo = () => {
+    if (!useNewShippingAddress && selectedShippingAddress) {
+      return {
+        firstName: '', // No tenemos estos campos en Address, usar defaults
+        lastName: '',
+        email: user?.email || '',
+        address: selectedShippingAddress.street || '',
+        city: selectedShippingAddress.city || '',
+        zipCode: selectedShippingAddress.zip_code || '',
+        country: selectedShippingAddress.country || 'Ecuador',
+        phone: '' // No tenemos phone en Address, usar default
+      };
+    }
+    return shippingInfo;
   };
 
   const handlePaymentSuccess = async (paymentIntent: any) => {
@@ -434,92 +471,144 @@ const CheckoutPage = () => {
         <h3 className="text-xl font-semibold">Información de Envío</h3>
       </div>
       
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-6">
+        {/* Selector de direcciones guardadas */}
+        {addresses.length > 0 && (
           <div>
-            <label className="block text-sm font-medium mb-1">Nombre *</label>
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={shippingInfo.firstName}
-              onChange={(e) => handleShippingChange('firstName', e.target.value)}
-              placeholder="Tu nombre"
-              required
+            <label className="block text-sm font-medium mb-3">
+              Seleccionar dirección guardada
+            </label>
+            <AddressSelector
+              title="Direcciones de envío"
+              addresses={addresses}
+              selectedAddress={selectedShippingAddress}
+              onSelectAddress={setSelectedShippingAddress}
+              onAddNewAddress={() => setUseNewShippingAddress(true)}
+              loading={addressesLoading}
             />
+            
+            {selectedShippingAddress && !useNewShippingAddress && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-sm text-green-600">
+                  ✓ Dirección seleccionada. Los datos se completarán automáticamente.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setUseNewShippingAddress(true)}
+                  className="text-blue-600 hover:text-blue-800 text-sm underline mt-1"
+                >
+                  Usar una dirección diferente
+                </button>
+              </div>
+            )}
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Apellidos *</label>
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={shippingInfo.lastName}
-              onChange={(e) => handleShippingChange('lastName', e.target.value)}
-              placeholder="Tus apellidos"
-              required
-            />
+        )}
+
+        {/* Formulario manual (se muestra si no hay direcciones guardadas o si elige "nueva dirección") */}
+        {(addresses.length === 0 || useNewShippingAddress) && (
+          <div className="space-y-4">
+            {useNewShippingAddress && (
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseNewShippingAddress(false);
+                    setSelectedShippingAddress(null);
+                  }}
+                  className="text-blue-600 hover:text-blue-800 text-sm underline"
+                >
+                  ← Volver a direcciones guardadas
+                </button>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Nombre *</label>
+                <input
+                  type="text"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={shippingInfo.firstName}
+                  onChange={(e) => handleShippingChange('firstName', e.target.value)}
+                  placeholder="Tu nombre"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Apellidos *</label>
+                <input
+                  type="text"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={shippingInfo.lastName}
+                  onChange={(e) => handleShippingChange('lastName', e.target.value)}
+                  placeholder="Tus apellidos"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Email *</label>
+              <input
+                type="email"
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={shippingInfo.email}
+                onChange={(e) => handleShippingChange('email', e.target.value)}
+                placeholder="tu@email.com"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Teléfono *</label>
+              <input
+                type="tel"
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={shippingInfo.phone}
+                onChange={(e) => handleShippingChange('phone', e.target.value)}
+                placeholder="+593 99 123 4567"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Dirección *</label>
+              <input
+                type="text"
+                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={shippingInfo.address}
+                onChange={(e) => handleShippingChange('address', e.target.value)}
+                placeholder="Calle, número, barrio"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Ciudad *</label>
+                <input
+                  type="text"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={shippingInfo.city}
+                  onChange={(e) => handleShippingChange('city', e.target.value)}
+                  placeholder="Ciudad"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Código Postal *</label>
+                <input
+                  type="text"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={shippingInfo.zipCode}
+                  onChange={(e) => handleShippingChange('zipCode', e.target.value)}
+                  placeholder="170515"
+                  required
+                />
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Email *</label>
-          <input
-            type="email"
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            value={shippingInfo.email}
-            onChange={(e) => handleShippingChange('email', e.target.value)}
-            placeholder="tu@email.com"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Teléfono *</label>
-          <input
-            type="tel"
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            value={shippingInfo.phone}
-            onChange={(e) => handleShippingChange('phone', e.target.value)}
-            placeholder="+593 99 123 4567"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Dirección *</label>
-          <input
-            type="text"
-            className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            value={shippingInfo.address}
-            onChange={(e) => handleShippingChange('address', e.target.value)}
-            placeholder="Calle, número, barrio"
-            required
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Ciudad *</label>
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={shippingInfo.city}
-              onChange={(e) => handleShippingChange('city', e.target.value)}
-              placeholder="Ciudad"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Código Postal *</label>
-            <input
-              type="text"
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={shippingInfo.zipCode}
-              onChange={(e) => handleShippingChange('zipCode', e.target.value)}
-              placeholder="170515"
-              required
-            />
-          </div>
-        </div>
+        )}
 
         <div className="flex justify-between mt-6 gap-4">
           <Button variant="outline" onClick={() => router.back()}>
@@ -546,7 +635,7 @@ const CheckoutPage = () => {
       <PaymentMethodSelector
         clientSecret={clientSecret}
         amount={total}
-        shippingInfo={shippingInfo}
+        shippingInfo={getCurrentShippingInfo()}
         onSuccess={(paymentIntent) => {
           console.log('🔥 PaymentMethodSelector onSuccess ejecutado con:', paymentIntent);
           handlePaymentSuccess(paymentIntent);
