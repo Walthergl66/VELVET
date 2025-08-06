@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useRole } from '@/hooks/useRole';
@@ -13,7 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
  */
 
 interface AdminLayoutProps {
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
 }
 
 const navigation = [
@@ -77,8 +77,15 @@ const navigation = [
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOut } = useAuth();
-  const { isAdmin, isLoading, role } = useRole();
+  const { user } = useAuth();
+  const { isAdmin, isLoading } = useRole();
+
+  // Manejar redirección si no está autenticado
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/auth/login?redirectTo=/admin');
+    }
+  }, [user, isLoading, router]);
 
   // Mostrar loading mientras verificamos permisos
   if (isLoading) {
@@ -92,10 +99,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
-  // Redirigir si no está autenticado
+  // Mostrar loading si no está autenticado (mientras redirige)
   if (!user) {
-    router.push('/auth/login?redirectTo=/admin');
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirigiendo...</p>
+        </div>
+      </div>
+    );
   }
 
   // Mostrar mensaje de acceso denegado si no es admin
@@ -128,11 +141,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </div>
     );
   }
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.push('/');
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
