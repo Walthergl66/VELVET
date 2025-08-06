@@ -73,7 +73,7 @@ export function useWishlist(): UseWishlistReturn {
         user_id: item.user_id,
         product_id: item.product_id,
         created_at: item.created_at,
-        product: item.products as Product
+        product: Array.isArray(item.products) ? item.products[0] as Product : item.products as Product
       }));
 
       setWishlistItems(transformedItems);
