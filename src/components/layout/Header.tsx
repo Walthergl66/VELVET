@@ -141,13 +141,13 @@ export default function Header({
                         {/* Opciones para user */}
                         {isUser && (
                           <>
-                            <Link
+                            {/* <Link
                               href="/user/dashboard"
                               onClick={() => setIsUserMenuOpen(false)}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >
                               Mi Dashboard
-                            </Link>
+                            </Link> */}
                             <Link
                               href="/user/profile"
                               onClick={() => setIsUserMenuOpen(false)}

@@ -117,7 +117,7 @@ export default function OrdersPage() {
             </div>
             <Link
               href="/shop"
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
+              className="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
             >
               Seguir Comprando
             </Link>
@@ -125,7 +125,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Filtros y búsqueda */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Búsqueda */}
             <form onSubmit={handleSearch} className="flex-1">
@@ -135,7 +135,7 @@ export default function OrdersPage() {
                   placeholder="Buscar por número de seguimiento o notas..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-black focus:border-black transition-colors duration-200"
                 />
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +156,7 @@ export default function OrdersPage() {
               <select
                 value={selectedStatus}
                 onChange={(e) => handleStatusFilter(e.target.value as OrderStatus | 'all')}
-                className="w-full py-2 px-3 border border-gray-300 rounded-md focus:ring-pink-500 focus:border-pink-500"
+                className="w-full py-2 px-3 border border-gray-300 rounded-md focus:ring-black focus:border-black transition-colors duration-200"
               >
                 <option value="all">Todos los estados</option>
                 <option value="pending">Pendiente</option>
@@ -189,63 +189,63 @@ export default function OrdersPage() {
 
         {/* Lista de pedidos */}
         {orders.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <svg className="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
+            <svg className="h-16 w-16 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">
               No hay pedidos aún
             </h3>
-            <p className="text-gray-500 mb-6">
-              Cuando realices tu primera compra, aparecerá aquí.
+            <p className="text-gray-500 mb-8 max-w-md mx-auto">
+              Cuando realices tu primera compra, aparecerá aquí el historial completo de todos tus pedidos.
             </p>
             <Link
               href="/shop"
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700"
+              className="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 transition-colors duration-200"
             >
               Explorar Productos
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {orders.map((order) => (
-              <div key={order.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
-                <div className="p-6">
+              <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-gray-200">
+                <div className="p-6 lg:p-8">
                   {/* Header del pedido */}
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900">
+                      <h3 className="text-xl font-semibold text-gray-900 mb-1">
                         Pedido #{order.id.slice(-8).toUpperCase()}
                       </h3>
                       <p className="text-sm text-gray-500">
                         {formatDate(order.created_at)}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(order.status)}`}>
+                    <div className="flex items-center space-x-4">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(order.status)}`}>
                         {getStatusText(order.status)}
                       </span>
-                      <span className="text-lg font-bold text-gray-900">
+                      <span className="text-xl font-bold text-gray-900">
                         {formatPrice(order.total)}
                       </span>
                     </div>
                   </div>
 
                   {/* Productos comprados */}
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Productos comprados:</h4>
+                  <div className="mb-6">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">Productos comprados</h4>
                     <div className="space-y-3">
                       {order.items && order.items.length > 0 ? (
                         order.items.slice(0, 3).map((item, index) => (
-                          <div key={item.id || index} className="flex items-center space-x-3 py-2 px-3 bg-gray-50 rounded-lg">
+                          <div key={item.id || index} className="flex items-center space-x-4 py-3 px-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
                             <div className="flex-shrink-0">
                               {item.product_snapshot?.images?.[0] ? (
                                 <Image
                                   src={item.product_snapshot.images[0]}
                                   alt={item.product_snapshot.name || 'Producto'}
-                                  width={48}
-                                  height={48}
-                                  className="w-12 h-12 object-cover rounded-md"
+                                  width={56}
+                                  height={56}
+                                  className="w-14 h-14 object-cover rounded-lg shadow-sm"
                                   unoptimized
                                   onError={(e) => {
                                     // Fallback to placeholder if image fails to load
@@ -255,30 +255,32 @@ export default function OrdersPage() {
                                   }}
                                 />
                               ) : null}
-                              <div className={`w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center ${item.product_snapshot?.images?.[0] ? 'hidden' : ''}`}>
-                                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <div className={`w-14 h-14 bg-gray-200 rounded-lg flex items-center justify-center ${item.product_snapshot?.images?.[0] ? 'hidden' : ''}`}>
+                                <svg className="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                               </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h5 className="text-sm font-medium text-gray-900 truncate">
+                              <h5 className="text-sm font-semibold text-gray-900 truncate mb-1">
                                 {item.product_snapshot?.name || 'Producto sin nombre'}
                               </h5>
                               {item.product_snapshot?.brand && (
-                                <p className="text-xs text-gray-400 mb-1">{item.product_snapshot.brand}</p>
+                                <p className="text-xs text-gray-500 mb-2 font-medium">{item.product_snapshot.brand}</p>
                               )}
-                              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                                <span>Cantidad: {item.quantity}</span>
-                                {item.size && <span>• Talla: {item.size}</span>}
-                                {item.color && <span>• Color: {item.color}</span>}
+                              <div className="flex items-center space-x-3 text-xs text-gray-600">
+                                <span className="bg-white px-2 py-1 rounded-md">Cantidad: {item.quantity}</span>
+                                {item.size && <span className="bg-white px-2 py-1 rounded-md">Talla: {item.size}</span>}
+                                {item.color && <span className="bg-white px-2 py-1 rounded-md">Color: {item.color}</span>}
                               </div>
                               {item.product_snapshot?.sku && (
-                                <p className="text-xs text-gray-400 mt-1">SKU: {item.product_snapshot.sku}</p>
+                                <p className="text-xs text-gray-400 mt-2">SKU: {item.product_snapshot.sku}</p>
                               )}
                             </div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {formatPrice(item.total_price)}
+                            <div className="text-right">
+                              <div className="text-sm font-bold text-gray-900">
+                                {formatPrice(item.total_price)}
+                              </div>
                             </div>
                           </div>
                         ))
@@ -288,8 +290,8 @@ export default function OrdersPage() {
                       
                       {/* Mostrar si hay más productos */}
                       {order.items && order.items.length > 3 && (
-                        <div className="text-center">
-                          <p className="text-sm text-gray-500">
+                        <div className="text-center py-3">
+                          <p className="text-sm text-gray-500 bg-gray-100 py-2 px-4 rounded-lg inline-block">
                             y {order.items.length - 3} producto{order.items.length - 3 > 1 ? 's' : ''} más...
                           </p>
                         </div>
@@ -298,14 +300,14 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Footer del pedido */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between pt-6 border-t border-gray-100">
                     <div className="flex-1">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 font-medium">
                         {order.items?.length || 0} {(order.items?.length || 0) === 1 ? 'artículo' : 'artículos'} en total
                       </p>
                       {order.tracking_number && (
-                        <p className="text-sm text-gray-600">
-                          Seguimiento: <span className="font-medium">{order.tracking_number}</span>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Seguimiento: <span className="font-semibold text-gray-900 bg-gray-100 px-2 py-1 rounded-md">{order.tracking_number}</span>
                         </p>
                       )}
                     </div>
