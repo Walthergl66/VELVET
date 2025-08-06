@@ -183,7 +183,7 @@ export default function UserProfile() {
                       name="first_name"
                       value={formData.first_name}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                      className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black placeholder-gray-600"
                       placeholder="Tu nombre"
                     />
                   ) : (
@@ -204,7 +204,7 @@ export default function UserProfile() {
                       name="last_name"
                       value={formData.last_name}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                      className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black placeholder-gray-600"
                       placeholder="Tu apellido"
                     />
                   ) : (
@@ -227,7 +227,7 @@ export default function UserProfile() {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+                    className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black placeholder-gray-600"
                     placeholder="+52 (555) 123-4567"
                   />
                 ) : (

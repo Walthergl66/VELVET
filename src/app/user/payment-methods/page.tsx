@@ -7,7 +7,14 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 /**
- * Página para gestionar métodos de pago del usuario
+ * Página pa                        <input
+                          id="cardNumber"
+                          type="text"
+                          name="cardNumber"
+                          placeholder="1234 5678 9012 3456"
+                          maxLength={19}
+                          required
+                          className="w-full px-3 py-2 border-2 border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent placeholder-gray-600"onar métodos de pago del usuario
  * Permite agregar, editar y eliminar tarjetas de crédito/débito
  */
 
@@ -285,7 +292,7 @@ export default function PaymentMethodsPage() {
                           id="expiryMonth"
                           name="expiryMonth"
                           required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                          className="w-full px-3 py-2 border-2 border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                         >
                           {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
                             <option key={month} value={month}>
@@ -302,7 +309,7 @@ export default function PaymentMethodsPage() {
                           id="expiryYear"
                           name="expiryYear"
                           required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                          className="w-full px-3 py-2 border-2 border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                         >
                           {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(year => (
                             <option key={year} value={year}>
@@ -322,7 +329,7 @@ export default function PaymentMethodsPage() {
                           placeholder="123"
                           maxLength={4}
                           required
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                          className="w-full px-3 py-2 border-2 border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent placeholder-gray-600"
                           onChange={(e) => {
                             e.target.value = e.target.value.replace(/\D/g, '');
                           }}
@@ -340,7 +347,7 @@ export default function PaymentMethodsPage() {
                         name="holderName"
                         placeholder="Juan Pérez"
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                        className="w-full px-3 py-2 border-2 border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent placeholder-gray-600"
                       />
                     </div>
                   </div>

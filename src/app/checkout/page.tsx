@@ -77,6 +77,15 @@ const CheckoutPage = () => {
     }
   }, [getItemCount, currentStep]);
 
+  // Establecer dirección por defecto cuando se cargan las direcciones
+  useEffect(() => {
+    if (addresses.length > 0 && !selectedShippingAddress && !useNewShippingAddress) {
+      // Seleccionar la dirección por defecto o la primera disponible
+      const defaultAddress = addresses.find(addr => addr.is_default) || addresses[0];
+      setSelectedShippingAddress(defaultAddress);
+    }
+  }, [addresses, selectedShippingAddress, useNewShippingAddress, setSelectedShippingAddress]);
+
   const createPaymentIntent = async () => {
     try {
       setLoading(true);
@@ -166,26 +175,43 @@ const CheckoutPage = () => {
   };
 
   const validateShippingInfo = () => {
-    const currentInfo = getCurrentShippingInfo();
-    const required = ['firstName', 'lastName', 'email', 'address', 'city', 'zipCode', 'phone'];
-    return required.every(field => {
-      const value = currentInfo[field as keyof ShippingInfo];
-      return value && value.trim() !== '';
-    });
+    // Si está usando una dirección guardada y está seleccionada, es válido
+    if (!useNewShippingAddress && selectedShippingAddress) {
+      // Verificar que la dirección seleccionada tenga los campos mínimos requeridos
+      return !!(
+        selectedShippingAddress.street &&
+        selectedShippingAddress.city &&
+        selectedShippingAddress.zip_code &&
+        user?.email // El email viene del usuario autenticado
+      );
+    }
+    
+    // Si está usando el formulario manual, validar todos los campos
+    if (useNewShippingAddress || addresses.length === 0) {
+      const currentInfo = getCurrentShippingInfo();
+      const required = ['firstName', 'lastName', 'email', 'address', 'city', 'zipCode', 'phone'];
+      return required.every(field => {
+        const value = currentInfo[field as keyof ShippingInfo];
+        return value && value.trim() !== '';
+      });
+    }
+    
+    // Si no hay dirección seleccionada y no está usando formulario manual, no es válido
+    return false;
   };
 
   // Función auxiliar para obtener la dirección actual de envío
   const getCurrentShippingInfo = () => {
     if (!useNewShippingAddress && selectedShippingAddress) {
       return {
-        firstName: '', // No tenemos estos campos en Address, usar defaults
-        lastName: '',
+        firstName: user?.user_metadata?.first_name || '',
+        lastName: user?.user_metadata?.last_name || '',
         email: user?.email || '',
         address: selectedShippingAddress.street || '',
         city: selectedShippingAddress.city || '',
         zipCode: selectedShippingAddress.zip_code || '',
         country: selectedShippingAddress.country || 'Ecuador',
-        phone: '' // No tenemos phone en Address, usar default
+        phone: user?.user_metadata?.phone || ''
       };
     }
     return shippingInfo;
@@ -481,9 +507,15 @@ const CheckoutPage = () => {
             <AddressSelector
               title="Direcciones de envío"
               addresses={addresses}
-              selectedAddress={selectedShippingAddress}
-              onSelectAddress={setSelectedShippingAddress}
-              onAddNewAddress={() => setUseNewShippingAddress(true)}
+              selectedAddress={useNewShippingAddress ? null : selectedShippingAddress}
+              onSelectAddress={(address) => {
+                setSelectedShippingAddress(address);
+                setUseNewShippingAddress(false);
+              }}
+              onAddNewAddress={() => {
+                setUseNewShippingAddress(true);
+                setSelectedShippingAddress(null);
+              }}
               loading={addressesLoading}
             />
             
@@ -494,7 +526,10 @@ const CheckoutPage = () => {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setUseNewShippingAddress(true)}
+                  onClick={() => {
+                    setUseNewShippingAddress(true);
+                    setSelectedShippingAddress(null);
+                  }}
                   className="text-blue-600 hover:text-blue-800 text-sm underline mt-1"
                 >
                   Usar una dirección diferente
@@ -507,13 +542,16 @@ const CheckoutPage = () => {
         {/* Formulario manual (se muestra si no hay direcciones guardadas o si elige "nueva dirección") */}
         {(addresses.length === 0 || useNewShippingAddress) && (
           <div className="space-y-4">
-            {useNewShippingAddress && (
-              <div className="mb-4">
+            {addresses.length > 0 && useNewShippingAddress && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-600 mb-2">
+                  📝 Complete todos los campos para continuar
+                </p>
                 <button
                   type="button"
                   onClick={() => {
                     setUseNewShippingAddress(false);
-                    setSelectedShippingAddress(null);
+                    setSelectedShippingAddress(addresses.find(addr => addr.is_default) || addresses[0] || null);
                   }}
                   className="text-blue-600 hover:text-blue-800 text-sm underline"
                 >
@@ -527,7 +565,7 @@ const CheckoutPage = () => {
                 <label className="block text-sm font-medium mb-1">Nombre *</label>
                 <input
                   type="text"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   value={shippingInfo.firstName}
                   onChange={(e) => handleShippingChange('firstName', e.target.value)}
                   placeholder="Tu nombre"
@@ -538,7 +576,7 @@ const CheckoutPage = () => {
                 <label className="block text-sm font-medium mb-1">Apellidos *</label>
                 <input
                   type="text"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   value={shippingInfo.lastName}
                   onChange={(e) => handleShippingChange('lastName', e.target.value)}
                   placeholder="Tus apellidos"
@@ -551,7 +589,7 @@ const CheckoutPage = () => {
               <label className="block text-sm font-medium mb-1">Email *</label>
               <input
                 type="email"
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                 value={shippingInfo.email}
                 onChange={(e) => handleShippingChange('email', e.target.value)}
                 placeholder="tu@email.com"
@@ -563,7 +601,7 @@ const CheckoutPage = () => {
               <label className="block text-sm font-medium mb-1">Teléfono *</label>
               <input
                 type="tel"
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                 value={shippingInfo.phone}
                 onChange={(e) => handleShippingChange('phone', e.target.value)}
                 placeholder="+593 99 123 4567"
@@ -575,7 +613,7 @@ const CheckoutPage = () => {
               <label className="block text-sm font-medium mb-1">Dirección *</label>
               <input
                 type="text"
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                 value={shippingInfo.address}
                 onChange={(e) => handleShippingChange('address', e.target.value)}
                 placeholder="Calle, número, barrio"
@@ -588,7 +626,7 @@ const CheckoutPage = () => {
                 <label className="block text-sm font-medium mb-1">Ciudad *</label>
                 <input
                   type="text"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   value={shippingInfo.city}
                   onChange={(e) => handleShippingChange('city', e.target.value)}
                   placeholder="Ciudad"
@@ -599,7 +637,7 @@ const CheckoutPage = () => {
                 <label className="block text-sm font-medium mb-1">Código Postal *</label>
                 <input
                   type="text"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   value={shippingInfo.zipCode}
                   onChange={(e) => handleShippingChange('zipCode', e.target.value)}
                   placeholder="170515"

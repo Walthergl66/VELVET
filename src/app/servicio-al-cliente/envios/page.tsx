@@ -186,7 +186,7 @@ export default function EnviosPage() {
                   id="trackingNumber"
                   value={trackingData.trackingNumber}
                   onChange={(e) => setTrackingData(prev => ({ ...prev, trackingNumber: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   placeholder="VLV123456789"
                   required
                 />
@@ -201,7 +201,7 @@ export default function EnviosPage() {
                   id="trackingEmail"
                   value={trackingData.email}
                   onChange={(e) => setTrackingData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   placeholder="tu@email.com"
                   required
                 />
@@ -269,7 +269,7 @@ export default function EnviosPage() {
                   id="destination"
                   value={shippingData.destination}
                   onChange={(e) => setShippingData(prev => ({ ...prev, destination: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   required
                 >
                   <option value="">Selecciona tu provincia</option>
@@ -311,7 +311,7 @@ export default function EnviosPage() {
                   step="0.1"
                   value={shippingData.weight}
                   onChange={(e) => setShippingData(prev => ({ ...prev, weight: parseFloat(e.target.value) || 0 }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent placeholder-gray-600"
                   placeholder="1.5"
                   required
                 />

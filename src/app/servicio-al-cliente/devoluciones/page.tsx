@@ -147,7 +147,7 @@ export default function DevolucionesPage() {
                     value={formData.returnType}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   >
                     <option value="devolucion">Devolución (Reembolso)</option>
                     <option value="cambio">Cambio por otro producto</option>
@@ -166,7 +166,7 @@ export default function DevolucionesPage() {
                     onChange={handleInputChange}
                     required
                     placeholder="Ej: VEL-2024-001234"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-600"
                   />
                 </div>
 
@@ -182,7 +182,7 @@ export default function DevolucionesPage() {
                     onChange={handleInputChange}
                     required
                     placeholder="tu@email.com"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-600"
                   />
                 </div>
 
@@ -198,7 +198,7 @@ export default function DevolucionesPage() {
                     onChange={handleInputChange}
                     required
                     placeholder="Nombre del producto a devolver"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-600"
                   />
                 </div>
 
@@ -212,7 +212,7 @@ export default function DevolucionesPage() {
                     value={formData.reason}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   >
                     <option value="">Selecciona un motivo</option>
                     <option value="defectuoso">Producto defectuoso</option>
@@ -236,7 +236,7 @@ export default function DevolucionesPage() {
                     onChange={handleInputChange}
                     rows={4}
                     placeholder="Describe el problema o motivo de la devolución..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-gray-600"
                   />
                 </div>
 
