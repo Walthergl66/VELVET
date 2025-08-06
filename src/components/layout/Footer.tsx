@@ -91,7 +91,6 @@ const Footer: React.FC = () => {
             {[
               { name: 'Contacto', href: '/servicio-al-cliente/contact' },
               { name: 'Envíos', href: '/servicio-al-cliente/envios' },
-              //{ name: 'Devoluciones', href: '/servicio-al-cliente/devoluciones' },
               { name: 'Guía de Tallas', href: '/servicio-al-cliente/guia-tallas' },
               //{ name: 'Cuidado de Prendas', href: '/servicio-al-cliente/cuidado-prendas' },
               { name: 'Preguntas Frecuentes', href: '/servicio-al-cliente/faq' }
