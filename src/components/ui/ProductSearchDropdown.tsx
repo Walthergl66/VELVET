@@ -77,7 +77,7 @@ export default function ProductSearchDropdown({
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <svg 
-            className="h-5 w-5 text-gray-400" 
+            className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
@@ -94,7 +94,7 @@ export default function ProductSearchDropdown({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           aria-label="Buscar productos"
-          className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-black focus:border-black"
+          className="block w-full pl-8 sm:pl-10 pr-8 sm:pr-10 py-2 sm:py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-black focus:border-black text-sm sm:text-base"
         />
         {/* Loading indicator */}
         {isSearching && (
@@ -117,11 +117,11 @@ export default function ProductSearchDropdown({
 
       {/* Dropdown de resultados */}
       {showResults && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 sm:max-h-96 overflow-y-auto">
           {error && (
-            <div className="p-4 text-red-600 text-sm">
+            <div className="p-3 sm:p-4 text-red-600 text-xs sm:text-sm">
               <div className="flex items-center">
-                <svg className="h-4 w-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-3 w-3 sm:h-4 sm:w-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 {error}
@@ -130,8 +130,8 @@ export default function ProductSearchDropdown({
           )}
           
           {!error && searchResults.length === 0 && !isSearching && searchTerm.trim() && (
-            <div className="p-4 text-gray-500 text-sm text-center">
-              <svg className="h-8 w-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-3 sm:p-4 text-gray-500 text-xs sm:text-sm text-center">
+              <svg className="h-6 w-6 sm:h-8 sm:w-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               No se encontraron productos para &ldquo;{searchTerm}&rdquo;
@@ -142,22 +142,22 @@ export default function ProductSearchDropdown({
             <button
               key={product.id}
               onClick={() => handleResultClick(product.id)}
-              className="w-full p-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0 transition-colors"
+              className="w-full p-2 sm:p-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0 transition-colors"
             >
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 {/* Imagen del producto */}
                 <div className="flex-shrink-0">
                   {product.images && product.images.length > 0 ? (
                     <Image
                       src={product.images[0]}
                       alt={product.name}
-                      width={40}
-                      height={40}
-                      className="rounded-md object-cover"
+                      width={32}
+                      height={32}
+                      className="sm:w-10 sm:h-10 rounded-md object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 bg-gray-200 rounded-md flex items-center justify-center">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-md flex items-center justify-center">
+                      <svg className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
@@ -167,20 +167,20 @@ export default function ProductSearchDropdown({
                 {/* Información del producto */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-xs sm:text-sm font-medium text-gray-900 truncate pr-2">
                       {product.name}
                     </p>
-                    <p className="text-sm font-semibold text-black ml-2">
+                    <p className="text-xs sm:text-sm font-semibold text-black whitespace-nowrap">
                       {formatPrice(product.price)}
                     </p>
                   </div>
                   {product.category && (
-                    <p className="text-xs text-gray-500 truncate mt-1">
+                    <p className="text-xs text-gray-500 truncate mt-0.5 sm:mt-1">
                       {product.category.name}
                     </p>
                   )}
                   {product.description && (
-                    <p className="text-xs text-gray-400 truncate mt-1">
+                    <p className="text-xs text-gray-400 truncate mt-0.5 sm:mt-1 hidden sm:block">
                       {product.description.slice(0, 60)}...
                     </p>
                   )}

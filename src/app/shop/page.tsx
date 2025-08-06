@@ -159,14 +159,14 @@ export default function ShopPage() {
   const renderProductsGrid = () => {
     if (productsLoading) {
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {Array.from({ length: 8 }, (_, index) => (
             <div key={`skeleton-${index}`} className="bg-white rounded-lg shadow-sm overflow-hidden animate-pulse">
-              <div className="w-full h-64 bg-gray-200" />
-              <div className="p-4 space-y-2">
-                <div className="h-4 bg-gray-200 rounded" />
-                <div className="h-4 bg-gray-200 rounded w-3/4" />
-                <div className="h-6 bg-gray-200 rounded w-1/2" />
+              <div className="w-full h-48 sm:h-56 lg:h-64 bg-gray-200" />
+              <div className="p-3 sm:p-4 space-y-2">
+                <div className="h-3 sm:h-4 bg-gray-200 rounded" />
+                <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4" />
+                <div className="h-4 sm:h-6 bg-gray-200 rounded w-1/2" />
               </div>
             </div>
           ))}
@@ -176,7 +176,7 @@ export default function ShopPage() {
 
     if (filteredProducts.length > 0) {
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredProducts.map((product, index) => (
             <ProductCard 
               key={product.id} 
@@ -189,19 +189,19 @@ export default function ShopPage() {
     }
 
     return (
-      <div className="text-center py-16">
-        <svg className="w-24 h-24 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="text-center py-12 sm:py-16">
+        <svg className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 text-gray-300 mx-auto mb-4 sm:mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.5-.65-6.364-1.75L3 16.25v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.25l-2.636-3" />
         </svg>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
           No se encontraron productos
         </h3>
-        <p className="text-gray-600 mb-6">
+        <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">
           Intenta ajustar tus filtros o buscar con términos diferentes.
         </p>
         <button
           onClick={clearFilters}
-          className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
+          className="bg-black text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-gray-800 transition-colors text-sm sm:text-base touch-friendly"
         >
           Limpiar Filtros
         </button>
@@ -233,10 +233,10 @@ export default function ShopPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Tienda</h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">Tienda</h1>
+            <p className="text-sm sm:text-base lg:text-lg text-gray-600 max-w-2xl mx-auto">
               Descubre nuestra colección completa de ropa moderna y elegante.
               Encuentra tu estilo perfecto entre nuestra amplia variedad de productos.
             </p>
@@ -244,27 +244,27 @@ export default function ShopPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Search Bar */}
-        <div className="lg:hidden mb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        {/* Quick Search Bar - Mobile */}
+        <div className="lg:hidden mb-4 sm:mb-6">
           <ProductSearchDropdown 
             placeholder="Buscar productos..."
             className="w-full"
           />
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-64 flex-shrink-0">
             {/* Mobile Filter Toggle */}
             <div className="lg:hidden mb-4">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-lg px-4 py-2"
+                className="w-full flex items-center justify-between bg-white border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 touch-friendly"
               >
-                <span className="font-medium">Filtros</span>
+                <span className="font-medium text-sm sm:text-base">Filtros</span>
                 <svg 
-                  className={`w-5 h-5 transform transition-transform ${showFilters ? 'rotate-180' : ''}`}
+                  className={`w-4 h-4 sm:w-5 sm:h-5 transform transition-transform ${showFilters ? 'rotate-180' : ''}`}
                   fill="none" 
                   stroke="currentColor" 
                   viewBox="0 0 24 24"
@@ -275,9 +275,9 @@ export default function ShopPage() {
             </div>
 
             {/* Filters */}
-            <div className={`bg-white rounded-lg shadow-sm p-6 space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-              {/* Search */}
-              <div>
+            <div className={`bg-white rounded-lg shadow-sm p-4 sm:p-6 space-y-4 sm:space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+              {/* Search - Desktop Only */}
+              <div className="hidden lg:block">
                 <label htmlFor="search-products" className="block text-sm font-medium text-gray-700 mb-2">
                   Buscar Productos
                 </label>
@@ -287,7 +287,7 @@ export default function ShopPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Buscar..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black focus:border-black text-sm sm:text-base"
                 />
               </div>
 
@@ -296,14 +296,14 @@ export default function ShopPage() {
                 <legend className="block text-sm font-medium text-gray-700 mb-2">
                   Categorías
                 </legend>
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   <label className="flex items-center">
                     <input
                       type="radio"
                       name="category"
                       checked={selectedCategory === ''}
                       onChange={() => setSelectedCategory('')}
-                      className="text-black focus:ring-black"
+                      className="text-black focus:ring-black touch-friendly"
                     />
                     <span className="ml-2 text-sm text-gray-700">Todas</span>
                   </label>
@@ -314,7 +314,7 @@ export default function ShopPage() {
                         name="category"
                         checked={selectedCategory === category.id}
                         onChange={() => setSelectedCategory(category.id)}
-                        className="text-black focus:ring-black"
+                        className="text-black focus:ring-black touch-friendly"
                       />
                       <span className="ml-2 text-sm text-gray-700">
                         {category.name}
@@ -338,9 +338,9 @@ export default function ShopPage() {
                       value={priceRange.min}
                       onChange={(e) => setPriceRange({...priceRange, min: Number(e.target.value)})}
                       placeholder="Mín"
-                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                      className="w-full px-2 py-1.5 sm:py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
                     />
-                    <span className="text-gray-500">-</span>
+                    <span className="text-gray-500 text-sm">-</span>
                     <label htmlFor="price-max" className="sr-only">Precio máximo</label>
                     <input
                       id="price-max"
@@ -348,7 +348,7 @@ export default function ShopPage() {
                       value={priceRange.max}
                       onChange={(e) => setPriceRange({...priceRange, max: Number(e.target.value)})}
                       placeholder="Máx"
-                      className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                      className="w-full px-2 py-1.5 sm:py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
                     />
                   </div>
                   <div className="text-xs text-gray-500">
@@ -362,12 +362,12 @@ export default function ShopPage() {
                 <legend className="block text-sm font-medium text-gray-700 mb-2">
                   Tallas
                 </legend>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   {availableSizes.map(size => (
                     <button
                       key={size}
                       onClick={() => handleSizeToggle(size)}
-                      className={`px-3 py-2 text-sm border rounded-lg transition-colors ${
+                      className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm border rounded-lg transition-colors touch-friendly ${
                         selectedSizes.includes(size)
                           ? 'bg-black text-white border-black'
                           : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
@@ -384,14 +384,14 @@ export default function ShopPage() {
                 <legend className="block text-sm font-medium text-gray-700 mb-2">
                   Colores
                 </legend>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
                   {availableColors.map(color => (
                     <button
                       key={color.value}
                       onClick={() => handleColorToggle(color.value)}
                       title={color.name}
                       aria-label={`Seleccionar color ${color.name}`}
-                      className={`w-8 h-8 rounded-full border-2 transition-all ${
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all touch-friendly ${
                         selectedColors.includes(color.value)
                           ? 'border-black ring-2 ring-black ring-offset-2'
                           : 'border-gray-300 hover:border-gray-400'
@@ -409,7 +409,7 @@ export default function ShopPage() {
               {/* Clear Filters */}
               <button
                 onClick={clearFilters}
-                className="w-full text-sm text-gray-600 hover:text-gray-900 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="w-full text-xs sm:text-sm text-gray-600 hover:text-gray-900 py-2 sm:py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors touch-friendly"
               >
                 Limpiar Filtros
               </button>
@@ -419,21 +419,21 @@ export default function ShopPage() {
           {/* Products */}
           <div className="flex-1">
             {/* Sort and Results Count */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-              <div className="text-sm text-gray-600 mb-4 sm:mb-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
+              <div className="text-xs sm:text-sm text-gray-600 order-2 sm:order-1">
                 {productsLoading ? (
                   'Cargando productos...'
                 ) : (
                   `Mostrando ${filteredProducts.length} de ${products?.length || 0} productos`
                 )}
               </div>
-              <div className="flex items-center space-x-2">
-                <label htmlFor="sort-select" className="text-sm text-gray-600">Ordenar por:</label>
+              <div className="flex items-center space-x-2 order-1 sm:order-2">
+                <label htmlFor="sort-select" className="text-xs sm:text-sm text-gray-600 whitespace-nowrap">Ordenar por:</label>
                 <select
                   id="sort-select"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+                  className="px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-black focus:border-black text-xs sm:text-sm min-w-0 flex-1 sm:flex-initial"
                 >
                   {sortOptions.map(option => (
                     <option key={option.value} value={option.value}>

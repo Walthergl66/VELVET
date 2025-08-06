@@ -50,22 +50,22 @@ export default function Header({
   return (
     <>
       <header className="bg-white shadow-sm sticky top-0 z-30">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="container-responsive">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
-            <div className="flex-shrink-0 flex items-center justify-start w-70">
-              <Link href="/" className="text-4xl font-bold bg-gradient-to-r from-[#ff3b4a] via-[#B32134] to-[#490000] bg-clip-text text-transparent">
+            <div className="flex-shrink-0 flex items-center justify-start min-w-0">
+              <Link href="/" className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-[#ff3b4a] via-[#B32134] to-[#490000] bg-clip-text text-transparent">
                 VELVET
               </Link>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-8">
+            <nav className="hidden lg:flex space-x-6 xl:space-x-8">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-gray-900 hover:text-gray-600 transition-colors font-medium"
+                  className="text-gray-900 hover:text-gray-600 transition-colors font-medium text-sm xl:text-base"
                 >
                   {item.name}
                 </Link>
@@ -75,7 +75,7 @@ export default function Header({
               {panelButton && (
                 <Link
                   href={panelButton.href}
-                  className="text-gray-900 hover:text-gray-600 transition-colors font-medium"
+                  className="text-gray-900 hover:text-gray-600 transition-colors font-medium text-sm xl:text-base"
                 >
                   {panelButton.name}
                 </Link>
@@ -85,15 +85,15 @@ export default function Header({
               {isAuthenticated && isUser && (
                 <Link
                   href="/user/orders"
-                  className="text-gray-900 hover:text-gray-600 transition-colors font-medium"
+                  className="text-gray-900 hover:text-gray-600 transition-colors font-medium text-sm xl:text-base"
                 >
                   Historial
                 </Link>
               )}
             </nav>
 
-            {/* Search Bar */}
-            <div className="hidden lg:flex flex-1 max-w-2xl mx-8">
+            {/* Search Bar - Hidden on small screens, visible on large */}
+            <div className="hidden xl:flex flex-1 max-w-md 2xl:max-w-2xl mx-4 2xl:mx-8">
               <ProductSearchDropdown 
                 placeholder="Buscar productos..." 
                 className="w-full"
@@ -101,13 +101,13 @@ export default function Header({
             </div>
 
             {/* Right Side Actions */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
 
               {/* User Menu */}
               <div className="relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                  className="p-2 text-gray-600 hover:text-gray-900 transition-colors btn-touch"
                   aria-label="Menú de usuario"
                   aria-expanded={isUserMenuOpen ? "true" : "false"}
                 >
@@ -117,14 +117,14 @@ export default function Header({
                 </button>
 
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                  <div className="absolute right-0 mt-2 w-48 sm:w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                     {isAuthenticated ? (
                       <div className="py-1">
                         <div className="px-4 py-2 border-b border-gray-100">
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-gray-900 truncate">
                             {user?.user_metadata?.first_name || user?.email}
                           </p>
-                          <p className="text-xs text-gray-500">{user?.email}</p>
+                          <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                           {!isLoading && role && (
                             <div className="mt-1">
                               <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
@@ -141,13 +141,6 @@ export default function Header({
                         {/* Opciones para user */}
                         {isUser && (
                           <>
-                            {/* <Link
-                              href="/user/dashboard"
-                              onClick={() => setIsUserMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                              Mi Dashboard
-                            </Link> */}
                             <Link
                               href="/user/profile"
                               onClick={() => setIsUserMenuOpen(false)}
@@ -175,13 +168,6 @@ export default function Header({
                         {/* Opciones para admin */}
                         {isAdmin && (
                           <>
-                            {/* <Link
-                              href="/admin"
-                              onClick={() => setIsUserMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                            >
-                              Admin Dashboard
-                            </Link> */}
                             <Link
                               href="/admin/products"
                               onClick={() => setIsUserMenuOpen(false)}
@@ -240,14 +226,14 @@ export default function Header({
               {/* Cart */}
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors btn-touch"
                 aria-label={getCartAriaLabel()}
               >
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119.993z" />
                 </svg>
                 {getItemCount() > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center font-medium">
                     {getItemCount()}
                   </span>
                 )}
@@ -256,7 +242,7 @@ export default function Header({
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="lg:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors btn-touch"
                 aria-label="Menú de navegación móvil"
                 aria-expanded={isMobileMenuOpen ? "true" : "false"}
               >
@@ -273,16 +259,24 @@ export default function Header({
             </div>
           </div>
 
+          {/* Mobile Search Bar */}
+          <div className="xl:hidden border-t border-gray-200 p-3 safe-area-padding">
+            <ProductSearchDropdown 
+              placeholder="Buscar productos..." 
+              className="w-full"
+            />
+          </div>
+
           {/* Mobile Menu */}
           {isMobileMenuOpen && (
-            <div className="md:hidden border-t border-gray-200">
-              <div className="px-2 pt-2 pb-3 space-y-1">
+            <div className="lg:hidden border-t border-gray-200">
+              <div className="px-2 pt-2 pb-3 space-y-1 safe-area-padding">
                 {navigation.map((item) => (
                   <Link
                     key={item.name}
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-3 py-2 text-base font-medium text-gray-900 hover:text-gray-600 hover:bg-gray-50 rounded-md"
+                    className="block px-3 py-3 text-base font-medium text-gray-900 hover:text-gray-600 hover:bg-gray-50 rounded-md"
                   >
                     {item.name}
                   </Link>
@@ -293,7 +287,7 @@ export default function Header({
                   <Link
                     href={panelButton.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-3 py-2 text-base font-medium text-gray-900 hover:text-gray-600 hover:bg-gray-50 rounded-md"
+                    className="block px-3 py-3 text-base font-medium text-gray-900 hover:text-gray-600 hover:bg-gray-50 rounded-md"
                   >
                     {panelButton.name}
                   </Link>
@@ -304,7 +298,7 @@ export default function Header({
                   <Link
                     href="/user/orders"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="block px-3 py-2 text-base font-medium text-gray-900 hover:text-gray-600 hover:bg-gray-50 rounded-md"
+                    className="block px-3 py-3 text-base font-medium text-gray-900 hover:text-gray-600 hover:bg-gray-50 rounded-md"
                   >
                     Historial
                   </Link>

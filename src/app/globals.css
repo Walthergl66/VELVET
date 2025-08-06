@@ -16,10 +16,128 @@
   }
 }
 
+/* Base responsive settings */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+/* Responsive container utilities */
+.container-responsive {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-responsive {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-responsive {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container-responsive {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
+
+/* Responsive typography utilities */
+.text-responsive-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.text-responsive-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.text-responsive-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.text-responsive-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.text-responsive-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.text-responsive-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.text-responsive-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.text-responsive-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-xl { font-size: 1.5rem; line-height: 2rem; }
+  .text-responsive-2xl { font-size: 1.875rem; line-height: 2.25rem; }
+  .text-responsive-3xl { font-size: 2.25rem; line-height: 2.5rem; }
+  .text-responsive-4xl { font-size: 3rem; line-height: 1; }
+}
+
+@media (min-width: 1024px) {
+  .text-responsive-2xl { font-size: 2.25rem; line-height: 2.5rem; }
+  .text-responsive-3xl { font-size: 3rem; line-height: 1; }
+  .text-responsive-4xl { font-size: 3.75rem; line-height: 1; }
+}
+
+/* Responsive spacing utilities */
+.spacing-responsive-sm {
+  padding: 1rem;
+}
+
+.spacing-responsive-md {
+  padding: 1.5rem;
+}
+
+.spacing-responsive-lg {
+  padding: 2rem;
+}
+
+@media (min-width: 640px) {
+  .spacing-responsive-sm { padding: 1.5rem; }
+  .spacing-responsive-md { padding: 2rem; }
+  .spacing-responsive-lg { padding: 3rem; }
+}
+
+@media (min-width: 1024px) {
+  .spacing-responsive-sm { padding: 2rem; }
+  .spacing-responsive-md { padding: 3rem; }
+  .spacing-responsive-lg { padding: 4rem; }
 }
 
 /* Mejoras globales para inputs y formularios */
@@ -45,6 +163,19 @@ textarea,
 select {
   color: #111827 !important;
   border-color: #9CA3AF;
+  font-size: 16px; /* Prevent zoom on iOS */
+}
+
+@media (min-width: 1024px) {
+  input[type="text"],
+  input[type="email"], 
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 14px; /* Desktop size */
+  }
 }
 
 input[type="text"]:focus,
@@ -56,5 +187,65 @@ textarea:focus,
 select:focus {
   border-color: #000000;
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Touch-friendly buttons on mobile */
+@media (max-width: 1023px) {
+  button {
+    min-height: 44px; /* iOS recommended touch target size */
+  }
+  
+  .btn-touch {
+    padding: 0.75rem 1.5rem;
+    min-height: 48px;
+  }
+}
+
+/* Responsive images */
+.img-responsive {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Safe areas for mobile devices */
+.safe-area-padding {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.safe-area-padding-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Responsive grid utilities */
+.grid-responsive-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.grid-responsive-2 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.grid-responsive-3 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.grid-responsive-4 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .grid-responsive-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-responsive-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-responsive-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 768px) {
+  .grid-responsive-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid-responsive-4 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+  .grid-responsive-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 

@@ -44,16 +44,16 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
       )}
 
       {/* Drawer */}
-      <div className={`fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 transform transition-transform duration-300 ease-in-out ${
+      <div className={`fixed top-0 right-0 h-full w-full sm:max-w-md lg:max-w-lg bg-white z-50 transform transition-transform duration-300 ease-in-out safe-area-padding ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold">Carrito de Compras</h2>
+          <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200">
+            <h2 className="text-base sm:text-lg font-semibold">Carrito de Compras</h2>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full"
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors touch-friendly"
               aria-label="Cerrar carrito de compras"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,25 +65,25 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
           {/* Contenido del carrito */}
           <div className="flex-1 overflow-y-auto">
             {cart.items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-                <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex flex-col items-center justify-center h-full p-4 sm:p-8 text-center">
+                <svg className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mb-3 sm:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293a1 1 0 000 1.414L7 19m5-6v6a1 1 0 001 1h4a1 1 0 001-1v-6m-5-6v-2a4 4 0 018 0v2m-8 0V7a4 4 0 118 0v2m-8 0h8" />
                 </svg>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Tu carrito está vacío</h3>
-                <p className="text-gray-500 mb-4">Agrega algunos productos para continuar</p>
+                <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">Tu carrito está vacío</h3>
+                <p className="text-sm sm:text-base text-gray-500 mb-4">Agrega algunos productos para continuar</p>
                 <Link
                   href="/shop"
                   onClick={onClose}
-                  className="bg-black text-white px-6 py-2 rounded-full hover:bg-black focus:bg-black transition-all duration-300 shadow-md transform hover:scale-105 hover:shadow-xl focus:scale-105 focus:shadow-xl"
+                  className="bg-black text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-gray-800 focus:bg-gray-800 transition-all duration-300 shadow-md transform hover:scale-105 hover:shadow-xl focus:scale-105 focus:shadow-xl text-sm sm:text-base touch-friendly"
                 >
                   Explorar Productos
                 </Link>
               </div>
             ) : (
-              <div className="p-4 space-y-4">
+              <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
                 {cart.items.map((item) => (
-                  <div key={item.id} className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg">
-                    <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden">
+                  <div key={item.id} className="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 border border-gray-200 rounded-lg">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                       <img
                         src={item.product.images?.[0] || '/images/placeholder.jpg'}
                         alt={item.product.name}
@@ -92,39 +92,39 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-gray-900 truncate">
+                      <h4 className="text-xs sm:text-sm font-medium text-gray-900 truncate">
                         {item.product.name}
                       </h4>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs sm:text-sm text-gray-500 mt-1">
                         Talla: {item.size} | Color: {item.color}
                       </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-between mt-2 sm:mt-3">
+                        <div className="flex items-center space-x-1 sm:space-x-2">
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                            className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors touch-friendly"
                             aria-label={`Disminuir cantidad de ${item.product.name}`}
                           >
-                            -
+                            <span className="text-xs sm:text-sm">-</span>
                           </button>
-                          <span className="text-sm font-medium">{item.quantity}</span>
+                          <span className="text-xs sm:text-sm font-medium px-2">{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="w-6 h-6 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                            className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors touch-friendly"
                             aria-label={`Aumentar cantidad de ${item.product.name}`}
                           >
-                            +
+                            <span className="text-xs sm:text-sm">+</span>
                           </button>
                         </div>
                         <button
                           onClick={() => removeFromCart(item.id)}
-                          className="text-red-500 hover:text-red-700 text-sm"
+                          className="text-red-500 hover:text-red-700 text-xs sm:text-sm transition-colors touch-friendly"
                           aria-label={`Eliminar ${item.product.name} del carrito`}
                         >
                           Eliminar
                         </button>
                       </div>
-                      <p className="text-sm font-semibold text-gray-900 mt-2">
+                      <p className="text-xs sm:text-sm font-semibold text-gray-900 mt-1 sm:mt-2">
                         {formatPrice((item.product.discount_price || item.product.price) * item.quantity)}
                       </p>
                     </div>
@@ -136,21 +136,21 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
 
           {/* Footer con resumen y botón de checkout */}
           {cart.items.length > 0 && (
-            <div className="border-t border-gray-200 p-4 space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
+            <div className="border-t border-gray-200 p-3 sm:p-4 space-y-3 sm:space-y-4">
+              <div className="space-y-1 sm:space-y-2">
+                <div className="flex justify-between text-xs sm:text-sm">
                   <span>Subtotal:</span>
                   <span>{formatPrice(cart.subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-xs sm:text-sm">
                   <span>Envío:</span>
                   <span>{cart.shipping === 0 ? 'Gratis' : formatPrice(cart.shipping)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-xs sm:text-sm">
                   <span>IVA:</span>
                   <span>{formatPrice(cart.tax)}</span>
                 </div>
-                <div className="flex justify-between text-lg font-semibold border-t border-gray-200 pt-2">
+                <div className="flex justify-between text-base sm:text-lg font-semibold border-t border-gray-200 pt-2">
                   <span>Total:</span>
                   <span>{formatPrice(cart.total)}</span>
                 </div>
@@ -160,14 +160,14 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                 <Link
                   href="/checkout"
                   onClick={onClose}
-                  className="w-full bg-black text-white py-3 rounded-full text-center block hover:bg-gray-800 transition-colors font-medium"
+                  className="w-full bg-black text-white py-2.5 sm:py-3 rounded-full text-center block hover:bg-gray-800 transition-colors font-medium text-sm sm:text-base touch-friendly"
                 >
                   Finalizar Compra
                 </Link>
                 <Link
                   href="/cart"
                   onClick={onClose}
-                  className="w-full border border-gray-300 text-gray-700 py-3 rounded-full text-center block hover:bg-gray-50 transition-colors"
+                  className="w-full border border-gray-300 text-gray-700 py-2.5 sm:py-3 rounded-full text-center block hover:bg-gray-50 transition-colors text-sm sm:text-base touch-friendly"
                 >
                   Ver Carrito Completo
                 </Link>

@@ -9,20 +9,20 @@ import Link from 'next/link';
 const Footer: React.FC = () => {
   return (
   <footer className="bg-black/90 backdrop-blur-md text-white border-t border-gray-700/50">
-    <div className="container mx-auto px-4 py-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+    <div className="container-responsive py-8 sm:py-10 lg:py-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 lg:gap-12">
         {/* Brand Information */}
-        <div className="space-y-6">
-          <Link href="/" className="flex items-center space-x-2 group">
-            <div className="bg-white/90 text-black px-3 py-1 font-bold text-xl tracking-wider rounded-lg group-hover:bg-white transition-all duration-300 shadow-lg">
+        <div className="space-y-4 sm:space-y-6 text-center sm:text-left">
+          <Link href="/" className="flex items-center justify-center sm:justify-start space-x-2 group">
+            <div className="bg-white/90 text-black px-3 py-1 font-bold text-lg sm:text-xl tracking-wider rounded-lg group-hover:bg-white transition-all duration-300 shadow-lg">
               VELVET
             </div>
           </Link>
-          <p className="text-gray-300/80 text-sm leading-relaxed">
+          <p className="text-gray-300/80 text-sm leading-relaxed max-w-sm mx-auto sm:mx-0">
             Tu destino para la moda más elegante y sofisticada. 
             Descubre piezas únicas que reflejan tu estilo personal.
           </p>
-          <div className="flex space-x-5">
+          <div className="flex space-x-4 sm:space-x-5 justify-center sm:justify-start">
             {[
               { 
                 name: 'Facebook', 
@@ -48,10 +48,10 @@ const Footer: React.FC = () => {
                 href={social.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`${social.color} text-gray-300 hover:text-white transition-all duration-300 w-9 h-9 rounded-full flex items-center justify-center`}
+                className={`${social.color} text-gray-300 hover:text-white transition-all duration-300 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center btn-touch`}
                 aria-label={social.name}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 24 24">
                   <path d={social.icon} />
                 </svg>
               </a>
@@ -60,9 +60,9 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Shop Links */}
-        <div className="space-y-6">
-          <h3 className="text-lg font-semibold tracking-wider text-white/90">Explorar</h3>
-          <ul className="space-y-3">
+        <div className="space-y-4 sm:space-y-6 text-center sm:text-left">
+          <h3 className="text-base sm:text-lg font-semibold tracking-wider text-white/90">Explorar</h3>
+          <ul className="space-y-2 sm:space-y-3">
             {[
               { name: 'Todos los Productos', href: '/shop' },
               { name: 'Mujer', href: '/shop?category=women' },
@@ -74,9 +74,9 @@ const Footer: React.FC = () => {
               <li key={item.name}>
                 <Link 
                   href={item.href} 
-                  className="text-gray-300/80 hover:text-white transition-all duration-300 text-sm flex items-center group"
+                  className="text-gray-300/80 hover:text-white transition-all duration-300 text-sm flex items-center justify-center sm:justify-start group"
                 >
-                  <span className="w-2 h-0.5 bg-gray-500 rounded-full mr-3 group-hover:w-3 group-hover:bg-white transition-all duration-300"></span>
+                  <span className="w-2 h-0.5 bg-gray-500 rounded-full mr-3 group-hover:w-3 group-hover:bg-white transition-all duration-300 hidden sm:block"></span>
                   {item.name}
                 </Link>
               </li>
@@ -85,22 +85,21 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Customer Service */}
-        <div className="space-y-6">
-          <h3 className="text-lg font-semibold tracking-wider text-white/90">Servicio</h3>
-          <ul className="space-y-3">
+        <div className="space-y-4 sm:space-y-6 text-center sm:text-left sm:col-span-2 lg:col-span-1">
+          <h3 className="text-base sm:text-lg font-semibold tracking-wider text-white/90">Servicio</h3>
+          <ul className="space-y-2 sm:space-y-3">
             {[
               { name: 'Contacto', href: '/servicio-al-cliente/contact' },
               { name: 'Envíos', href: '/servicio-al-cliente/envios' },
               { name: 'Guía de Tallas', href: '/servicio-al-cliente/guia-tallas' },
-              //{ name: 'Cuidado de Prendas', href: '/servicio-al-cliente/cuidado-prendas' },
               { name: 'Preguntas Frecuentes', href: '/servicio-al-cliente/faq' }
             ].map((item) => (
               <li key={item.name}>
                 <Link 
                   href={item.href} 
-                  className="text-gray-300/80 hover:text-white transition-all duration-300 text-sm flex items-center group"
+                  className="text-gray-300/80 hover:text-white transition-all duration-300 text-sm flex items-center justify-center sm:justify-start group"
                 >
-                  <span className="w-2 h-0.5 bg-gray-500 rounded-full mr-3 group-hover:w-3 group-hover:bg-white transition-all duration-300"></span>
+                  <span className="w-2 h-0.5 bg-gray-500 rounded-full mr-3 group-hover:w-3 group-hover:bg-white transition-all duration-300 hidden sm:block"></span>
                   {item.name}
                 </Link>
               </li>
@@ -110,12 +109,12 @@ const Footer: React.FC = () => {
       </div>
 
       {/* Payment Methods & Copyright */}
-      <div className="border-t border-gray-700/50 mt-12 pt-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="border-t border-gray-700/50 mt-8 sm:mt-10 lg:mt-12 pt-6 sm:pt-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6 text-center sm:text-left">
           <div>
             <h4 className="text-xs uppercase tracking-wider mb-3 text-gray-400">Métodos de Pago</h4>
-            <div className="flex flex-wrap gap-2">
-              {['VISA', 'PAYPAL',].map((method) => (
+            <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+              {['VISA', 'PAYPAL'].map((method) => (
                 <div 
                   key={method}
                   className="bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-300 hover:bg-white/10 transition-all duration-200 backdrop-blur-sm"
@@ -126,7 +125,7 @@ const Footer: React.FC = () => {
             </div>
           </div>
           <div className="text-xs text-gray-400/80 tracking-wide">
-            <p>&copy; {new Date().getFullYear()} VELVET.</p>
+            <p>&copy; {new Date().getFullYear()} VELVET. Todos los derechos reservados.</p>
           </div>
         </div>
       </div>
