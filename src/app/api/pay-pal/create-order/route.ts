@@ -8,20 +8,35 @@ const PAYPAL_BASE_URL = process.env.NODE_ENV === 'production'
 
 async function getPayPalAccessToken() {
   try {
+    console.log('🔐 Requesting PayPal access token...');
+    console.log('PayPal base URL:', PAYPAL_BASE_URL);
+    
+    const authString = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64');
+    console.log('Auth string length:', authString.length);
+
     const response = await fetch(`${PAYPAL_BASE_URL}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64')}`,
+        'Authorization': `Basic ${authString}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: 'grant_type=client_credentials',
     });
 
+    console.log('PayPal token response status:', response.status);
+
     if (!response.ok) {
-      throw new Error('Error al obtener el token de acceso de PayPal');
+      const errorText = await response.text();
+      console.error('PayPal token error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      });
+      throw new Error(`Error al obtener el token de acceso de PayPal: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('✅ PayPal access token obtained');
     return data.access_token;
   } catch (error) {
     console.error('Error getting PayPal access token:', error);
@@ -31,16 +46,29 @@ async function getPayPalAccessToken() {
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('📥 PayPal create-order API called');
+    
     const { amount, currency = 'USD', items, shippingInfo } = await req.json();
 
     console.log('PayPal order request:', { amount, currency, items: items?.length || 0 });
 
     if (!amount || amount <= 0) {
+      console.error('❌ Invalid amount:', amount);
       return NextResponse.json(
         { error: 'El monto debe ser mayor a 0' },
         { status: 400 }
       );
     }
+
+    console.log('🔑 Checking PayPal credentials...');
+    console.log('Environment variables:', {
+      NODE_ENV: process.env.NODE_ENV,
+      PAYPAL_BASE_URL,
+      hasClientId: !!PAYPAL_CLIENT_ID,
+      hasClientSecret: !!PAYPAL_CLIENT_SECRET,
+      clientIdLength: PAYPAL_CLIENT_ID?.length || 0,
+      clientSecretLength: PAYPAL_CLIENT_SECRET?.length || 0
+    });
 
     if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
       console.error('PayPal credentials missing:', { 
@@ -53,7 +81,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    console.log('🔐 Getting PayPal access token...');
     const accessToken = await getPayPalAccessToken();
+    console.log('✅ Access token obtained successfully');
 
     // Como trabajamos en USD, no necesitamos conversión
     const amountInUSD = amount.toFixed(2);
@@ -77,7 +107,11 @@ export async function POST(req: NextRequest) {
           }
         }
       }
-    };    const response = await fetch(`${PAYPAL_BASE_URL}/v2/checkout/orders`, {
+    };
+
+    console.log('Creating PayPal order with data:', JSON.stringify(orderData, null, 2));
+
+    const response = await fetch(`${PAYPAL_BASE_URL}/v2/checkout/orders`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -92,15 +126,21 @@ export async function POST(req: NextRequest) {
       console.error('PayPal order creation error:', {
         status: response.status,
         statusText: response.statusText,
-        errorData
+        errorData,
+        orderData: JSON.stringify(orderData, null, 2)
       });
       return NextResponse.json(
-        { error: `Error al crear la orden de PayPal: ${response.status} ${response.statusText}` },
+        { error: `Error al crear la orden de PayPal: ${response.status} - ${errorData}` },
         { status: response.status }
       );
     }
 
     const order = await response.json();
+    console.log('PayPal order created successfully:', { 
+      orderId: order.id, 
+      status: order.status,
+      fullOrder: JSON.stringify(order, null, 2)
+    });
 
     return NextResponse.json({
       id: order.id,

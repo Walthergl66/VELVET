@@ -33,6 +33,7 @@ const PayPalPaymentForm: React.FC<PayPalPaymentFormProps> = ({
   const createOrder = async () => {
     try {
       setIsProcessing(true);
+      console.log('🔄 Creating PayPal order with amount:', amount);
 
       const items = cart.items.map(item => ({
         name: item.product?.name || 'Producto',
@@ -42,34 +43,55 @@ const PayPalPaymentForm: React.FC<PayPalPaymentFormProps> = ({
         color: item.color,
       }));
 
+      console.log('📦 Order items:', items);
+
+      const requestBody = {
+        amount,
+        currency: 'USD',
+        items,
+        shippingInfo,
+      };
+
+      console.log('📤 Sending request to PayPal API:', requestBody);
+
       const response = await fetch('/api/pay-pal/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          amount,
-          currency: 'USD',
-          items,
-          shippingInfo,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('📥 PayPal API response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.text();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = await response.text();
+        }
         console.error('PayPal API Error:', {
           status: response.status,
           statusText: response.statusText,
           errorData
         });
-        throw new Error(`Error al crear la orden de PayPal: ${response.status} - ${errorData}`);
+        throw new Error(`Error al crear la orden de PayPal: ${response.status} - ${JSON.stringify(errorData)}`);
       }
 
       const orderData = await response.json();
+      console.log('✅ PayPal order created successfully:', orderData);
+      
+      if (!orderData.id) {
+        console.error('❌ No order ID received from PayPal API');
+        throw new Error('No se recibió un ID de orden válido de PayPal');
+      }
+
       return orderData.id;
     } catch (error) {
       console.error('Error creating PayPal order:', error);
-      onError('Error al crear la orden de PayPal');
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      onError(`Error al crear la orden de PayPal: ${errorMessage}`);
       return null;
     } finally {
       setIsProcessing(false);
