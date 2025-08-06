@@ -25,6 +25,13 @@ const CheckoutSuccessContent = () => {
       setTransactionId(paypalTransactionId);
       setPaymentMethod('PayPal');
     }
+
+    // Disparar evento personalizado para notificar que las estadísticas del usuario deben actualizarse
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('userStatsUpdate'));
+      }, 1000); // Dar tiempo para que la orden se procese completamente
+    }
   }, [searchParams]);
 
   return (

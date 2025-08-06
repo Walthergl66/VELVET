@@ -43,7 +43,7 @@ export default function AddressesPage() {
     city: '',
     state: '',
     zip_code: '',
-    country: 'México',
+    country: 'Ecuador',
     is_default: false
   });
 
@@ -106,7 +106,7 @@ export default function AddressesPage() {
       city: '',
       state: '',
       zip_code: '',
-      country: 'México',
+      country: 'Ecuador',
       is_default: false
     });
     setEditingAddress(null);
@@ -384,7 +384,7 @@ export default function AddressesPage() {
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
                   >
-                    <option value="México">México</option>
+                    <option value="Ecuador">Ecuador</option>
                   </select>
                 </div>
 

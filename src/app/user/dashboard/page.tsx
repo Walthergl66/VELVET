@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserStats } from '@/hooks/useUserStats';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
@@ -11,9 +12,10 @@ import { redirect } from 'next/navigation';
  */
 
 export default function UserDashboard() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { stats, loading: statsLoading, error: statsError } = useUserStats();
 
-  if (loading) {
+  if (authLoading || statsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
@@ -25,6 +27,14 @@ export default function UserDashboard() {
     redirect('/auth/login');
   }
 
+  // Formatear el total gastado
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-MX', {
+      style: 'currency',
+      currency: 'MXN'
+    }).format(amount);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12 px-2 sm:px-6 lg:px-8 flex items-center justify-center">
       <div className="w-full max-w-7xl space-y-10">
@@ -32,10 +42,26 @@ export default function UserDashboard() {
         <div className="mb-8 flex flex-col items-center">
           <h1 className="text-4xl font-extrabold text-black select-none">Bienvenido, {user?.user_metadata?.first_name || user?.email}</h1>
           <p className="text-gray-600 mt-2 text-lg text-center">Gestiona tu cuenta y revisa tus pedidos desde aquí</p>
+          
+          {/* Botón de actualización (solo para desarrollo/testing) */}
+          {process.env.NODE_ENV === 'development' && (
+            <button 
+              onClick={() => {
+                console.log('🔄 Actualizando estadísticas manualmente...');
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('userStatsUpdate'));
+                }
+              }}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
+            >
+              🔄 Actualizar Estadísticas
+            </button>
+          )}
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          {/* Tarjeta de Pedidos Totales */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 flex items-center">
             <div className="flex-shrink-0">
               <svg className="h-10 w-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,9 +70,11 @@ export default function UserDashboard() {
             </div>
             <div className="ml-6">
               <h3 className="text-lg font-semibold text-gray-900">Pedidos Totales</h3>
-              <p className="text-2xl font-bold text-blue-600">0</p>
+              <p className="text-2xl font-bold text-blue-600">{stats?.totalOrders || 0}</p>
             </div>
           </div>
+          
+          {/* Tarjeta de Total Gastado */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 flex items-center">
             <div className="flex-shrink-0">
               <svg className="h-10 w-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,9 +83,11 @@ export default function UserDashboard() {
             </div>
             <div className="ml-6">
               <h3 className="text-lg font-semibold text-gray-900">Total Gastado</h3>
-              <p className="text-2xl font-bold text-green-600">$0.00</p>
+              <p className="text-2xl font-bold text-green-600">{formatCurrency(stats?.totalSpent || 0)}</p>
             </div>
           </div>
+          
+          {/* Tarjeta de Favoritos */}
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8 flex items-center">
             <div className="flex-shrink-0">
               <svg className="h-10 w-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,7 +96,7 @@ export default function UserDashboard() {
             </div>
             <div className="ml-6">
               <h3 className="text-lg font-semibold text-gray-900">Favoritos</h3>
-              <p className="text-2xl font-bold text-red-600">0</p>
+              <p className="text-2xl font-bold text-red-600">{stats?.favorites || 0}</p>
             </div>
           </div>
         </div>
@@ -125,23 +155,43 @@ export default function UserDashboard() {
               <h2 className="text-2xl font-bold text-black">Historial de Pedidos</h2>
             </div>
             <div className="p-8">
-              <div className="text-center py-8">
-                <svg className="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No tienes pedidos aún
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  Explora nuestra tienda y realiza tu primera compra
-                </p>
-                <Link
-                  href="/shop"
-                  className="inline-flex items-center bg-black text-white px-6 py-3 rounded-full font-semibold shadow hover:scale-105 transition-all duration-200"
-                >
-                  Explorar Tienda
-                </Link>
-              </div>
+              {stats?.totalOrders && stats.totalOrders > 0 ? (
+                <div className="text-center py-8">
+                  <svg className="h-12 w-12 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Tienes {stats.totalOrders} pedido{stats.totalOrders > 1 ? 's' : ''}
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    Consulta el detalle y estado de todos tus pedidos
+                  </p>
+                  <Link
+                    href="/user/orders"
+                    className="inline-flex items-center bg-black text-white px-6 py-3 rounded-full font-semibold shadow hover:scale-105 transition-all duration-200"
+                  >
+                    Ver Mis Pedidos
+                  </Link>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <svg className="h-12 w-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No tienes pedidos aún
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    Explora nuestra tienda y realiza tu primera compra
+                  </p>
+                  <Link
+                    href="/shop"
+                    className="inline-flex items-center bg-black text-white px-6 py-3 rounded-full font-semibold shadow hover:scale-105 transition-all duration-200"
+                  >
+                    Explorar Tienda
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
