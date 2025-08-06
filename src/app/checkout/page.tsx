@@ -56,14 +56,21 @@ const CheckoutPage = () => {
     phone: ''
   });
 
+  // Usar los mismos cálculos que CartContext
   const subtotal = cart.items.reduce((sum, item) => {
-    const price = item.product?.price || 0;
+    const price = item.product?.discount_price || item.product?.price || 0;
     return sum + (price * item.quantity);
   }, 0);
-  // Ajuste para Ecuador: envío gratis en compras mayores a $100 USD
-  const shipping = subtotal > 100 ? 0 : 15; // $15 USD envío estándar en Ecuador
-  const tax = subtotal * 0.12; // IVA 12% en Ecuador
-  const total = subtotal + shipping + tax;
+  
+  // Usar la misma lógica que CartContext: envío gratis arriba de $50, costo $5
+  const shipping = subtotal >= 50 ? 0 : 5;
+  
+  // Usar el mismo porcentaje de impuesto que CartContext: 15% IVA
+  const tax = subtotal * 0.15;
+  const discount = 0; // Mismo que CartContext
+  
+  // Calcular total con la misma lógica que CartContext
+  const total = subtotal + tax + shipping - discount;
 
   useEffect(() => {
     if (getItemCount() === 0) {
@@ -572,39 +579,101 @@ const CheckoutPage = () => {
       
       <div className="space-y-4">
         {cart.items.map((item) => {
-          const price = item.product?.price || 0;
+          // Usar la misma lógica de precio que CartContext
+          const price = item.product?.discount_price || item.product?.price || 0;
+          const itemTotal = price * item.quantity;
           return (
             <div key={item.id} className="flex justify-between items-start border-b pb-3">
               <div className="flex-1">
-                <h4 className="font-medium">{item.product?.name || 'Producto'}</h4>
+                <h4 className="font-medium text-gray-800">{item.product?.name || 'Producto'}</h4>
                 {item.size && <p className="text-sm text-gray-600">Talla: {item.size}</p>}
                 {item.color && <p className="text-sm text-gray-600">Color: {item.color}</p>}
-                <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
+                <p className="text-sm text-gray-600">
+                  Cantidad: {item.quantity} × ${price.toFixed(2)}
+                  {item.product?.discount_price && (
+                    <span className="ml-2 text-gray-400 line-through text-xs">
+                      ${item.product.price.toFixed(2)}
+                    </span>
+                  )}
+                </p>
               </div>
-              <p className="font-medium">${(price * item.quantity).toFixed(2)}</p>
+              <p className="font-semibold text-gray-800">${itemTotal.toFixed(2)}</p>
             </div>
           );
         })}
         
-        <div className="border-t pt-4 space-y-2">
-          <div className="flex justify-between">
-            <span>Subtotal:</span>
-            <span>${subtotal.toFixed(2)}</span>
+        <div className="border-t pt-4 space-y-3">
+          <div className="flex justify-between text-gray-700">
+            <span className="flex items-center">
+              📋 <span className="ml-1">Subtotal:</span>
+            </span>
+            <span className="font-medium">${subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between">
-            <span>Envío:</span>
-            <span>{shipping === 0 ? 'Gratis' : `$${shipping.toFixed(2)}`}</span>
+          
+          <div className="flex justify-between text-gray-700">
+            <span className="flex items-center">
+              🚚 <span className="ml-1">Envío:</span>
+            </span>
+            <span className="font-medium">
+              {shipping === 0 ? (
+                <span className="text-green-600 font-semibold">¡Gratis!</span>
+              ) : (
+                `$${shipping.toFixed(2)}`
+              )}
+            </span>
           </div>
-          <div className="flex justify-between">
-            <span>IVA (12%):</span>
-            <span>${tax.toFixed(2)}</span>
+          
+          <div className="flex justify-between text-gray-700">
+            <span className="flex items-center">
+              📊 <span className="ml-1">IVA (15%):</span>
+            </span>
+            <span className="font-medium">${tax.toFixed(2)}</span>
           </div>
-          <div className="border-t pt-2">
-            <div className="flex justify-between font-bold text-lg">
-              <span>Total:</span>
-              <span>${total.toFixed(2)}</span>
+          
+          {discount > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span className="flex items-center">
+                🎟️ <span className="ml-1">Descuento:</span>
+              </span>
+              <span className="font-medium">-${discount.toFixed(2)}</span>
+            </div>
+          )}
+          
+          <div className="border-t pt-3">
+            <div className="flex justify-between font-bold text-lg text-gray-900 bg-green-50 p-3 rounded-lg">
+              <span className="flex items-center">
+                💰 <span className="ml-1">Total:</span>
+              </span>
+              <span className="text-green-700">${total.toFixed(2)}</span>
             </div>
           </div>
+          
+          {/* Mostrar información adicional si hay envío gratis */}
+          {subtotal >= 50 && (
+            <div className="bg-green-50 border border-green-200 rounded-md p-3 mt-3">
+              <p className="text-sm text-green-700 text-center">
+                🎉 ¡Felicidades! Tienes envío gratis por compras mayores a $50
+              </p>
+            </div>
+          )}
+          
+          {/* Mostrar cuánto falta para envío gratis */}
+          {subtotal < 50 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-3">
+              <p className="text-sm text-blue-700 text-center">
+                💡 Agrega ${(50 - subtotal).toFixed(2)} más para obtener envío gratis
+              </p>
+            </div>
+          )}
+          
+          {/* Verificar que los totales coinciden con CartContext */}
+          {(Math.abs(cart.total - total) > 0.01) && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-3">
+              <p className="text-sm text-yellow-700 text-center">
+                ⚠️ Detectada diferencia en cálculos. CartContext: ${cart.total.toFixed(2)}, Checkout: ${total.toFixed(2)}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

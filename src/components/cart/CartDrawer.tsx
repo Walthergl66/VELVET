@@ -92,10 +92,10 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                      <h4 className="text-xs sm:text-sm font-medium text-black truncate">
                         {item.product.name}
                       </h4>
-                      <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                      <p className="text-xs sm:text-sm text-gray-800 mt-1">
                         Talla: {item.size} | Color: {item.color}
                       </p>
                       <div className="flex items-center justify-between mt-2 sm:mt-3">
@@ -124,7 +124,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                           Eliminar
                         </button>
                       </div>
-                      <p className="text-xs sm:text-sm font-semibold text-gray-900 mt-1 sm:mt-2">
+                      <p className="text-xs sm:text-sm font-semibold text-black mt-1 sm:mt-2">
                         {formatPrice((item.product.discount_price || item.product.price) * item.quantity)}
                       </p>
                     </div>
@@ -138,19 +138,19 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
           {cart.items.length > 0 && (
             <div className="border-t border-gray-200 p-3 sm:p-4 space-y-3 sm:space-y-4">
               <div className="space-y-1 sm:space-y-2">
-                <div className="flex justify-between text-xs sm:text-sm">
+                <div className="flex justify-between text-xs sm:text-sm text-black font-medium">
                   <span>Subtotal:</span>
                   <span>{formatPrice(cart.subtotal)}</span>
                 </div>
-                <div className="flex justify-between text-xs sm:text-sm">
+                <div className="flex justify-between text-xs sm:text-sm text-black font-medium">
                   <span>Envío:</span>
                   <span>{cart.shipping === 0 ? 'Gratis' : formatPrice(cart.shipping)}</span>
                 </div>
-                <div className="flex justify-between text-xs sm:text-sm">
+                <div className="flex justify-between text-xs sm:text-sm text-black font-medium">
                   <span>IVA:</span>
                   <span>{formatPrice(cart.tax)}</span>
                 </div>
-                <div className="flex justify-between text-base sm:text-lg font-semibold border-t border-gray-200 pt-2">
+                <div className="flex justify-between text-base sm:text-lg font-bold border-t border-gray-200 pt-2 text-black">
                   <span>Total:</span>
                   <span>{formatPrice(cart.total)}</span>
                 </div>

@@ -19,24 +19,25 @@ export default function ShopPage() {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  // const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  // const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({ min: 0, max: 10000 });
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [showFilters, setShowFilters] = useState(false);
 
   // Opciones de filtros
-  const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-  const availableColors = [
-    { name: 'Negro', value: 'black', color: '#000000' },
-    { name: 'Blanco', value: 'white', color: '#FFFFFF' },
-    { name: 'Gris', value: 'gray', color: '#6B7280' },
-    { name: 'Azul', value: 'blue', color: '#3B82F6' },
-    { name: 'Rojo', value: 'red', color: '#EF4444' },
-    { name: 'Verde', value: 'green', color: '#10B981' },
-    { name: 'Rosa', value: 'pink', color: '#EC4899' },
-    { name: 'Amarillo', value: 'yellow', color: '#F59E0B' },
-  ];
+  // FILTROS DE TALLAS Y COLORES COMENTADOS TEMPORALMENTE
+  // const availableSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  // const availableColors = [
+  //   { name: 'Negro', value: 'black', color: '#000000' },
+  //   { name: 'Blanco', value: 'white', color: '#FFFFFF' },
+  //   { name: 'Gris', value: 'gray', color: '#6B7280' },
+  //   { name: 'Azul', value: 'blue', color: '#3B82F6' },
+  //   { name: 'Rojo', value: 'red', color: '#EF4444' },
+  //   { name: 'Verde', value: 'green', color: '#10B981' },
+  //   { name: 'Rosa', value: 'pink', color: '#EC4899' },
+  //   { name: 'Amarillo', value: 'yellow', color: '#F59E0B' },
+  // ];
 
   const sortOptions = [
     { value: 'default', label: 'Predeterminado' },
@@ -63,35 +64,36 @@ export default function ShopPage() {
     return productPrice >= priceRange.min && productPrice <= priceRange.max;
   };
 
-  const matchesSizes = (product: any, selectedSizes: string[]) => {
-    if (selectedSizes.length === 0) return true;
-    
-    // Usar el nuevo sistema de opciones
-    const sizeOption = product.options?.find((option: any) => 
-      option.title?.toLowerCase().includes('talla') || 
-      option.title?.toLowerCase().includes('size')
-    );
-    
-    if (!sizeOption?.values) return false;
-    
-    const productSizes = sizeOption.values.map((value: any) => value.value);
-    return selectedSizes.some(size => productSizes.includes(size));
-  };
+  // FUNCIONES DE FILTROS DE TALLA Y COLOR COMENTADAS
+  // const matchesSizes = (product: any, selectedSizes: string[]) => {
+  //   if (selectedSizes.length === 0) return true;
+  //   
+  //   // Usar el nuevo sistema de opciones
+  //   const sizeOption = product.options?.find((option: any) => 
+  //     option.title?.toLowerCase().includes('talla') || 
+  //     option.title?.toLowerCase().includes('size')
+  //   );
+  //   
+  //   if (!sizeOption?.values) return false;
+  //   
+  //   const productSizes = sizeOption.values.map((value: any) => value.value);
+  //   return selectedSizes.some(size => productSizes.includes(size));
+  // };
 
-  const matchesColors = (product: any, selectedColors: string[]) => {
-    if (selectedColors.length === 0) return true;
-    
-    // Usar el nuevo sistema de opciones
-    const colorOption = product.options?.find((option: any) => 
-      option.title?.toLowerCase().includes('color') || 
-      option.title?.toLowerCase().includes('colour')
-    );
-    
-    if (!colorOption?.values) return false;
-    
-    const productColors = colorOption.values.map((value: any) => value.value);
-    return selectedColors.some(color => productColors.includes(color));
-  };
+  // const matchesColors = (product: any, selectedColors: string[]) => {
+  //   if (selectedColors.length === 0) return true;
+  //   
+  //   // Usar el nuevo sistema de opciones
+  //   const colorOption = product.options?.find((option: any) => 
+  //     option.title?.toLowerCase().includes('color') || 
+  //     option.title?.toLowerCase().includes('colour')
+  //   );
+  //   
+  //   if (!colorOption?.values) return false;
+  //   
+  //   const productColors = colorOption.values.map((value: any) => value.value);
+  //   return selectedColors.some(color => productColors.includes(color));
+  // };
 
   const sortProducts = (products: any[], sortBy: SortOption) => {
     const sorted = [...products];
@@ -109,42 +111,44 @@ export default function ShopPage() {
     }
   };
 
-  // Productos filtrados y ordenados
+  // Productos filtrados y ordenados (SIN FILTROS DE TALLA Y COLOR)
   const filteredProducts = useMemo(() => {
     if (!products) return [];
 
     const filtered = products.filter(product => {
       return matchesSearch(product, searchTerm) &&
              matchesCategory(product, selectedCategory) &&
-             matchesPrice(product, priceRange) &&
-             matchesSizes(product, selectedSizes) &&
-             matchesColors(product, selectedColors);
+             matchesPrice(product, priceRange);
+             // matchesSizes(product, selectedSizes) &&      // COMENTADO
+             // matchesColors(product, selectedColors);      // COMENTADO
     });
 
     return sortProducts(filtered, sortBy);
-  }, [products, searchTerm, selectedCategory, selectedSizes, selectedColors, priceRange, sortBy]);
+  }, [products, searchTerm, selectedCategory, priceRange, sortBy]);
+  // }, [products, searchTerm, selectedCategory, selectedSizes, selectedColors, priceRange, sortBy]); // DEPENDENCIAS ORIGINALES
 
-  const handleSizeToggle = (size: string) => {
-    setSelectedSizes(prev => 
-      prev.includes(size) 
-        ? prev.filter(s => s !== size)
-        : [...prev, size]
-    );
-  };
+  // FUNCIONES PARA MANEJAR FILTROS DE TALLA Y COLOR COMENTADAS
+  // const handleSizeToggle = (size: string) => {
+  //   setSelectedSizes(prev => 
+  //     prev.includes(size) 
+  //       ? prev.filter(s => s !== size)
+  //       : [...prev, size]
+  //   );
+  // };
 
-  const handleColorToggle = (color: string) => {
-    setSelectedColors(prev => 
-      prev.includes(color) 
-        ? prev.filter(c => c !== color)
-        : [...prev, color]
-    );
-  };
+  // const handleColorToggle = (color: string) => {
+  //   setSelectedColors(prev => 
+  //     prev.includes(color) 
+  //       ? prev.filter(c => c !== color)
+  //       : [...prev, color]
+  //   );
+  // };
 
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedCategory('');
-    setSelectedSizes([]);
-    setSelectedColors([]);
+    // setSelectedSizes([]);      // COMENTADO
+    // setSelectedColors([]);     // COMENTADO
     setPriceRange({ min: 0, max: 10000 });
     setSortBy('default');
   };
@@ -227,7 +231,7 @@ export default function ShopPage() {
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -357,8 +361,8 @@ export default function ShopPage() {
                 </div>
               </fieldset>
 
-              {/* Sizes */}
-              <fieldset>
+              {/* FILTROS DE TALLAS COMENTADOS */}
+              {/* <fieldset>
                 <legend className="block text-sm font-medium text-gray-700 mb-2">
                   Tallas
                 </legend>
@@ -377,10 +381,10 @@ export default function ShopPage() {
                     </button>
                   ))}
                 </div>
-              </fieldset>
+              </fieldset> */}
 
-              {/* Colors */}
-              <fieldset>
+              {/* FILTROS DE COLORES COMENTADOS */}
+              {/* <fieldset>
                 <legend className="block text-sm font-medium text-gray-700 mb-2">
                   Colores
                 </legend>
@@ -404,7 +408,7 @@ export default function ShopPage() {
                     </button>
                   ))}
                 </div>
-              </fieldset>
+              </fieldset> */}
 
               {/* Clear Filters */}
               <button
