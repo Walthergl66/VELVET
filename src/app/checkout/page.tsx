@@ -501,7 +501,7 @@ const CheckoutPage = () => {
         {/* Selector de direcciones guardadas */}
         {addresses.length > 0 && (
           <div>
-            <label className="block text-sm font-medium mb-3">
+            <label className="block text-base font-bold mb-3 text-gray-900">
               Seleccionar dirección guardada
             </label>
             <AddressSelector
@@ -509,8 +509,15 @@ const CheckoutPage = () => {
               addresses={addresses}
               selectedAddress={useNewShippingAddress ? null : selectedShippingAddress}
               onSelectAddress={(address) => {
-                setSelectedShippingAddress(address);
-                setUseNewShippingAddress(false);
+                if (address === null) {
+                  // Usuario seleccionó "Ingresar nueva dirección"
+                  setUseNewShippingAddress(true);
+                  setSelectedShippingAddress(null);
+                } else {
+                  // Usuario seleccionó una dirección guardada
+                  setSelectedShippingAddress(address);
+                  setUseNewShippingAddress(false);
+                }
               }}
               onAddNewAddress={() => {
                 setUseNewShippingAddress(true);
@@ -562,7 +569,7 @@ const CheckoutPage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Nombre *</label>
+                <label className="block text-base font-bold mb-2 text-gray-900">Nombre *</label>
                 <input
                   type="text"
                   className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
@@ -573,7 +580,7 @@ const CheckoutPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Apellidos *</label>
+                <label className="block text-base font-bold mb-2 text-gray-900">Apellidos *</label>
                 <input
                   type="text"
                   className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
@@ -586,7 +593,7 @@ const CheckoutPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Email *</label>
+              <label className="block text-base font-bold mb-2 text-gray-900">Email *</label>
               <input
                 type="email"
                 className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
@@ -598,7 +605,7 @@ const CheckoutPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Teléfono *</label>
+              <label className="block text-base font-bold mb-2 text-gray-900">Teléfono *</label>
               <input
                 type="tel"
                 className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
@@ -610,7 +617,7 @@ const CheckoutPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Dirección *</label>
+              <label className="block text-base font-bold mb-2 text-gray-900">Dirección *</label>
               <input
                 type="text"
                 className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
@@ -623,7 +630,7 @@ const CheckoutPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Ciudad *</label>
+                <label className="block text-base font-bold mb-2 text-gray-900">Ciudad *</label>
                 <input
                   type="text"
                   className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
@@ -634,7 +641,7 @@ const CheckoutPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Código Postal *</label>
+                <label className="block text-base font-bold mb-2 text-gray-900">Código Postal *</label>
                 <input
                   type="text"
                   className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
