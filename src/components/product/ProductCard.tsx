@@ -34,8 +34,8 @@ export default function ProductCard({ product, className = '', priority = false 
   // Función auxiliar para obtener opciones de talla del producto
   const getSizeOptions = () => {
     const sizeOption = product.options?.find(option => 
-      option.title?.toLowerCase().includes('talla') || 
-      option.title?.toLowerCase().includes('size')
+      option.name?.toLowerCase().includes('talla') || 
+      option.name?.toLowerCase().includes('size')
     );
     return sizeOption?.values?.map(value => value.value) || [];
   };
@@ -43,8 +43,8 @@ export default function ProductCard({ product, className = '', priority = false 
   // Función auxiliar para obtener opciones de color del producto
   const getColorOptions = () => {
     const colorOption = product.options?.find(option => 
-      option.title?.toLowerCase().includes('color') || 
-      option.title?.toLowerCase().includes('colour')
+      option.name?.toLowerCase().includes('color') || 
+      option.name?.toLowerCase().includes('colour')
     );
     return colorOption?.values?.map(value => value.value) || [];
   };
@@ -63,8 +63,8 @@ export default function ProductCard({ product, className = '', priority = false 
 
     try {
       // Obtener opciones de tamaño y color desde las opciones del producto
-      const sizeOption = product.options?.find(opt => opt.title.toLowerCase().includes('talla') || opt.title.toLowerCase().includes('size'));
-      const colorOption = product.options?.find(opt => opt.title.toLowerCase().includes('color'));
+      const sizeOption = product.options?.find(opt => opt.name.toLowerCase().includes('talla') || opt.name.toLowerCase().includes('size'));
+      const colorOption = product.options?.find(opt => opt.name.toLowerCase().includes('color'));
       
       const selectedSize = sizeOption ? sizeOption.values?.find(val => val.id === selectedOptions[sizeOption.id])?.value || '' : '';
       const selectedColor = colorOption ? colorOption.values?.find(val => val.id === selectedOptions[colorOption.id])?.value || '' : '';
@@ -89,8 +89,8 @@ export default function ProductCard({ product, className = '', priority = false 
   const isProductInCart = (() => {
     if (!hasRequiredOptions()) return false;
     
-    const sizeOption = product.options?.find(opt => opt.title.toLowerCase().includes('talla') || opt.title.toLowerCase().includes('size'));
-    const colorOption = product.options?.find(opt => opt.title.toLowerCase().includes('color'));
+    const sizeOption = product.options?.find(opt => opt.name.toLowerCase().includes('talla') || opt.name.toLowerCase().includes('size'));
+    const colorOption = product.options?.find(opt => opt.name.toLowerCase().includes('color'));
     
     const selectedSize = sizeOption ? sizeOption.values?.find(val => val.id === selectedOptions[sizeOption.id])?.value || '' : '';
     const selectedColor = colorOption ? colorOption.values?.find(val => val.id === selectedOptions[colorOption.id])?.value || '' : '';
@@ -184,7 +184,7 @@ export default function ProductCard({ product, className = '', priority = false 
               {product.options && product.options.map((option) => (
                 <fieldset key={option.id}>
                   <legend className="text-xs font-medium text-gray-700 block mb-1">
-                    {option.title}:
+                    {option.name}:
                   </legend>
                   <div className="flex gap-1 flex-wrap">
                     {option.values?.map((value) => (
