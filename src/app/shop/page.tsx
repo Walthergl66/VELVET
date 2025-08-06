@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useProducts } from '@/hooks/useProducts';
 import { useCategories } from '@/hooks/useCategories';
 import ProductCard from '@/components/product/ProductCard';
+import ProductSearchDropdown from '@/components/ui/ProductSearchDropdown';
 
 /**
  * Página de la tienda - Lista todos los productos con filtros y búsqueda
@@ -244,6 +245,14 @@ export default function ShopPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Search Bar */}
+        <div className="lg:hidden mb-6">
+          <ProductSearchDropdown 
+            placeholder="Buscar productos..."
+            className="w-full"
+          />
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-64 flex-shrink-0">

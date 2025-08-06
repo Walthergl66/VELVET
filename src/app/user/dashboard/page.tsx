@@ -42,21 +42,6 @@ export default function UserDashboard() {
         <div className="mb-8 flex flex-col items-center">
           <h1 className="text-4xl font-extrabold text-black select-none">Bienvenido, {user?.user_metadata?.first_name || user?.email}</h1>
           <p className="text-gray-600 mt-2 text-lg text-center">Gestiona tu cuenta y revisa tus pedidos desde aquí</p>
-          
-          {/* Botón de actualización (solo para desarrollo/testing) */}
-          {process.env.NODE_ENV === 'development' && (
-            <button 
-              onClick={() => {
-                console.log('🔄 Actualizando estadísticas manualmente...');
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('userStatsUpdate'));
-                }
-              }}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
-            >
-              🔄 Actualizar Estadísticas
-            </button>
-          )}
         </div>
 
         {/* Stats Cards */}
@@ -196,7 +181,8 @@ export default function UserDashboard() {
           </div>
         </div>
 
-        {/* Recent Activity */}
+        {/* Recent Activity - Comentado temporalmente */}
+        {/* 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
           <div className="px-8 py-6 border-b border-gray-100">
             <h2 className="text-2xl font-bold text-black">Actividad Reciente</h2>
@@ -207,6 +193,7 @@ export default function UserDashboard() {
             </div>
           </div>
         </div>
+        */}
       </div>
     </div>
   );

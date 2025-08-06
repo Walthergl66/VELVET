@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/hooks/useWishlist';
 import { supabase } from '@/lib/supabase';
-import { Product, ProductVariant, ProductOption, ProductOptionValue } from '@/types';
+import { Product, ProductVariant } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -17,6 +18,7 @@ import Link from 'next/link';
 export default function ProductPage() {
   const params = useParams();
   const { addToCart, loading: cartLoading } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +28,7 @@ export default function ProductPage() {
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -207,6 +210,25 @@ export default function ProductPage() {
     if (cartLoading) return 'Agregando...';
     if (getAvailableStock() === 0) return 'Agotado';
     return 'Agregar al Carrito';
+  };
+
+  const handleWishlistToggle = async () => {
+    if (!product) return;
+    
+    setWishlistLoading(true);
+    try {
+      const isCurrentlyInWishlist = isInWishlist(product.id);
+      
+      if (isCurrentlyInWishlist) {
+        await removeFromWishlist(product.id);
+      } else {
+        await addToWishlist(product.id);
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error);
+    } finally {
+      setWishlistLoading(false);
+    }
   };
 
   if (loading) {
@@ -441,14 +463,43 @@ export default function ProductPage() {
                 {getAddToCartButtonText()}
               </button>
               
-              <div className="grid grid-cols-2 gap-3">
-                <button className="border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                  ♡ Favoritos
-                </button>
-                <button className="border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                  Compartir
-                </button>
-              </div>
+              <button 
+                onClick={handleWishlistToggle}
+                disabled={wishlistLoading}
+                className={`w-full py-3 rounded-lg font-medium transition-colors ${
+                  isInWishlist(product.id)
+                    ? 'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200'
+                    : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {wishlistLoading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {isInWishlist(product.id) ? 'Removiendo...' : 'Agregando...'}
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    {isInWishlist(product.id) ? (
+                      <>
+                        <svg className="w-5 h-5 mr-2 fill-current" viewBox="0 0 24 24">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        En Favoritos
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                        Agregar a Favoritos
+                      </>
+                    )}
+                  </span>
+                )}
+              </button>
             </div>
 
             {/* Product Details */}
