@@ -79,6 +79,16 @@ export default function Header({
                   {panelButton.name}
                 </Link>
               )}
+
+              {/* Historial para usuarios autenticados que no son admin */}
+              {isAuthenticated && isUser && (
+                <Link
+                  href="/user/orders"
+                  className="text-gray-900 hover:text-gray-600 transition-colors font-medium"
+                >
+                  Historial
+                </Link>
+              )}
             </nav>
 
             {/* Search Bar */}
@@ -161,11 +171,11 @@ export default function Header({
                               Mis Direcciones
                             </Link>
                             <Link
-                              href="/user/pedidos"
+                              href="/user/orders"
                               onClick={() => setIsUserMenuOpen(false)}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             >
-                              Mis Pedidos
+                              Historial de Pedidos
                             </Link>
                           </>
                         )}
@@ -294,6 +304,17 @@ export default function Header({
                     className="block px-3 py-2 text-base font-medium text-gray-900 hover:text-gray-600 hover:bg-gray-50 rounded-md"
                   >
                     {panelButton.name}
+                  </Link>
+                )}
+
+                {/* Historial para usuarios en móvil */}
+                {isAuthenticated && isUser && (
+                  <Link
+                    href="/user/orders"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-3 py-2 text-base font-medium text-gray-900 hover:text-gray-600 hover:bg-gray-50 rounded-md"
+                  >
+                    Historial
                   </Link>
                 )}
               </div>
