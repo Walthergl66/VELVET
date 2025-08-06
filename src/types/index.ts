@@ -155,23 +155,26 @@ export interface Database {
         Row: {
           id: string;
           product_id: string;
-          title: string;
+          name: string;
+          type: string;
+          position: number;
           created_at: string;
-          updated_at: string;
         };
         Insert: {
           id?: string;
           product_id: string;
-          title: string;
+          name: string;
+          type?: string;
+          position?: number;
           created_at?: string;
-          updated_at?: string;
         };
         Update: {
           id?: string;
           product_id?: string;
-          title?: string;
+          name?: string;
+          type?: string;
+          position?: number;
           created_at?: string;
-          updated_at?: string;
         };
       };
       product_option_values: {
