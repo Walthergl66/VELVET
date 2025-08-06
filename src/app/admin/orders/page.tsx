@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useRole } from '@/hooks/useRole';
 
@@ -16,31 +15,17 @@ interface Order {
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
   total: number;
   subtotal: number;
-  tax: number;
-  shipping_cost: number;
-  payment_method: string;
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
+  payment_method?: any; // JSON con información del método de pago
   created_at: string;
   updated_at: string;
   
-  // Datos relacionados - Supabase devuelve objetos únicos, no arrays
-  user_profiles: {
+  // Datos relacionados - solo user_profiles ahora
+  user_profiles?: {
     email: string;
-    full_name?: string;
+    first_name?: string;
+    last_name?: string;
   } | null;
-  shipping_address: any;
-  order_items: Array<{
-    id: string;
-    quantity: number;
-    unit_price: number;
-    product_variants: {
-      id: string;
-      sku: string;
-      products: {
-        name: string;
-      };
-    };
-  }>;
 }
 
 interface FilterOptions {
@@ -56,6 +41,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authUser, setAuthUser] = useState<any>(null);
   
   // Filtros y paginación
   const [filters, setFilters] = useState<FilterOptions>({
@@ -70,49 +56,52 @@ export default function OrdersPage() {
   const [totalOrders, setTotalOrders] = useState(0);
   const ordersPerPage = 20;
 
-  // Estados para acciones
-  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
-  const [bulkAction, setBulkAction] = useState('');
+  // Verificar autenticación
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user:', user);
+      setAuthUser(user);
+    };
+    checkAuth();
+  }, []);
 
   useEffect(() => {
-    fetchOrders();
-  }, [currentPage, filters]);
+    if (authUser && role === 'admin') {
+      loadOrders();
+    }
+  }, [currentPage, filters, authUser, role]);
 
-  const fetchOrders = async () => {
+
+
+  // Función principal para cargar pedidos siguiendo el patrón de users
+  const loadOrders = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Construir query base
+      // Construir query base con campos esenciales
       let query = supabase
         .from('orders')
         .select(`
           id,
           user_id,
           status,
+          payment_status,
+          payment_method,
           total,
           subtotal,
-          tax,
-          shipping_cost,
-          payment_method,
-          payment_status,
           created_at,
           updated_at,
-          user_profiles!inner(email, full_name),
-          shipping_address,
-          order_items(
-            id,
-            quantity,
-            unit_price,
-            product_variants(
-              id,
-              sku,
-              products(name)
-            )
-          )
+          user_profiles(email, first_name, last_name)
         `, { count: 'exact' });
 
-      // Aplicar filtros
+      // Aplicar filtros de búsqueda
+      if (filters.search) {
+        query = query.or(`id.ilike.%${filters.search}%,user_profiles.email.ilike.%${filters.search}%,user_profiles.first_name.ilike.%${filters.search}%,user_profiles.last_name.ilike.%${filters.search}%`);
+      }
+
+      // Aplicar filtros específicos
       if (filters.status) {
         query = query.eq('status', filters.status);
       }
@@ -125,142 +114,51 @@ export default function OrdersPage() {
       if (filters.date_to) {
         query = query.lte('created_at', filters.date_to + 'T23:59:59');
       }
-      if (filters.search) {
-        query = query.or(`user_profiles.email.ilike.%${filters.search}%,user_profiles.full_name.ilike.%${filters.search}%,id.ilike.%${filters.search}%`);
-      }
 
       // Paginación
       const from = (currentPage - 1) * ordersPerPage;
       const to = from + ordersPerPage - 1;
 
-      const { data, error: fetchError, count } = await query
+      const { data, error: queryError, count } = await query
         .order('created_at', { ascending: false })
         .range(from, to);
 
-      if (fetchError) throw fetchError;
+      if (queryError) {
+        throw new Error(`Error al obtener pedidos: ${queryError.message}`);
+      }
 
-      // TypeScript cast para resolver tipos de Supabase
-      setOrders((data as unknown as Order[]) || []);
+      // Asegurar que los datos tengan la estructura correcta
+      const ordersWithDefaults = (data || []).map(order => ({
+        ...order,
+        user_profiles: order.user_profiles || null
+      }));
+
+      setOrders(ordersWithDefaults as unknown as Order[]);
       setTotalOrders(count || 0);
       setTotalPages(Math.ceil((count || 0) / ordersPerPage));
 
     } catch (err) {
-      console.error('Error fetching orders:', err);
-      setError(err instanceof Error ? err.message : 'Error al cargar pedidos');
+      console.error('Error loading orders:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Error al cargar pedidos';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const updateOrderStatus = async (orderId: string, newStatus: Order['status']) => {
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ 
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', orderId);
 
-      if (error) throw error;
 
-      // Actualizar estado local
-      setOrders(orders.map(order => 
-        order.id === orderId 
-          ? { ...order, status: newStatus, updated_at: new Date().toISOString() }
-          : order
-      ));
 
-      // Mostrar mensaje de éxito (puedes agregar toast aquí)
-      console.log(`Pedido ${orderId} actualizado a ${newStatus}`);
-
-    } catch (err) {
-      console.error('Error updating order status:', err);
-      alert('Error al actualizar el estado del pedido');
-    }
-  };
-
-  const updatePaymentStatus = async (orderId: string, newPaymentStatus: Order['payment_status']) => {
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ 
-          payment_status: newPaymentStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', orderId);
-
-      if (error) throw error;
-
-      setOrders(orders.map(order => 
-        order.id === orderId 
-          ? { ...order, payment_status: newPaymentStatus, updated_at: new Date().toISOString() }
-          : order
-      ));
-
-    } catch (err) {
-      console.error('Error updating payment status:', err);
-      alert('Error al actualizar el estado del pago');
-    }
-  };
-
-  const handleBulkAction = async () => {
-    if (!bulkAction || selectedOrders.length === 0) return;
-
-    if (bulkAction === 'delete') {
-      if (!confirm(`¿Estás seguro de que quieres eliminar ${selectedOrders.length} pedidos?`)) return;
-      
-      try {
-        const { error } = await supabase
-          .from('orders')
-          .delete()
-          .in('id', selectedOrders);
-
-        if (error) throw error;
-
-        setOrders(orders.filter(order => !selectedOrders.includes(order.id)));
-        setSelectedOrders([]);
-        setBulkAction('');
-      } catch (err) {
-        console.error('Error deleting orders:', err);
-        alert('Error al eliminar pedidos');
-      }
-    } else {
-      // Actualizar estado en lote
-      try {
-        const { error } = await supabase
-          .from('orders')
-          .update({ 
-            status: bulkAction as Order['status'],
-            updated_at: new Date().toISOString()
-          })
-          .in('id', selectedOrders);
-
-        if (error) throw error;
-
-        setOrders(orders.map(order => 
-          selectedOrders.includes(order.id)
-            ? { ...order, status: bulkAction as Order['status'], updated_at: new Date().toISOString() }
-            : order
-        ));
-        setSelectedOrders([]);
-        setBulkAction('');
-      } catch (err) {
-        console.error('Error updating orders:', err);
-        alert('Error al actualizar pedidos');
-      }
-    }
-  };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('es-EC', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    return new Date(dateString).toLocaleDateString('es-EC', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -277,16 +175,6 @@ export default function OrdersPage() {
       shipped: 'bg-indigo-100 text-indigo-800',
       delivered: 'bg-green-100 text-green-800',
       cancelled: 'bg-red-100 text-red-800',
-      refunded: 'bg-gray-100 text-gray-800'
-    };
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
-  };
-
-  const getPaymentStatusColor = (status: string) => {
-    const colors = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      paid: 'bg-green-100 text-green-800',
-      failed: 'bg-red-100 text-red-800',
       refunded: 'bg-gray-100 text-gray-800'
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
@@ -313,6 +201,33 @@ export default function OrdersPage() {
       refunded: 'Reembolsado'
     };
     return labels[status as keyof typeof labels] || status;
+  };
+
+  const getPaymentMethod = (paymentMethod: any) => {
+    if (!paymentMethod) return 'No especificado';
+    
+    const getMethodFromString = (method: string) => {
+      if (method === 'stripe') return 'Stripe';
+      if (method === 'paypal') return 'PayPal';
+      return method;
+    };
+    
+    const getMethodFromObject = (method: any) => {
+      if (method.type === 'stripe' || method.brand || method.last4) return 'Stripe';
+      if (method.type === 'paypal' || method.paypal_email) return 'PayPal';
+      if (method.type) return getMethodFromString(method.type);
+      return 'Otro método';
+    };
+    
+    if (typeof paymentMethod === 'string') {
+      return getMethodFromString(paymentMethod);
+    }
+    
+    if (typeof paymentMethod === 'object') {
+      return getMethodFromObject(paymentMethod);
+    }
+    
+    return 'Otro método';
   };
 
   if (isLoading) {
@@ -349,10 +264,11 @@ export default function OrdersPage() {
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-1">
               Estado del Pedido
             </label>
             <select
+              id="status-filter"
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -369,10 +285,11 @@ export default function OrdersPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="payment-status-filter" className="block text-sm font-medium text-gray-700 mb-1">
               Estado del Pago
             </label>
             <select
+              id="payment-status-filter"
               value={filters.payment_status}
               onChange={(e) => setFilters({ ...filters, payment_status: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -386,10 +303,11 @@ export default function OrdersPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="date-from-filter" className="block text-sm font-medium text-gray-700 mb-1">
               Desde
             </label>
             <input
+              id="date-from-filter"
               type="date"
               value={filters.date_from}
               onChange={(e) => setFilters({ ...filters, date_from: e.target.value })}
@@ -398,10 +316,11 @@ export default function OrdersPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="date-to-filter" className="block text-sm font-medium text-gray-700 mb-1">
               Hasta
             </label>
             <input
+              id="date-to-filter"
               type="date"
               value={filters.date_to}
               onChange={(e) => setFilters({ ...filters, date_to: e.target.value })}
@@ -410,10 +329,11 @@ export default function OrdersPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="search-filter" className="block text-sm font-medium text-gray-700 mb-1">
               Buscar
             </label>
             <input
+              id="search-filter"
               type="text"
               placeholder="ID, email, nombre..."
               value={filters.search}
@@ -439,90 +359,54 @@ export default function OrdersPage() {
 
           <div className="text-sm text-gray-600">
             Mostrando {orders.length} de {totalOrders} pedidos
+            {authUser && <div className="text-xs">Usuario autenticado: {authUser.email}</div>}
+            {role && <div className="text-xs">Rol: {role}</div>}
           </div>
         </div>
       </div>
 
-      {/* Bulk Actions */}
-      {selectedOrders.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-blue-800 font-medium">
-              {selectedOrders.length} pedidos seleccionados
-            </span>
-            <div className="flex items-center space-x-2">
-              <select
-                value={bulkAction}
-                onChange={(e) => setBulkAction(e.target.value)}
-                className="px-3 py-1 border border-blue-300 rounded-md text-sm"
-              >
-                <option value="">Seleccionar acción</option>
-                <option value="confirmed">Marcar como confirmado</option>
-                <option value="processing">Marcar como procesando</option>
-                <option value="shipped">Marcar como enviado</option>
-                <option value="delivered">Marcar como entregado</option>
-                <option value="cancelled">Marcar como cancelado</option>
-                {role === 'admin' && <option value="delete">Eliminar</option>}
-              </select>
-              <button
-                onClick={handleBulkAction}
-                disabled={!bulkAction}
-                className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
-              >
-                Aplicar
-              </button>
-              <button
-                onClick={() => setSelectedOrders([])}
-                className="text-blue-600 hover:text-blue-800 text-sm"
-              >
-                Deseleccionar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Orders Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        {loading ? (
+        {loading && (
           <div className="p-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
             <p className="mt-2 text-gray-600">Cargando pedidos...</p>
           </div>
-        ) : error ? (
+        )}
+        
+        {!loading && error && (
           <div className="p-8 text-center">
             <div className="text-red-500 mb-4">{error}</div>
-            <button
-              onClick={fetchOrders}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
-              Reintentar
-            </button>
+            <div className="space-y-2">
+              <button
+                onClick={loadOrders}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Reintentar
+              </button>
+            </div>
           </div>
-        ) : orders.length === 0 ? (
+        )}
+        
+        {!loading && !error && orders.length === 0 && (
           <div className="p-8 text-center text-gray-500">
-            No se encontraron pedidos con los filtros aplicados
+            <div className="mb-4">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay pedidos</h3>
+            <p className="text-gray-500 mb-4">
+              No se encontraron pedidos en la base de datos con los filtros aplicados.
+            </p>
           </div>
-        ) : (
+        )}
+        
+        {!loading && !error && orders.length > 0 && (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectedOrders.length === orders.length && orders.length > 0}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedOrders(orders.map(order => order.id));
-                        } else {
-                          setSelectedOrders([]);
-                        }
-                      }}
-                      className="rounded border-gray-300"
-                      aria-label="Seleccionar todos los pedidos"
-                    />
-                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ID / Cliente
                   </th>
@@ -536,34 +420,16 @@ export default function OrdersPage() {
                     Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Pago
+                    Método de pago
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Fecha
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {orders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={selectedOrders.includes(order.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedOrders([...selectedOrders, order.id]);
-                          } else {
-                            setSelectedOrders(selectedOrders.filter(id => id !== order.id));
-                          }
-                        }}
-                        className="rounded border-gray-300"
-                        aria-label={`Seleccionar pedido ${order.id.slice(-8)}`}
-                      />
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
@@ -572,21 +438,19 @@ export default function OrdersPage() {
                         <div className="text-sm text-gray-500">
                           {order.user_profiles?.email || 'Email no disponible'}
                         </div>
-                        {order.user_profiles?.full_name && (
+                        {(order.user_profiles?.first_name || order.user_profiles?.last_name) && (
                           <div className="text-sm text-gray-500">
-                            {order.user_profiles.full_name}
+                            {`${order.user_profiles?.first_name || ''} ${order.user_profiles?.last_name || ''}`.trim()}
                           </div>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">
-                        {order.order_items.length} artículo{order.order_items.length !== 1 ? 's' : ''}
+                        Pedido #{order.id.slice(-8)}
                       </div>
-                      <div className="text-xs text-gray-500 max-w-xs truncate">
-                        {order.order_items.map(item => 
-                          `${item.product_variants.products.name} (${item.quantity})`
-                        ).join(', ')}
+                      <div className="text-xs text-gray-500">
+                        Ver detalles para productos
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -598,54 +462,20 @@ export default function OrdersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <select
-                        value={order.status}
-                        onChange={(e) => updateOrderStatus(order.id, e.target.value as Order['status'])}
-                        className={`text-xs font-semibold rounded-full px-2 py-1 border-0 ${getStatusColor(order.status)}`}
-                      >
-                        <option value="pending">Pendiente</option>
-                        <option value="confirmed">Confirmado</option>
-                        <option value="processing">Procesando</option>
-                        <option value="shipped">Enviado</option>
-                        <option value="delivered">Entregado</option>
-                        <option value="cancelled">Cancelado</option>
-                        <option value="refunded">Reembolsado</option>
-                      </select>
+                      <span className={`text-xs font-semibold rounded-full px-2 py-1 ${getStatusColor(order.status)}`}>
+                        {getStatusLabel(order.status)}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <select
-                        value={order.payment_status}
-                        onChange={(e) => updatePaymentStatus(order.id, e.target.value as Order['payment_status'])}
-                        className={`text-xs font-semibold rounded-full px-2 py-1 border-0 ${getPaymentStatusColor(order.payment_status)}`}
-                      >
-                        <option value="pending">Pendiente</option>
-                        <option value="paid">Pagado</option>
-                        <option value="failed">Fallido</option>
-                        <option value="refunded">Reembolsado</option>
-                      </select>
+                      <div className="text-sm font-medium text-gray-900">
+                        {getPaymentMethod(order.payment_method)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Estado: {getPaymentStatusLabel(order.payment_status)}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(order.created_at)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <Link
-                        href={`/admin/orders/${order.id}`}
-                        className="text-blue-600 hover:text-blue-900 mr-3"
-                      >
-                        Ver detalles
-                      </Link>
-                      {role === 'admin' && (
-                        <button
-                          onClick={() => {
-                            if (confirm('¿Estás seguro de que quieres eliminar este pedido?')) {
-                              // Implementar eliminación individual
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Eliminar
-                        </button>
-                      )}
                     </td>
                   </tr>
                 ))}

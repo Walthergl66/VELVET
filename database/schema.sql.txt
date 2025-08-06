@@ -9,7 +9,7 @@ CREATE TABLE public.addresses (
   city character varying NOT NULL,
   state character varying NOT NULL,
   zip_code character varying NOT NULL,
-  country character varying NOT NULL DEFAULT 'México'::character varying,
+  country character varying NOT NULL DEFAULT 'Ecuador'::character varying,
   is_default boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),

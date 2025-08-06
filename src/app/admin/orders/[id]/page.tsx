@@ -130,23 +130,29 @@ export default function OrderDetailPage() {
           tracking_number,
           created_at,
           updated_at,
-          user_profiles(email, full_name, phone),
           shipping_address,
           billing_address,
+          user_profiles(
+            email,
+            first_name,
+            last_name,
+            phone
+          ),
           order_items(
             id,
             quantity,
             unit_price,
+            total_price,
             product_variants(
               id,
               sku,
-              image_url,
-              products(name, description),
-              variant_option_values(
-                product_option_values(
-                  value,
-                  product_options(name)
-                )
+              size,
+              color,
+              products(
+                id,
+                name,
+                description,
+                images
               )
             )
           )
@@ -274,20 +280,48 @@ export default function OrderDetailPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('es-EC', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    return new Date(dateString).toLocaleDateString('es-EC', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const getPaymentMethod = (paymentMethod: any) => {
+    if (!paymentMethod) return 'No especificado';
+    
+    // Si es un string, devolverlo directamente
+    if (typeof paymentMethod === 'string') {
+      return paymentMethod === 'stripe' ? 'Stripe' : 
+             paymentMethod === 'paypal' ? 'PayPal' : 
+             paymentMethod;
+    }
+    
+    // Si es un objeto, buscar indicadores
+    if (typeof paymentMethod === 'object') {
+      if (paymentMethod.type === 'stripe' || paymentMethod.brand || paymentMethod.last4) {
+        return 'Stripe';
+      }
+      if (paymentMethod.type === 'paypal' || paymentMethod.paypal_email) {
+        return 'PayPal';
+      }
+      if (paymentMethod.type) {
+        return paymentMethod.type === 'stripe' ? 'Stripe' : 
+               paymentMethod.type === 'paypal' ? 'PayPal' : 
+               paymentMethod.type;
+      }
+    }
+    
+    return 'Otro método';
   };
 
   const getStatusColor = (status: string) => {
@@ -422,24 +456,34 @@ export default function OrderDetailPage() {
             <div className="space-y-4">
               {order.order_items.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
-                  {item.product_variants.image_url && (
-                    <img
-                      src={item.product_variants.image_url}
-                      alt={item.product_variants.products.name}
-                      className="w-16 h-16 object-cover rounded-md"
-                    />
-                  )}
+                  {/* Imagen del producto */}
+                  <div className="flex-shrink-0 w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
+                    {item.product_variants.image_url ? (
+                      <img
+                        src={item.product_variants.image_url}
+                        alt={item.product_variants?.products?.name || 'Producto'}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">
-                      {item.product_variants.products.name}
+                      {item.product_variants?.products?.name || 'Producto sin nombre'}
                     </h4>
                     <p className="text-sm text-gray-600">
-                      SKU: {item.product_variants.sku}
+                      SKU: {item.product_variants?.sku || 'N/A'}
                     </p>
-                    {item.product_variants.variant_option_values.length > 0 && (
+                    {/* Mostrar variantes usando el sistema existente */}
+                    {item.product_variants.variant_option_values && item.product_variants.variant_option_values.length > 0 && (
                       <div className="text-sm text-gray-600">
-                        {item.product_variants.variant_option_values.map((option, index) => (
-                          <span key={index}>
+                        {item.product_variants.variant_option_values.map((option: any, index: number) => (
+                          <span key={`${item.id}-${index}`}>
                             {option.product_option_values.product_options.name}: {option.product_option_values.value}
                             {index < item.product_variants.variant_option_values.length - 1 && ', '}
                           </span>
@@ -620,7 +664,7 @@ export default function OrderDetailPage() {
                   </div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">Método de Pago:</span>
-                    <span className="text-sm text-gray-600">{order.payment_method}</span>
+                    <span className="text-sm text-gray-600">{getPaymentMethod(order.payment_method)}</span>
                   </div>
                   {order.tracking_number && (
                     <div className="flex items-center justify-between mb-2">

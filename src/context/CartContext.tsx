@@ -106,7 +106,7 @@ const calculateCartTotals = (items: CartItem[]): Pick<Cart, 'subtotal' | 'tax' |
     return sum + (price * item.quantity);
   }, 0);
 
-  const tax = subtotal * 0.16; // 16% IVA México
+  const tax = subtotal * 0.12; // 12% IVA Ecuador
   const shipping = subtotal > 1000 ? 0 : 150; // Envío gratis arriba de $1000
   const discount = 0; // Se puede implementar lógica de descuentos
   const total = subtotal + tax + shipping - discount;
