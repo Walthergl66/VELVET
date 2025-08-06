@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import Link from 'next/link';
+import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { OrderStatus } from '@/types';
 
@@ -208,8 +209,9 @@ export default function OrdersPage() {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
-              <div key={order.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div key={order.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
                 <div className="p-6">
+                  {/* Header del pedido */}
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">
@@ -229,10 +231,77 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  {/* Productos comprados */}
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-900 mb-3">Productos comprados:</h4>
+                    <div className="space-y-3">
+                      {order.items && order.items.length > 0 ? (
+                        order.items.slice(0, 3).map((item, index) => (
+                          <div key={item.id || index} className="flex items-center space-x-3 py-2 px-3 bg-gray-50 rounded-lg">
+                            <div className="flex-shrink-0">
+                              {item.product_snapshot?.images?.[0] ? (
+                                <Image
+                                  src={item.product_snapshot.images[0]}
+                                  alt={item.product_snapshot.name || 'Producto'}
+                                  width={48}
+                                  height={48}
+                                  className="w-12 h-12 object-cover rounded-md"
+                                  unoptimized
+                                  onError={(e) => {
+                                    // Fallback to placeholder if image fails to load
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                    target.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null}
+                              <div className={`w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center ${item.product_snapshot?.images?.[0] ? 'hidden' : ''}`}>
+                                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h5 className="text-sm font-medium text-gray-900 truncate">
+                                {item.product_snapshot?.name || 'Producto sin nombre'}
+                              </h5>
+                              {item.product_snapshot?.brand && (
+                                <p className="text-xs text-gray-400 mb-1">{item.product_snapshot.brand}</p>
+                              )}
+                              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                <span>Cantidad: {item.quantity}</span>
+                                {item.size && <span>• Talla: {item.size}</span>}
+                                {item.color && <span>• Color: {item.color}</span>}
+                              </div>
+                              {item.product_snapshot?.sku && (
+                                <p className="text-xs text-gray-400 mt-1">SKU: {item.product_snapshot.sku}</p>
+                              )}
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {formatPrice(item.total_price)}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 italic">No se encontraron detalles de productos</p>
+                      )}
+                      
+                      {/* Mostrar si hay más productos */}
+                      {order.items && order.items.length > 3 && (
+                        <div className="text-center">
+                          <p className="text-sm text-gray-500">
+                            y {order.items.length - 3} producto{order.items.length - 3 > 1 ? 's' : ''} más...
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Footer del pedido */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div className="flex-1">
                       <p className="text-sm text-gray-600">
-                        {order.items.length} {order.items.length === 1 ? 'artículo' : 'artículos'}
+                        {order.items?.length || 0} {(order.items?.length || 0) === 1 ? 'artículo' : 'artículos'} en total
                       </p>
                       {order.tracking_number && (
                         <p className="text-sm text-gray-600">
@@ -244,7 +313,7 @@ export default function OrdersPage() {
                       href={`/user/orders/${order.id}`}
                       className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
                     >
-                      Ver Detalles
+                      Ver Detalles Completos
                     </Link>
                   </div>
                 </div>
