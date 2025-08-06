@@ -128,7 +128,7 @@ export default function ProductPage() {
     if (product.options && product.options.length > 0) {
       const missingOptions = product.options.filter(option => !selectedOptions[option.id]);
       if (missingOptions.length > 0) {
-        alert(`Por favor selecciona: ${missingOptions.map(opt => opt.title).join(', ')}`);
+        alert(`Por favor selecciona: ${missingOptions.map(opt => opt.name || 'Opción').join(', ')}`);
         return;
       }
     }
@@ -142,8 +142,12 @@ export default function ProductPage() {
 
     try {
       // Obtener el tamaño y color desde las opciones seleccionadas
-      const sizeOption = product.options?.find(opt => opt.title.toLowerCase().includes('talla') || opt.title.toLowerCase().includes('size'));
-      const colorOption = product.options?.find(opt => opt.title.toLowerCase().includes('color'));
+      const sizeOption = product.options?.find(opt => 
+        opt.name && (opt.name.toLowerCase().includes('talla') || opt.name.toLowerCase().includes('size'))
+      );
+      const colorOption = product.options?.find(opt => 
+        opt.name && opt.name.toLowerCase().includes('color')
+      );
       
       const selectedSize = sizeOption ? sizeOption.values?.find(val => val.id === selectedOptions[sizeOption.id])?.value || '' : '';
       const selectedColor = colorOption ? colorOption.values?.find(val => val.id === selectedOptions[colorOption.id])?.value || '' : '';
@@ -367,7 +371,7 @@ export default function ProductPage() {
             {product.options && product.options.map((option) => (
               <div key={option.id}>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  {option.title}: {' '}
+                  {option.name || 'Opción'}: {' '}
                   <span className="font-normal text-gray-600">
                     {option.values?.find(val => val.id === selectedOptions[option.id])?.value || 'Seleccionar'}
                   </span>
@@ -383,7 +387,7 @@ export default function ProductPage() {
                           : 'border-gray-300 text-gray-700 hover:border-gray-400'
                       }`}
                     >
-                      {value.value}
+                      {value.value || 'Valor'}
                     </button>
                   ))}
                 </div>
