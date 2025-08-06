@@ -164,7 +164,9 @@ export default function AdminDashboard() {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-EC', {
       style: 'currency',
-      currency: 'ECU'
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(amount);
   };
 
@@ -265,9 +267,9 @@ export default function AdminDashboard() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
               </svg>
             </div>
-            <div className="ml-4">
+            <div className="ml-4 flex-1">
               <p className="text-sm font-medium text-gray-600">Ventas Totales</p>
-              <p className="text-2xl font-semibold text-green-600">
+              <p className="text-xl lg:text-2xl font-semibold text-green-600 break-words">
                 {formatCurrency(stats?.totalSales || 0)}
               </p>
             </div>
