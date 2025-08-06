@@ -44,15 +44,6 @@ interface ProductOptionValue {
   image_url?: string;
 }
 
-interface ProductVariant {
-  sku: string;
-  price: number;
-  stock: number;
-  weight?: number;
-  image_url?: string;
-  options: { [optionName: string]: string };
-}
-
 export default function NewProductPage() {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -77,25 +68,59 @@ export default function NewProductPage() {
     colors: []
   });
 
-  const [productOptions, setProductOptions] = useState<ProductOption[]>([
-    {
-      name: 'Talla',
-      type: 'size',
-      values: []
-    },
-    {
-      name: 'Color',
-      type: 'color',
-      values: []
-    }
-  ]);
-
-  const [productVariants, setProductVariants] = useState<ProductVariant[]>([]);
-  const [showVariantsSection, setShowVariantsSection] = useState(false);
+  const [productOptions, setProductOptions] = useState<ProductOption[]>([]);
 
   const [newTag, setNewTag] = useState('');
-  const [newOptionTitle, setNewOptionTitle] = useState('');
-  const [newOptionValue, setNewOptionValue] = useState('');
+  const [selectedOptionType, setSelectedOptionType] = useState('');
+
+  // Opciones predefinidas con sus valores
+  const predefinedOptions = {
+    'Talla': {
+      type: 'size' as const,
+      values: ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']
+    },
+    'Color': {
+      type: 'color' as const,
+      values: [
+        { name: 'Negro', hex: '#000000' },
+        { name: 'Blanco', hex: '#FFFFFF' },
+        { name: 'Rojo', hex: '#FF0000' },
+        { name: 'Azul', hex: '#0000FF' },
+        { name: 'Verde', hex: '#008000' },
+        { name: 'Amarillo', hex: '#FFFF00' },
+        { name: 'Rosa', hex: '#FFC0CB' },
+        { name: 'Morado', hex: '#800080' },
+        { name: 'Naranja', hex: '#FFA500' },
+        { name: 'Gris', hex: '#808080' },
+        { name: 'Marrón', hex: '#A52A2A' },
+        { name: 'Beige', hex: '#F5F5DC' }
+      ]
+    },
+    'Material': {
+      type: 'select' as const,
+      values: ['Algodón', 'Poliéster', 'Seda', 'Lana', 'Lino', 'Denim', 'Cuero', 'Sintético', 'Mezcla']
+    },
+    'Estilo': {
+      type: 'select' as const,
+      values: ['Casual', 'Formal', 'Deportivo', 'Elegante', 'Vintage', 'Moderno', 'Clásico', 'Bohemio']
+    },
+    'Talla de Calzado': {
+      type: 'size' as const,
+      values: ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46']
+    },
+    'Género': {
+      type: 'select' as const,
+      values: ['Hombre', 'Mujer', 'Unisex', 'Niño', 'Niña']
+    },
+    'Temporada': {
+      type: 'select' as const,
+      values: ['Primavera', 'Verano', 'Otoño', 'Invierno', 'Todo el año']
+    },
+    'Acabado': {
+      type: 'select' as const,
+      values: ['Mate', 'Brillante', 'Satinado', 'Texturizado', 'Liso', 'Rugoso']
+    }
+  };
 
   useEffect(() => {
     loadCategories();
@@ -158,110 +183,63 @@ export default function NewProductPage() {
   };
 
   const addOption = () => {
-    if (newOptionTitle.trim()) {
+    if (!selectedOptionType) return;
+
+    // Verificar si la opción ya existe
+    const existingOption = productOptions.find(opt => opt.name === selectedOptionType);
+    if (existingOption) {
+      alert('Esta opción ya ha sido agregada');
+      return;
+    }
+
+    const predefinedOption = predefinedOptions[selectedOptionType as keyof typeof predefinedOptions];
+    
+    if (predefinedOption) {
+      // Agregar la opción sin valores inicialmente
       const newOption: ProductOption = {
-        name: newOptionTitle.trim(),
-        type: 'select',
+        name: selectedOptionType,
+        type: predefinedOption.type,
         values: []
       };
       setProductOptions(prev => [...prev, newOption]);
-      setNewOptionTitle('');
     }
+    
+    setSelectedOptionType('');
   };
 
-  const addOptionValue = (optionIndex: number, value: string, colorHex?: string) => {
-    if (value.trim()) {
-      const newValue: ProductOptionValue = {
-        value: value.trim(),
-        color_hex: colorHex
-      };
-      
-      setProductOptions(prev => 
-        prev.map((option, index) => 
-          index === optionIndex 
-            ? { ...option, values: [...option.values, newValue] }
-            : option
-        )
-      );
-      setNewOptionValue('');
-    }
+  const addValueToOption = (optionIndex: number, value: string, colorHex?: string) => {
+    setProductOptions(prev => prev.map((option, index) => {
+      if (index === optionIndex) {
+        // Verificar si el valor ya existe
+        const valueExists = option.values.some(v => v.value === value);
+        if (valueExists) {
+          return option;
+        }
+        
+        const newValue: ProductOptionValue = {
+          value: value,
+          ...(colorHex && { color_hex: colorHex })
+        };
+        return { ...option, values: [...option.values, newValue] };
+      }
+      return option;
+    }));
   };
 
-  const removeOptionValue = (optionIndex: number, valueIndex: number) => {
-    setProductOptions(prev => 
-      prev.map((option, index) => 
-        index === optionIndex 
-          ? { ...option, values: option.values.filter((_, i) => i !== valueIndex) }
-          : option
-      )
-    );
+  const removeValueFromOption = (optionIndex: number, valueIndex: number) => {
+    setProductOptions(prev => prev.map((option, index) => {
+      if (index === optionIndex) {
+        return {
+          ...option,
+          values: option.values.filter((_, i) => i !== valueIndex)
+        };
+      }
+      return option;
+    }));
   };
 
   const removeOption = (optionIndex: number) => {
     setProductOptions(prev => prev.filter((_, index) => index !== optionIndex));
-  };
-
-  const updateOptionType = (optionIndex: number, type: ProductOption['type']) => {
-    setProductOptions(prev => 
-      prev.map((option, index) => 
-        index === optionIndex 
-          ? { ...option, type }
-          : option
-      )
-    );
-  };
-
-  const generateVariants = () => {
-    const optionsWithValues = productOptions.filter(option => option.values.length > 0);
-    
-    if (optionsWithValues.length === 0) {
-      setProductVariants([{
-        sku: formData.sku || `${formData.name.slice(0, 3).toUpperCase()}-001`,
-        price: formData.price,
-        stock: formData.stock,
-        weight: formData.weight || undefined,
-        options: {}
-      }]);
-      return;
-    }
-
-    const combinations: ProductVariant[] = [];
-    
-    function generateCombinations(optionIndex: number, currentCombination: { [key: string]: string }) {
-      if (optionIndex === optionsWithValues.length) {
-        const sku = `${formData.sku || formData.name.slice(0, 3).toUpperCase()}-${combinations.length + 1}`;
-        combinations.push({
-          sku,
-          price: formData.price,
-          stock: Math.floor(formData.stock / (combinations.length + 1)) || 0,
-          weight: formData.weight || undefined,
-          options: { ...currentCombination }
-        });
-        return;
-      }
-
-      const option = optionsWithValues[optionIndex];
-      option.values.forEach(value => {
-        generateCombinations(optionIndex + 1, {
-          ...currentCombination,
-          [option.name]: value.value
-        });
-      });
-    }
-
-    generateCombinations(0, {});
-    setProductVariants(combinations);
-    setShowVariantsSection(true);
-  };
-
-  const updateVariant = (variantIndex: number, field: keyof ProductVariant, value: any) => {
-    setProductVariants(prev => 
-      prev.map((variant, index) => 
-        index === variantIndex 
-          ? { ...variant, [field]: value }
-          : variant
-      )
-    );
   };
 
   const validateForm = (): string | null => {
@@ -374,58 +352,6 @@ export default function NewProductPage() {
 
           if (valuesError) throw valuesError;
         }
-      }
-
-      // Crear las variantes del producto
-      if (productVariants.length > 0) {
-        for (const variant of productVariants) {
-          const { data: createdVariant, error: variantError } = await supabase
-            .from('product_variants')
-            .insert([{
-              product_id: product.id,
-              sku: variant.sku,
-              price: variant.price,
-              stock: variant.stock,
-              weight: variant.weight || null,
-              image_url: variant.image_url || null,
-              active: true
-            }])
-            .select()
-            .single();
-
-          if (variantError) throw variantError;
-
-          // Asociar los valores de opciones con la variante
-          for (const [optionName, optionValue] of Object.entries(variant.options)) {
-            // Buscar el option_value_id correspondiente
-            const { data: optionValueData, error: optionValueError } = await supabase
-              .from('product_option_values')
-              .select('id')
-              .eq('value', optionValue)
-              .single();
-
-            if (!optionValueError && optionValueData) {
-              await supabase
-                .from('variant_option_values')
-                .insert([{
-                  variant_id: createdVariant.id,
-                  option_value_id: optionValueData.id
-                }]);
-            }
-          }
-        }
-      } else {
-        // Crear una variante básica si no hay opciones
-        await supabase
-          .from('product_variants')
-          .insert([{
-            product_id: product.id,
-            sku: sku,
-            price: formData.price,
-            stock: formData.stock,
-            weight: formData.weight,
-            active: true
-          }]);
       }
 
       alert('Producto creado exitosamente');
@@ -831,218 +757,142 @@ export default function NewProductPage() {
         <div className="bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-6">Opciones del Producto</h2>
           
-          {productOptions.map((option, optionIndex) => (
-            <div key={optionIndex} className="mb-6 p-4 border border-gray-200 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="text"
-                    value={option.name}
-                    onChange={(e) => setProductOptions(prev => 
-                      prev.map((opt, idx) => 
-                        idx === optionIndex ? { ...opt, name: e.target.value } : opt
-                      )
-                    )}
-                    className="text-sm font-medium text-gray-900 border border-gray-300 rounded px-2 py-1"
-                    placeholder="Nombre de la opción"
-                  />
-                  <select
-                    value={option.type}
-                    onChange={(e) => updateOptionType(optionIndex, e.target.value as ProductOption['type'])}
-                    className="text-sm border border-gray-300 rounded px-2 py-1"
-                  >
-                    <option value="select">Selección</option>
-                    <option value="color">Color</option>
-                    <option value="size">Talla</option>
-                    <option value="text">Texto</option>
-                  </select>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeOption(optionIndex)}
-                  className="text-red-600 hover:text-red-800 text-sm"
+          {/* Selector para agregar nuevas opciones */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="flex space-x-3 items-end">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Agregar Opción
+                </label>
+                <select
+                  value={selectedOptionType}
+                  onChange={(e) => setSelectedOptionType(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                 >
-                  Eliminar opción
-                </button>
+                  <option value="">Seleccionar tipo de opción...</option>
+                  {Object.keys(predefinedOptions).map(optionName => (
+                    <option key={optionName} value={optionName}>
+                      {optionName}
+                    </option>
+                  ))}
+                </select>
               </div>
-              
-              {option.values.length > 0 && (
-                <div className="mb-3">
-                  <div className="flex flex-wrap gap-2">
-                    {option.values.map((value, valueIndex) => (
-                      <span
-                        key={valueIndex}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
-                      >
-                        {option.type === 'color' && value.color_hex && (
-                          <span 
-                            className="w-3 h-3 rounded-full mr-2 border border-gray-300"
-                            style={{ backgroundColor: value.color_hex }}
-                          />
-                        )}
-                        {value.value}
-                        <button
-                          type="button"
-                          onClick={() => removeOptionValue(optionIndex, valueIndex)}
-                          className="ml-2 text-blue-600 hover:text-blue-800"
-                        >
-                          ✕
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  value={newOptionValue}
-                  onChange={(e) => setNewOptionValue(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addOptionValue(optionIndex, newOptionValue))}
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                  placeholder="Agregar valor"
-                />
-                {option.type === 'color' && (
-                  <input
-                    type="color"
-                    value="#000000"
-                    onChange={(e) => {
-                      // Temporal storage for color
-                      const colorInput = e.target;
-                      colorInput.dataset.colorValue = e.target.value;
-                    }}
-                    className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
-                    title="Seleccionar color"
-                  />
-                )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const colorInput = document.querySelector('input[type="color"]') as HTMLInputElement;
-                    const colorHex = option.type === 'color' && colorInput ? colorInput.dataset.colorValue : undefined;
-                    addOptionValue(optionIndex, newOptionValue, colorHex);
-                  }}
-                  className="bg-blue-100 text-blue-700 px-3 py-2 rounded-md text-sm hover:bg-blue-200 transition-colors"
-                >
-                  Agregar
-                </button>
-              </div>
-            </div>
-          ))}
-
-          <div className="flex space-x-2">
-            <input
-              type="text"
-              value={newOptionTitle}
-              onChange={(e) => setNewOptionTitle(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addOption())}
-              className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-              placeholder="Nombre de nueva opción (ej: Estilo, Acabado)"
-            />
-            <button
-              type="button"
-              onClick={addOption}
-              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors"
-            >
-              Nueva Opción
-            </button>
-          </div>
-
-          {productOptions.some(option => option.values.length > 0) && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
               <button
                 type="button"
-                onClick={generateVariants}
-                className="bg-green-100 text-green-700 px-4 py-2 rounded-md hover:bg-green-200 transition-colors"
+                onClick={addOption}
+                disabled={!selectedOptionType}
+                className="bg-black text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Generar Variantes ({productOptions.reduce((acc, opt) => acc * Math.max(opt.values.length, 1), 1)} combinaciones)
+                Agregar
               </button>
+            </div>
+          </div>
+
+          {/* Opciones agregadas */}
+          {productOptions.length > 0 && (
+            <div className="space-y-4">
+              {productOptions.map((option, optionIndex) => (
+                <div key={optionIndex} className="p-4 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-medium text-gray-900">{option.name}</h3>
+                    <button
+                      type="button"
+                      onClick={() => removeOption(optionIndex)}
+                      className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+
+                  {/* Selector para agregar valores a esta opción */}
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex space-x-3 items-end">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Agregar valor para {option.name}
+                        </label>
+                        <select
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              const predefinedOption = predefinedOptions[option.name as keyof typeof predefinedOptions];
+                              if (predefinedOption?.type === 'color') {
+                                const colorOption = (predefinedOption.values as any[]).find((c: any) => c.name === e.target.value);
+                                if (colorOption) {
+                                  addValueToOption(optionIndex, colorOption.name, colorOption.hex);
+                                }
+                              } else {
+                                addValueToOption(optionIndex, e.target.value);
+                              }
+                              e.target.value = ''; // Reset selector
+                            }
+                          }}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                        >
+                          <option value="">Seleccionar valor...</option>
+                          {predefinedOptions[option.name as keyof typeof predefinedOptions]?.type === 'color' 
+                            ? (predefinedOptions[option.name as keyof typeof predefinedOptions]?.values as any[])?.map((color: any) => (
+                                <option key={color.name} value={color.name}>
+                                  {color.name}
+                                </option>
+                              ))
+                            : (predefinedOptions[option.name as keyof typeof predefinedOptions]?.values as string[])?.map((value: string) => (
+                                <option key={value} value={value}>
+                                  {value}
+                                </option>
+                              ))
+                          }
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Valores seleccionados para esta opción */}
+                  {option.values.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Valores seleccionados:</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {option.values.map((value, valueIndex) => (
+                          <span
+                            key={valueIndex}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                          >
+                            {option.type === 'color' && value.color_hex && (
+                              <span 
+                                className="w-3 h-3 rounded-full mr-2 border border-gray-300 inline-block"
+                                style={{ backgroundColor: value.color_hex }}
+                              />
+                            )}
+                            {value.value}
+                            <button
+                              type="button"
+                              onClick={() => removeValueFromOption(optionIndex, valueIndex)}
+                              className="ml-2 text-blue-600 hover:text-blue-800"
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {option.values.length === 0 && (
+                    <div className="text-center py-4 text-gray-500 text-sm">
+                      No has seleccionado valores para esta opción
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {productOptions.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <p>No has agregado opciones para este producto.</p>
+              <p className="text-sm">Selecciona una opción arriba para comenzar.</p>
             </div>
           )}
         </div>
-
-        {/* Variantes del producto */}
-        {showVariantsSection && productVariants.length > 0 && (
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-6">Variantes del Producto</h2>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      SKU
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Opciones
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Precio
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Stock
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Peso (g)
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {productVariants.map((variant, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="text"
-                          value={variant.sku}
-                          onChange={(e) => updateVariant(index, 'sku', e.target.value)}
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-wrap gap-1">
-                          {Object.entries(variant.options).map(([optionName, optionValue]) => (
-                            <span key={optionName} className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
-                              {optionName}: {optionValue}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="number"
-                          value={variant.price}
-                          onChange={(e) => updateVariant(index, 'price', Number(e.target.value))}
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                          min="0"
-                          step="0.01"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="number"
-                          value={variant.stock}
-                          onChange={(e) => updateVariant(index, 'stock', Number(e.target.value))}
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                          min="0"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="number"
-                          value={variant.weight || ''}
-                          onChange={(e) => updateVariant(index, 'weight', e.target.value ? Number(e.target.value) : undefined)}
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                          min="0"
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
 
         {/* Botones de acción */}
         <div className="flex justify-end space-x-4">
