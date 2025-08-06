@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
  */
 
 export interface UserRole {
-  role: 'user' | 'admin' | 'super_admin';
+  role: 'user' | 'admin';
   first_name: string;
   last_name: string;
   email: string;
@@ -65,14 +65,14 @@ export async function getUserRole(userId: string): Promise<UserRole | null> {
  * Verifica si un usuario es administrador
  */
 export function isAdmin(role: string | null | undefined): boolean {
-  return role === 'admin' || role === 'super_admin';
+  return role === 'admin';
 }
 
 /**
- * Verifica si un usuario es super administrador
+ * Verifica si un usuario es super administrador (mantenido por compatibilidad, siempre devuelve false)
  */
 export function isSuperAdmin(role: string | null | undefined): boolean {
-  return role === 'super_admin';
+  return false; // Solo manejamos 'user' y 'admin'
 }
 
 /**
