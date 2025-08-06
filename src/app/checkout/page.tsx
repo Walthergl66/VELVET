@@ -220,10 +220,29 @@ const CheckoutPage = () => {
   const handlePaymentSuccess = async (paymentIntent: any) => {
     console.log('🎉 INICIANDO PROCESO DE CREACIÓN DE ORDEN...');
     console.log('📋 Pago exitoso:', paymentIntent);
-    console.log('👤 Usuario actual:', user);
+    console.log('� Método de pago:', paymentIntent.payment_method_type || 'stripe');
+    console.log('�👤 Usuario actual:', user);
     console.log('🛒 Items del carrito:', cart.items);
     
     try {
+      // Verificar conexión de Supabase primero
+      console.log('🔗 Verificando conexión con Supabase...');
+      try {
+        const { data: testConnection, error: connectionError } = await supabase
+          .from('orders')
+          .select('id')
+          .limit(1);
+        
+        if (connectionError) {
+          console.error('❌ Error de conexión con Supabase:', connectionError);
+          throw new Error(`Error de conexión con la base de datos: ${connectionError.message}`);
+        }
+        console.log('✅ Conexión con Supabase verificada');
+      } catch (connError) {
+        console.error('❌ Error crítico de conexión:', connError);
+        throw new Error('No se puede conectar con la base de datos. Por favor, intenta de nuevo.');
+      }
+      
       // Verificar sesión de Supabase
       console.log('🔍 Verificando sesión de Supabase...');
       const { data: session, error: sessionError } = await supabase.auth.getSession();
@@ -251,6 +270,9 @@ const CheckoutPage = () => {
       
       // Crear la orden en la base de datos
       console.log('📦 Preparando datos de la orden...');
+      const currentShipping = getCurrentShippingInfo();
+      console.log('📍 Información de envío actual:', currentShipping);
+      
       const orderData = {
         user_id: user.id,
         status: 'confirmed',
@@ -259,43 +281,67 @@ const CheckoutPage = () => {
         shipping: Number(shipping.toFixed(2)),
         discount: 0,
         total: Number(total.toFixed(2)),
-        shipping_address: shippingInfo,
-        billing_address: shippingInfo, // Usando la misma dirección para billing
+        shipping_address: currentShipping,
+        billing_address: currentShipping, // Usando la misma dirección para billing
         payment_method: {
-          type: 'stripe',
+          type: paymentIntent.payment_method_type === 'paypal' ? 'paypal' : 'stripe',
           payment_intent_id: paymentIntent.id,
           payment_method: paymentIntent.payment_method,
-          status: paymentIntent.status
+          status: paymentIntent.status,
+          // Datos específicos de PayPal si aplica
+          ...(paymentIntent.payment_method_type === 'paypal' && {
+            paypal_order_id: paymentIntent.payment_method?.paypal_order_id,
+            paypal_transaction_id: paymentIntent.payment_method?.paypal_transaction_id,
+            paypal_email: paymentIntent.payment_method?.paypal_email
+          })
         },
-        payment_status: 'completed',
+        payment_status: 'paid', // Cambiar a 'paid' ya que el pago fue exitoso
         payment_id: paymentIntent.id
       };
 
       console.log('📋 Datos de la orden a crear:', JSON.stringify(orderData, null, 2));
 
-      // Crear la orden principal
+      // Crear la orden principal con mejor manejo de errores
       console.log('💾 Insertando orden en la base de datos...');
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([orderData])
-        .select()
-        .single();
+      let order;
+      try {
+        const { data, error: orderError } = await supabase
+          .from('orders')
+          .insert([orderData])
+          .select()
+          .single();
 
-      if (orderError) {
-        console.error('❌ Error detallado creando orden:', JSON.stringify(orderError, null, 2));
-        throw new Error(`Error al crear la orden: ${orderError.message} (Código: ${orderError.code})`);
+        if (orderError) {
+          console.error('❌ Error detallado creando orden:', {
+            message: orderError.message,
+            details: orderError.details,
+            hint: orderError.hint,
+            code: orderError.code
+          });
+          throw new Error(`Error al crear la orden: ${orderError.message} (Código: ${orderError.code || 'UNKNOWN'})`);
+        }
+
+        order = data;
+        console.log('✅ Orden creada exitosamente:', order);
+      } catch (createOrderError) {
+        console.error('❌ Error crítico creando orden:', createOrderError);
+        throw new Error(`Error crítico al crear la orden: ${createOrderError instanceof Error ? createOrderError.message : 'Error desconocido'}`);
       }
-
-      console.log('✅ Orden creada exitosamente:', order);
 
       // Crear los items de la orden
       console.log('📦 Preparando items de la orden...');
-      const orderItems = cart.items.map(item => {
-        console.log('🔄 Procesando item:', item);
-        return {
+      const orderItems = cart.items.map((item, index) => {
+        console.log(`🔄 Procesando item ${index + 1}:`, item);
+        
+        // Validar que el item tiene los datos mínimos requeridos
+        if (!item.product_id) {
+          console.warn(`⚠️ Item ${index + 1} no tiene product_id:`, item);
+        }
+        
+        const orderItem = {
           order_id: order.id,
-          product_id: item.product_id,
-          variant_id: item.variant_id,
+          product_id: item.product_id || null,
+          variant_id: item.variant_id || null,
           product_snapshot: {
             name: item.product?.name || 'Producto sin nombre',
             description: item.product?.description || '',
@@ -303,25 +349,90 @@ const CheckoutPage = () => {
             brand: item.product?.brand || '',
             sku: item.product?.sku || ''
           },
-          quantity: item.quantity,
+          quantity: Number(item.quantity) || 1,
           size: item.size || null,
           color: item.color || null,
           unit_price: Number((item.product?.price || 0).toFixed(2)),
           total_price: Number(((item.product?.price || 0) * item.quantity).toFixed(2))
         };
+        
+        console.log(`✅ Item ${index + 1} preparado:`, orderItem);
+        return orderItem;
       });
 
       console.log('📋 Items de orden a crear:', JSON.stringify(orderItems, null, 2));
 
       console.log('💾 Insertando items en la base de datos...');
-      const { data: createdItems, error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems)
-        .select();
+      
+      // Función helper para reintentos
+      const retryOperation = async (operation: () => Promise<any>, maxRetries = 3, delay = 1000) => {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            console.log(`🔄 Intento ${attempt} de ${maxRetries}...`);
+            return await operation();
+          } catch (error) {
+            console.error(`❌ Intento ${attempt} falló:`, error);
+            if (attempt === maxRetries) throw error;
+            console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2; // Backoff exponencial
+          }
+        }
+      };
+      
+      // Intentar insertar los items con reintentos
+      let createdItems;
+      try {
+        createdItems = await retryOperation(async () => {
+          const { data, error: itemsError } = await supabase
+            .from('order_items')
+            .insert(orderItems)
+            .select();
 
-      if (itemsError) {
-        console.error('❌ Error detallado creando items:', JSON.stringify(itemsError, null, 2));
-        throw new Error(`Error al crear los items de la orden: ${itemsError.message} (Código: ${itemsError.code})`);
+          if (itemsError) {
+            console.error('❌ Error detallado creando items:', {
+              message: itemsError.message,
+              details: itemsError.details,
+              hint: itemsError.hint,
+              code: itemsError.code
+            });
+            throw itemsError;
+          }
+          
+          return data;
+        });
+        
+        console.log('✅ Items insertados con éxito:', createdItems);
+      } catch (itemsError) {
+        console.error('❌ Error después de todos los reintentos:', itemsError);
+        
+        // Si falla la inserción masiva, intentar uno por uno
+        console.log('🔄 Intentando insertar items uno por uno como última opción...');
+        createdItems = [];
+        
+        for (let i = 0; i < orderItems.length; i++) {
+          const item = orderItems[i];
+          console.log(`📦 Insertando item ${i + 1}/${orderItems.length}:`, item);
+          
+          try {
+            const singleItemResult = await retryOperation(async () => {
+              const { data: singleItem, error: singleError } = await supabase
+                .from('order_items')
+                .insert([item])
+                .select()
+                .single();
+              
+              if (singleError) throw singleError;
+              return singleItem;
+            });
+            
+            createdItems.push(singleItemResult);
+            console.log(`✅ Item ${i + 1} creado exitosamente`);
+          } catch (singleError) {
+            console.error(`❌ Error crítico insertando item ${i + 1}:`, singleError);
+            throw new Error(`Error al crear item ${i + 1}: ${singleError instanceof Error ? singleError.message : 'Error desconocido'}`);
+          }
+        }
       }
 
       console.log('✅ Items de orden creados exitosamente:', createdItems);
@@ -422,7 +533,16 @@ const CheckoutPage = () => {
       console.log('📊 Las estadísticas del usuario se actualizarán automáticamente');
       
       console.log('🚀 Redirigiendo a página de éxito...');
-      router.push(`/checkout/success?payment_intent=${paymentIntent.id}&order_id=${order.id}`);
+      
+      // Construir URL de éxito según el método de pago
+      let successUrl;
+      if (paymentIntent.payment_method_type === 'paypal') {
+        successUrl = `/checkout/success?paypal_transaction_id=${paymentIntent.payment_method?.paypal_transaction_id}&paypal_order_id=${paymentIntent.payment_method?.paypal_order_id}&order_id=${order.id}`;
+      } else {
+        successUrl = `/checkout/success?payment_intent=${paymentIntent.id}&order_id=${order.id}`;
+      }
+      
+      router.push(successUrl);
       
     } catch (err) {
       console.error('💥 ERROR COMPLETO al procesar el pedido:');
@@ -476,7 +596,7 @@ const CheckoutPage = () => {
             <span>{shipping === 0 ? 'Gratis' : `$${shipping.toFixed(2)}`}</span>
           </div>
           <div className="flex justify-between">
-            <span>IVA (16%):</span>
+            <span>IVA (12%):</span>
             <span>${tax.toFixed(2)}</span>
           </div>
           <div className="border-t pt-2">
