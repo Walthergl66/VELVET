@@ -262,7 +262,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                     required={!isLogin}
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
+                    className="mt-1 block w-full px-3 py-2 border-2 border-gray-400 rounded-lg shadow-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-gray-900 bg-white"
                     placeholder="Tu nombre"
                   />
                 </div>
@@ -277,7 +277,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                     required={!isLogin}
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
+                    className="mt-1 block w-full px-3 py-2 border-2 border-gray-400 rounded-lg shadow-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-gray-900 bg-white"
                     placeholder="Tu apellido"
                   />
                 </div>
@@ -297,7 +297,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                 required
                 value={formData.email}
                 onChange={handleInputChange}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
+                className="mt-1 block w-full px-3 py-2 border-2 border-gray-400 rounded-lg shadow-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-gray-900 bg-white"
                 placeholder="tu@ejemplo.com"
               />
             </div>
@@ -314,7 +314,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                   type="tel"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
+                  className="mt-1 block w-full px-3 py-2 border-2 border-gray-400 rounded-lg shadow-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-gray-900 bg-white"
                   placeholder="+52 (555) 123-4567"
                 />
               </div>
@@ -334,7 +334,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                   required
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
+                  className="block w-full px-3 py-2 pr-10 border-2 border-gray-400 rounded-lg shadow-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-gray-900 bg-white"
                   placeholder="••••••••"
                 />
                 <button
@@ -369,7 +369,7 @@ export default function AuthForm({ mode = 'login', redirectTo = '/', onClose }: 
                   required={!isLogin}
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black text-gray-900 bg-white"
+                  className="mt-1 block w-full px-3 py-2 border-2 border-gray-400 rounded-lg shadow-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-black focus:border-black text-gray-900 bg-white"
                   placeholder="••••••••"
                 />
               </div>

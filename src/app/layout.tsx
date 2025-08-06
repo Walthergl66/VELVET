@@ -48,8 +48,12 @@ export default function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#1b1717ff" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
-      <body className={`${inter.className} antialiased bg-[#fafafa] text-[#19171b]`}>
+      <body className={`${inter.className} antialiased bg-[#fafafa] text-[#19171b] overflow-x-hidden`}>
         <CartProvider>
           <div className="min-h-screen flex flex-col">
             <Header />

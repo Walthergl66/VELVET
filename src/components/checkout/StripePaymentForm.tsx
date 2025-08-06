@@ -96,7 +96,7 @@ const StripePaymentForm: React.FC<StripePaymentFormProps> = ({
         color: '#374151',
         fontFamily: 'ui-sans-serif, system-ui, sans-serif',
         '::placeholder': {
-          color: '#9CA3AF',
+          color: '#6B7280',
         },
       },
       invalid: {

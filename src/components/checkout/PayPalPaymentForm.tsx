@@ -96,11 +96,30 @@ const PayPalPaymentForm: React.FC<PayPalPaymentFormProps> = ({
 
       const details = await response.json();
       
-      // Redirigir con información de PayPal
-      const successUrl = `/checkout/success?paypal_transaction_id=${details.id}&paypal_order_id=${data.orderID}`;
-      window.location.href = successUrl;
+      console.log('🎉 PayPal payment captured successfully:', details);
+      console.log('📋 PayPal capture response details:', JSON.stringify(details, null, 2));
+      console.log('📦 PayPal order data:', JSON.stringify(data, null, 2));
       
-      onSuccess(details);
+      // Estructurar los datos de PayPal de manera similar a Stripe para compatibilidad
+      const paymentIntent = {
+        id: details.id || `paypal_${data.orderID}`,
+        status: 'succeeded',
+        payment_method: {
+          type: 'paypal',
+          paypal_email: details.payer?.email_address || 'unknown',
+          paypal_order_id: data.orderID,
+          paypal_transaction_id: details.id
+        },
+        amount: amount * 100, // Convertir a centavos para consistencia con Stripe
+        currency: 'usd',
+        payment_method_type: 'paypal'
+      };
+      
+      console.log('🔄 Calling onSuccess with PayPal payment intent:', paymentIntent);
+      console.log('🛒 About to trigger inventory update for PayPal payment');
+      
+      // Llamar a onSuccess para que se ejecute handlePaymentSuccess y se actualice el inventario
+      onSuccess(paymentIntent);
     } catch (error) {
       console.error('Error capturing PayPal payment:', error);
       onError('Error al procesar el pago de PayPal');

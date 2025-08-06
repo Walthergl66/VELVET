@@ -749,7 +749,7 @@ export const createAddress = async (addressData: {
       .insert({
         ...addressData,
         user_id: user.id,
-        country: addressData.country || 'México'
+        country: addressData.country || 'Ecuador'
       })
       .select()
       .single();

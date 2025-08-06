@@ -104,7 +104,7 @@ export default function ProductCard({ product, className = '', priority = false 
 
   return (
     <article 
-      className={`group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ${className}`}
+      className={`group relative bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
@@ -127,7 +127,7 @@ export default function ProductCard({ product, className = '', priority = false 
             alt={product.name}
             fill
             priority={priority}
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </Link>
@@ -156,18 +156,18 @@ export default function ProductCard({ product, className = '', priority = false 
           )}
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions - Hidden on mobile, visible on hover on desktop */}
         <div className={`absolute top-2 right-2 flex flex-col gap-1 transition-opacity duration-200 ${
           isHovered ? 'opacity-100' : 'opacity-0'
-        }`}>
-          <button className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors">
+        } hidden md:flex`}>
+          <button className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors btn-touch">
             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </button>
           <Link 
             href={`/product/${product.id}`}
-            className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors"
+            className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors btn-touch"
           >
             <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -176,9 +176,9 @@ export default function ProductCard({ product, className = '', priority = false 
           </Link>
         </div>
 
-        {/* Quick Add Panel */}
+        {/* Quick Add Panel - Desktop only */}
         {showQuickAdd && product.stock > 0 && (
-          <div className="absolute inset-x-2 bottom-2 bg-white p-3 rounded-lg shadow-lg">
+          <div className="absolute inset-x-2 bottom-2 bg-white p-3 rounded-lg shadow-lg hidden md:block">
             <div className="space-y-2">
               {/* Product Options */}
               {product.options && product.options.map((option) => (
@@ -190,7 +190,7 @@ export default function ProductCard({ product, className = '', priority = false 
                     {option.values?.map((value) => (
                       <label
                         key={value.id}
-                        className={`px-2 py-1 text-xs border rounded cursor-pointer ${
+                        className={`px-2 py-1 text-xs border rounded cursor-pointer transition-colors ${
                           selectedOptions[option.id] === value.id
                             ? 'bg-black text-white border-black'
                             : 'border-gray-300 hover:border-gray-400'
@@ -227,22 +227,22 @@ export default function ProductCard({ product, className = '', priority = false 
       </div>
 
       {/* Product Info */}
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         <Link href={`/product/${product.id}`}>
-          <h3 className="font-medium text-gray-900 hover:text-gray-600 transition-colors line-clamp-2">
+          <h3 className="font-medium text-gray-900 hover:text-gray-600 transition-colors line-clamp-2 text-sm sm:text-base">
             {product.name}
           </h3>
         </Link>
         
         {product.category && (
-          <p className="text-sm text-gray-500 mt-1 capitalize">
+          <p className="text-xs sm:text-sm text-gray-500 mt-1 capitalize">
             {product.category.name}
           </p>
         )}
 
-        {/* Product Details */}
+        {/* Product Details - Hidden on mobile */}
         {(product.material || product.weight || product.dimensions) && (
-          <div className="text-xs text-gray-500 mt-1 space-y-1">
+          <div className="text-xs text-gray-500 mt-1 space-y-1 hidden sm:block">
             {product.material && (
               <p>Material: {product.material}</p>
             )}
@@ -263,7 +263,7 @@ export default function ProductCard({ product, className = '', priority = false 
         <div className="flex items-center gap-2 mt-2">
           {product.discount_price ? (
             <>
-              <span className="text-lg font-semibold text-red-600">
+              <span className="text-base sm:text-lg font-semibold text-red-600">
                 {formatPrice(product.discount_price)}
               </span>
               <span className="text-sm text-gray-400 line-through">
@@ -271,14 +271,14 @@ export default function ProductCard({ product, className = '', priority = false 
               </span>
             </>
           ) : (
-            <span className="text-lg font-semibold text-gray-900">
+            <span className="text-base sm:text-lg font-semibold text-gray-900">
               {formatPrice(product.price)}
             </span>
           )}
         </div>
 
-        {/* Rating */}
-        <div className="flex items-center gap-1 mt-2">
+        {/* Rating - Hidden on mobile, shown on larger screens */}
+        <div className="hidden sm:flex items-center gap-1 mt-2">
           <div className="flex">
             {Array.from({ length: 5 }, (_, i) => (
               <svg
@@ -300,18 +300,18 @@ export default function ProductCard({ product, className = '', priority = false 
           </span>
         </div>
 
-        {/* Quick Add Button */}
+        {/* Quick Add Button - Mobile-friendly */}
         {!showQuickAdd && (
           <button
             onClick={() => product.stock > 0 ? setShowQuickAdd(true) : undefined}
             disabled={product.stock === 0 || loading}
-            className={`w-full mt-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+            className={`w-full mt-3 py-2 sm:py-3 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base btn-touch ${
               product.stock === 0 
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 : isProductInCart
                   ? 'bg-green-100 text-green-800'
                   : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-            } ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+            } ${isHovered || window.innerWidth < 768 ? 'opacity-100' : 'opacity-0'} md:opacity-0 md:group-hover:opacity-100`}
           >
             <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293a1 1 0 000 1.414L7 19m5-6v6a1 1 0 001 1h4a1 1 0 001-1v-6m-5-6v-2a4 4 0 118 0v2m-8 0V7a4 4 0 118 0v2m-8 0h8" />

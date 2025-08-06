@@ -171,14 +171,14 @@ describe('CheckoutPage - Comprehensive Coverage', () => {
       await user.clear(addressInput);
       await user.type(addressInput, 'Calle Falsa 123');
       await user.clear(cityInput);
-      await user.type(cityInput, 'Ciudad de México');
+      await user.type(cityInput, 'Quito');
       await user.clear(stateInput);
-      await user.type(stateInput, 'CDMX');
+      await user.type(stateInput, 'Pichincha');
       await user.clear(zipCodeInput);
-      await user.type(zipCodeInput, '12345');
+      await user.type(zipCodeInput, '170501');
       
       expect(addressInput).toHaveValue('Calle Falsa 123');
-      expect(cityInput).toHaveValue('Ciudad de México');
+      expect(cityInput).toHaveValue('Quito');
       expect(stateInput).toHaveValue('CDMX');
       expect(zipCodeInput).toHaveValue('12345');
     });
@@ -196,11 +196,11 @@ describe('CheckoutPage - Comprehensive Coverage', () => {
       await user.clear(addressInput);
       await user.type(addressInput, 'Calle Falsa 123');
       await user.clear(cityInput);
-      await user.type(cityInput, 'Ciudad de México');
+      await user.type(cityInput, 'Quito');
       await user.clear(stateInput);
-      await user.type(stateInput, 'CDMX');
+      await user.type(stateInput, 'Pichincha');
       await user.clear(zipCodeInput);
-      await user.type(zipCodeInput, '12345');
+      await user.type(zipCodeInput, '170501');
       
       const submitButton = screen.getByRole('button', { name: /continuar al pago/i });
       await user.click(submitButton);
@@ -225,11 +225,11 @@ describe('CheckoutPage - Comprehensive Coverage', () => {
       await user.clear(addressInput);
       await user.type(addressInput, 'Calle Falsa 123');
       await user.clear(cityInput);
-      await user.type(cityInput, 'Ciudad de México');
+      await user.type(cityInput, 'Quito');
       await user.clear(stateInput);
-      await user.type(stateInput, 'CDMX');
+      await user.type(stateInput, 'Pichincha');
       await user.clear(zipCodeInput);
-      await user.type(zipCodeInput, '12345');
+      await user.type(zipCodeInput, '170501');
       
       const continueButton = screen.getByRole('button', { name: /continuar al pago/i });
       await user.click(continueButton);
@@ -306,11 +306,11 @@ describe('CheckoutPage - Comprehensive Coverage', () => {
       await user.clear(addressInput);
       await user.type(addressInput, 'Calle Falsa 123');
       await user.clear(cityInput);
-      await user.type(cityInput, 'Ciudad de México');
+      await user.type(cityInput, 'Quito');
       await user.clear(stateInput);
-      await user.type(stateInput, 'CDMX');
+      await user.type(stateInput, 'Pichincha');
       await user.clear(zipCodeInput);
-      await user.type(zipCodeInput, '12345');
+      await user.type(zipCodeInput, '170501');
       
       await user.click(screen.getByRole('button', { name: /continuar al pago/i }));
       
@@ -334,7 +334,7 @@ describe('CheckoutPage - Comprehensive Coverage', () => {
     test('debe mostrar información de envío en la revisión', () => {
       expect(screen.getAllByText('John Doe')).toHaveLength(2); // Aparece en shipping y payment info
       expect(screen.getByText('Calle Falsa 123')).toBeInTheDocument();
-      expect(screen.getByText('Ciudad de México, CDMX 12345')).toBeInTheDocument();
+      expect(screen.getByText('Quito, Pichincha 170501')).toBeInTheDocument();
       expect(screen.getByText('123-456-7890')).toBeInTheDocument();
     });
 

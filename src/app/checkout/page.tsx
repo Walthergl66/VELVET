@@ -56,14 +56,21 @@ const CheckoutPage = () => {
     phone: ''
   });
 
+  // Usar los mismos cálculos que CartContext
   const subtotal = cart.items.reduce((sum, item) => {
-    const price = item.product?.price || 0;
+    const price = item.product?.discount_price || item.product?.price || 0;
     return sum + (price * item.quantity);
   }, 0);
-  // Ajuste para Ecuador: envío gratis en compras mayores a $100 USD
-  const shipping = subtotal > 100 ? 0 : 15; // $15 USD envío estándar en Ecuador
-  const tax = subtotal * 0.12; // IVA 12% en Ecuador
-  const total = subtotal + shipping + tax;
+  
+  // Usar la misma lógica que CartContext: envío gratis arriba de $50, costo $5
+  const shipping = subtotal >= 50 ? 0 : 5;
+  
+  // Usar el mismo porcentaje de impuesto que CartContext: 15% IVA
+  const tax = subtotal * 0.15;
+  const discount = 0; // Mismo que CartContext
+  
+  // Calcular total con la misma lógica que CartContext
+  const total = subtotal + tax + shipping - discount;
 
   useEffect(() => {
     if (getItemCount() === 0) {
@@ -76,6 +83,15 @@ const CheckoutPage = () => {
       setCurrentStep(2);
     }
   }, [getItemCount, currentStep]);
+
+  // Establecer dirección por defecto cuando se cargan las direcciones
+  useEffect(() => {
+    if (addresses.length > 0 && !selectedShippingAddress && !useNewShippingAddress) {
+      // Seleccionar la dirección por defecto o la primera disponible
+      const defaultAddress = addresses.find(addr => addr.is_default) || addresses[0];
+      setSelectedShippingAddress(defaultAddress);
+    }
+  }, [addresses, selectedShippingAddress, useNewShippingAddress, setSelectedShippingAddress]);
 
   const createPaymentIntent = async () => {
     try {
@@ -166,26 +182,43 @@ const CheckoutPage = () => {
   };
 
   const validateShippingInfo = () => {
-    const currentInfo = getCurrentShippingInfo();
-    const required = ['firstName', 'lastName', 'email', 'address', 'city', 'zipCode', 'phone'];
-    return required.every(field => {
-      const value = currentInfo[field as keyof ShippingInfo];
-      return value && value.trim() !== '';
-    });
+    // Si está usando una dirección guardada y está seleccionada, es válido
+    if (!useNewShippingAddress && selectedShippingAddress) {
+      // Verificar que la dirección seleccionada tenga los campos mínimos requeridos
+      return !!(
+        selectedShippingAddress.street &&
+        selectedShippingAddress.city &&
+        selectedShippingAddress.zip_code &&
+        user?.email // El email viene del usuario autenticado
+      );
+    }
+    
+    // Si está usando el formulario manual, validar todos los campos
+    if (useNewShippingAddress || addresses.length === 0) {
+      const currentInfo = getCurrentShippingInfo();
+      const required = ['firstName', 'lastName', 'email', 'address', 'city', 'zipCode', 'phone'];
+      return required.every(field => {
+        const value = currentInfo[field as keyof ShippingInfo];
+        return value && value.trim() !== '';
+      });
+    }
+    
+    // Si no hay dirección seleccionada y no está usando formulario manual, no es válido
+    return false;
   };
 
   // Función auxiliar para obtener la dirección actual de envío
   const getCurrentShippingInfo = () => {
     if (!useNewShippingAddress && selectedShippingAddress) {
       return {
-        firstName: '', // No tenemos estos campos en Address, usar defaults
-        lastName: '',
+        firstName: user?.user_metadata?.first_name || '',
+        lastName: user?.user_metadata?.last_name || '',
         email: user?.email || '',
         address: selectedShippingAddress.street || '',
         city: selectedShippingAddress.city || '',
         zipCode: selectedShippingAddress.zip_code || '',
         country: selectedShippingAddress.country || 'Ecuador',
-        phone: '' // No tenemos phone en Address, usar default
+        phone: user?.user_metadata?.phone || ''
       };
     }
     return shippingInfo;
@@ -194,10 +227,29 @@ const CheckoutPage = () => {
   const handlePaymentSuccess = async (paymentIntent: any) => {
     console.log('🎉 INICIANDO PROCESO DE CREACIÓN DE ORDEN...');
     console.log('📋 Pago exitoso:', paymentIntent);
-    console.log('👤 Usuario actual:', user);
+    console.log('� Método de pago:', paymentIntent.payment_method_type || 'stripe');
+    console.log('�👤 Usuario actual:', user);
     console.log('🛒 Items del carrito:', cart.items);
     
     try {
+      // Verificar conexión de Supabase primero
+      console.log('🔗 Verificando conexión con Supabase...');
+      try {
+        const { data: testConnection, error: connectionError } = await supabase
+          .from('orders')
+          .select('id')
+          .limit(1);
+        
+        if (connectionError) {
+          console.error('❌ Error de conexión con Supabase:', connectionError);
+          throw new Error(`Error de conexión con la base de datos: ${connectionError.message}`);
+        }
+        console.log('✅ Conexión con Supabase verificada');
+      } catch (connError) {
+        console.error('❌ Error crítico de conexión:', connError);
+        throw new Error('No se puede conectar con la base de datos. Por favor, intenta de nuevo.');
+      }
+      
       // Verificar sesión de Supabase
       console.log('🔍 Verificando sesión de Supabase...');
       const { data: session, error: sessionError } = await supabase.auth.getSession();
@@ -225,6 +277,9 @@ const CheckoutPage = () => {
       
       // Crear la orden en la base de datos
       console.log('📦 Preparando datos de la orden...');
+      const currentShipping = getCurrentShippingInfo();
+      console.log('📍 Información de envío actual:', currentShipping);
+      
       const orderData = {
         user_id: user.id,
         status: 'confirmed',
@@ -233,43 +288,67 @@ const CheckoutPage = () => {
         shipping: Number(shipping.toFixed(2)),
         discount: 0,
         total: Number(total.toFixed(2)),
-        shipping_address: shippingInfo,
-        billing_address: shippingInfo, // Usando la misma dirección para billing
+        shipping_address: currentShipping,
+        billing_address: currentShipping, // Usando la misma dirección para billing
         payment_method: {
-          type: 'stripe',
+          type: paymentIntent.payment_method_type === 'paypal' ? 'paypal' : 'stripe',
           payment_intent_id: paymentIntent.id,
           payment_method: paymentIntent.payment_method,
-          status: paymentIntent.status
+          status: paymentIntent.status,
+          // Datos específicos de PayPal si aplica
+          ...(paymentIntent.payment_method_type === 'paypal' && {
+            paypal_order_id: paymentIntent.payment_method?.paypal_order_id,
+            paypal_transaction_id: paymentIntent.payment_method?.paypal_transaction_id,
+            paypal_email: paymentIntent.payment_method?.paypal_email
+          })
         },
-        payment_status: 'completed',
+        payment_status: 'paid', // Cambiar a 'paid' ya que el pago fue exitoso
         payment_id: paymentIntent.id
       };
 
       console.log('📋 Datos de la orden a crear:', JSON.stringify(orderData, null, 2));
 
-      // Crear la orden principal
+      // Crear la orden principal con mejor manejo de errores
       console.log('💾 Insertando orden en la base de datos...');
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([orderData])
-        .select()
-        .single();
+      let order;
+      try {
+        const { data, error: orderError } = await supabase
+          .from('orders')
+          .insert([orderData])
+          .select()
+          .single();
 
-      if (orderError) {
-        console.error('❌ Error detallado creando orden:', JSON.stringify(orderError, null, 2));
-        throw new Error(`Error al crear la orden: ${orderError.message} (Código: ${orderError.code})`);
+        if (orderError) {
+          console.error('❌ Error detallado creando orden:', {
+            message: orderError.message,
+            details: orderError.details,
+            hint: orderError.hint,
+            code: orderError.code
+          });
+          throw new Error(`Error al crear la orden: ${orderError.message} (Código: ${orderError.code || 'UNKNOWN'})`);
+        }
+
+        order = data;
+        console.log('✅ Orden creada exitosamente:', order);
+      } catch (createOrderError) {
+        console.error('❌ Error crítico creando orden:', createOrderError);
+        throw new Error(`Error crítico al crear la orden: ${createOrderError instanceof Error ? createOrderError.message : 'Error desconocido'}`);
       }
-
-      console.log('✅ Orden creada exitosamente:', order);
 
       // Crear los items de la orden
       console.log('📦 Preparando items de la orden...');
-      const orderItems = cart.items.map(item => {
-        console.log('🔄 Procesando item:', item);
-        return {
+      const orderItems = cart.items.map((item, index) => {
+        console.log(`🔄 Procesando item ${index + 1}:`, item);
+        
+        // Validar que el item tiene los datos mínimos requeridos
+        if (!item.product_id) {
+          console.warn(`⚠️ Item ${index + 1} no tiene product_id:`, item);
+        }
+        
+        const orderItem = {
           order_id: order.id,
-          product_id: item.product_id,
-          variant_id: item.variant_id,
+          product_id: item.product_id || null,
+          variant_id: item.variant_id || null,
           product_snapshot: {
             name: item.product?.name || 'Producto sin nombre',
             description: item.product?.description || '',
@@ -277,25 +356,90 @@ const CheckoutPage = () => {
             brand: item.product?.brand || '',
             sku: item.product?.sku || ''
           },
-          quantity: item.quantity,
+          quantity: Number(item.quantity) || 1,
           size: item.size || null,
           color: item.color || null,
           unit_price: Number((item.product?.price || 0).toFixed(2)),
           total_price: Number(((item.product?.price || 0) * item.quantity).toFixed(2))
         };
+        
+        console.log(`✅ Item ${index + 1} preparado:`, orderItem);
+        return orderItem;
       });
 
       console.log('📋 Items de orden a crear:', JSON.stringify(orderItems, null, 2));
 
       console.log('💾 Insertando items en la base de datos...');
-      const { data: createdItems, error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems)
-        .select();
+      
+      // Función helper para reintentos
+      const retryOperation = async (operation: () => Promise<any>, maxRetries = 3, delay = 1000) => {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            console.log(`🔄 Intento ${attempt} de ${maxRetries}...`);
+            return await operation();
+          } catch (error) {
+            console.error(`❌ Intento ${attempt} falló:`, error);
+            if (attempt === maxRetries) throw error;
+            console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2; // Backoff exponencial
+          }
+        }
+      };
+      
+      // Intentar insertar los items con reintentos
+      let createdItems;
+      try {
+        createdItems = await retryOperation(async () => {
+          const { data, error: itemsError } = await supabase
+            .from('order_items')
+            .insert(orderItems)
+            .select();
 
-      if (itemsError) {
-        console.error('❌ Error detallado creando items:', JSON.stringify(itemsError, null, 2));
-        throw new Error(`Error al crear los items de la orden: ${itemsError.message} (Código: ${itemsError.code})`);
+          if (itemsError) {
+            console.error('❌ Error detallado creando items:', {
+              message: itemsError.message,
+              details: itemsError.details,
+              hint: itemsError.hint,
+              code: itemsError.code
+            });
+            throw itemsError;
+          }
+          
+          return data;
+        });
+        
+        console.log('✅ Items insertados con éxito:', createdItems);
+      } catch (itemsError) {
+        console.error('❌ Error después de todos los reintentos:', itemsError);
+        
+        // Si falla la inserción masiva, intentar uno por uno
+        console.log('🔄 Intentando insertar items uno por uno como última opción...');
+        createdItems = [];
+        
+        for (let i = 0; i < orderItems.length; i++) {
+          const item = orderItems[i];
+          console.log(`📦 Insertando item ${i + 1}/${orderItems.length}:`, item);
+          
+          try {
+            const singleItemResult = await retryOperation(async () => {
+              const { data: singleItem, error: singleError } = await supabase
+                .from('order_items')
+                .insert([item])
+                .select()
+                .single();
+              
+              if (singleError) throw singleError;
+              return singleItem;
+            });
+            
+            createdItems.push(singleItemResult);
+            console.log(`✅ Item ${i + 1} creado exitosamente`);
+          } catch (singleError) {
+            console.error(`❌ Error crítico insertando item ${i + 1}:`, singleError);
+            throw new Error(`Error al crear item ${i + 1}: ${singleError instanceof Error ? singleError.message : 'Error desconocido'}`);
+          }
+        }
       }
 
       console.log('✅ Items de orden creados exitosamente:', createdItems);
@@ -396,7 +540,16 @@ const CheckoutPage = () => {
       console.log('📊 Las estadísticas del usuario se actualizarán automáticamente');
       
       console.log('🚀 Redirigiendo a página de éxito...');
-      router.push(`/checkout/success?payment_intent=${paymentIntent.id}&order_id=${order.id}`);
+      
+      // Construir URL de éxito según el método de pago
+      let successUrl;
+      if (paymentIntent.payment_method_type === 'paypal') {
+        successUrl = `/checkout/success?paypal_transaction_id=${paymentIntent.payment_method?.paypal_transaction_id}&paypal_order_id=${paymentIntent.payment_method?.paypal_order_id}&order_id=${order.id}`;
+      } else {
+        successUrl = `/checkout/success?payment_intent=${paymentIntent.id}&order_id=${order.id}`;
+      }
+      
+      router.push(successUrl);
       
     } catch (err) {
       console.error('💥 ERROR COMPLETO al procesar el pedido:');
@@ -426,39 +579,101 @@ const CheckoutPage = () => {
       
       <div className="space-y-4">
         {cart.items.map((item) => {
-          const price = item.product?.price || 0;
+          // Usar la misma lógica de precio que CartContext
+          const price = item.product?.discount_price || item.product?.price || 0;
+          const itemTotal = price * item.quantity;
           return (
             <div key={item.id} className="flex justify-between items-start border-b pb-3">
               <div className="flex-1">
-                <h4 className="font-medium">{item.product?.name || 'Producto'}</h4>
+                <h4 className="font-medium text-gray-800">{item.product?.name || 'Producto'}</h4>
                 {item.size && <p className="text-sm text-gray-600">Talla: {item.size}</p>}
                 {item.color && <p className="text-sm text-gray-600">Color: {item.color}</p>}
-                <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>
+                <p className="text-sm text-gray-600">
+                  Cantidad: {item.quantity} × ${price.toFixed(2)}
+                  {item.product?.discount_price && (
+                    <span className="ml-2 text-gray-400 line-through text-xs">
+                      ${item.product.price.toFixed(2)}
+                    </span>
+                  )}
+                </p>
               </div>
-              <p className="font-medium">${(price * item.quantity).toFixed(2)}</p>
+              <p className="font-semibold text-gray-800">${itemTotal.toFixed(2)}</p>
             </div>
           );
         })}
         
-        <div className="border-t pt-4 space-y-2">
-          <div className="flex justify-between">
-            <span>Subtotal:</span>
-            <span>${subtotal.toFixed(2)}</span>
+        <div className="border-t pt-4 space-y-3">
+          <div className="flex justify-between text-gray-700">
+            <span className="flex items-center">
+              📋 <span className="ml-1">Subtotal:</span>
+            </span>
+            <span className="font-medium">${subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between">
-            <span>Envío:</span>
-            <span>{shipping === 0 ? 'Gratis' : `$${shipping.toFixed(2)}`}</span>
+          
+          <div className="flex justify-between text-gray-700">
+            <span className="flex items-center">
+              🚚 <span className="ml-1">Envío:</span>
+            </span>
+            <span className="font-medium">
+              {shipping === 0 ? (
+                <span className="text-green-600 font-semibold">¡Gratis!</span>
+              ) : (
+                `$${shipping.toFixed(2)}`
+              )}
+            </span>
           </div>
-          <div className="flex justify-between">
-            <span>IVA (16%):</span>
-            <span>${tax.toFixed(2)}</span>
+          
+          <div className="flex justify-between text-gray-700">
+            <span className="flex items-center">
+              📊 <span className="ml-1">IVA (15%):</span>
+            </span>
+            <span className="font-medium">${tax.toFixed(2)}</span>
           </div>
-          <div className="border-t pt-2">
-            <div className="flex justify-between font-bold text-lg">
-              <span>Total:</span>
-              <span>${total.toFixed(2)}</span>
+          
+          {discount > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span className="flex items-center">
+                🎟️ <span className="ml-1">Descuento:</span>
+              </span>
+              <span className="font-medium">-${discount.toFixed(2)}</span>
+            </div>
+          )}
+          
+          <div className="border-t pt-3">
+            <div className="flex justify-between font-bold text-lg text-gray-900 bg-green-50 p-3 rounded-lg">
+              <span className="flex items-center">
+                💰 <span className="ml-1">Total:</span>
+              </span>
+              <span className="text-green-700">${total.toFixed(2)}</span>
             </div>
           </div>
+          
+          {/* Mostrar información adicional si hay envío gratis */}
+          {subtotal >= 50 && (
+            <div className="bg-green-50 border border-green-200 rounded-md p-3 mt-3">
+              <p className="text-sm text-green-700 text-center">
+                🎉 ¡Felicidades! Tienes envío gratis por compras mayores a $50
+              </p>
+            </div>
+          )}
+          
+          {/* Mostrar cuánto falta para envío gratis */}
+          {subtotal < 50 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-3">
+              <p className="text-sm text-blue-700 text-center">
+                💡 Agrega ${(50 - subtotal).toFixed(2)} más para obtener envío gratis
+              </p>
+            </div>
+          )}
+          
+          {/* Verificar que los totales coinciden con CartContext */}
+          {(Math.abs(cart.total - total) > 0.01) && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-3">
+              <p className="text-sm text-yellow-700 text-center">
+                ⚠️ Detectada diferencia en cálculos. CartContext: ${cart.total.toFixed(2)}, Checkout: ${total.toFixed(2)}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -475,15 +690,28 @@ const CheckoutPage = () => {
         {/* Selector de direcciones guardadas */}
         {addresses.length > 0 && (
           <div>
-            <label className="block text-sm font-medium mb-3">
+            <label className="block text-base font-bold mb-3 text-gray-900">
               Seleccionar dirección guardada
             </label>
             <AddressSelector
               title="Direcciones de envío"
               addresses={addresses}
-              selectedAddress={selectedShippingAddress}
-              onSelectAddress={setSelectedShippingAddress}
-              onAddNewAddress={() => setUseNewShippingAddress(true)}
+              selectedAddress={useNewShippingAddress ? null : selectedShippingAddress}
+              onSelectAddress={(address) => {
+                if (address === null) {
+                  // Usuario seleccionó "Ingresar nueva dirección"
+                  setUseNewShippingAddress(true);
+                  setSelectedShippingAddress(null);
+                } else {
+                  // Usuario seleccionó una dirección guardada
+                  setSelectedShippingAddress(address);
+                  setUseNewShippingAddress(false);
+                }
+              }}
+              onAddNewAddress={() => {
+                setUseNewShippingAddress(true);
+                setSelectedShippingAddress(null);
+              }}
               loading={addressesLoading}
             />
             
@@ -494,7 +722,10 @@ const CheckoutPage = () => {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setUseNewShippingAddress(true)}
+                  onClick={() => {
+                    setUseNewShippingAddress(true);
+                    setSelectedShippingAddress(null);
+                  }}
                   className="text-blue-600 hover:text-blue-800 text-sm underline mt-1"
                 >
                   Usar una dirección diferente
@@ -507,13 +738,16 @@ const CheckoutPage = () => {
         {/* Formulario manual (se muestra si no hay direcciones guardadas o si elige "nueva dirección") */}
         {(addresses.length === 0 || useNewShippingAddress) && (
           <div className="space-y-4">
-            {useNewShippingAddress && (
-              <div className="mb-4">
+            {addresses.length > 0 && useNewShippingAddress && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-600 mb-2">
+                  📝 Complete todos los campos para continuar
+                </p>
                 <button
                   type="button"
                   onClick={() => {
                     setUseNewShippingAddress(false);
-                    setSelectedShippingAddress(null);
+                    setSelectedShippingAddress(addresses.find(addr => addr.is_default) || addresses[0] || null);
                   }}
                   className="text-blue-600 hover:text-blue-800 text-sm underline"
                 >
@@ -524,10 +758,10 @@ const CheckoutPage = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Nombre *</label>
+                <label className="block text-base font-bold mb-2 text-gray-900">Nombre *</label>
                 <input
                   type="text"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   value={shippingInfo.firstName}
                   onChange={(e) => handleShippingChange('firstName', e.target.value)}
                   placeholder="Tu nombre"
@@ -535,10 +769,10 @@ const CheckoutPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Apellidos *</label>
+                <label className="block text-base font-bold mb-2 text-gray-900">Apellidos *</label>
                 <input
                   type="text"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   value={shippingInfo.lastName}
                   onChange={(e) => handleShippingChange('lastName', e.target.value)}
                   placeholder="Tus apellidos"
@@ -548,10 +782,10 @@ const CheckoutPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Email *</label>
+              <label className="block text-base font-bold mb-2 text-gray-900">Email *</label>
               <input
                 type="email"
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                 value={shippingInfo.email}
                 onChange={(e) => handleShippingChange('email', e.target.value)}
                 placeholder="tu@email.com"
@@ -560,10 +794,10 @@ const CheckoutPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Teléfono *</label>
+              <label className="block text-base font-bold mb-2 text-gray-900">Teléfono *</label>
               <input
                 type="tel"
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                 value={shippingInfo.phone}
                 onChange={(e) => handleShippingChange('phone', e.target.value)}
                 placeholder="+593 99 123 4567"
@@ -572,10 +806,10 @@ const CheckoutPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Dirección *</label>
+              <label className="block text-base font-bold mb-2 text-gray-900">Dirección *</label>
               <input
                 type="text"
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                 value={shippingInfo.address}
                 onChange={(e) => handleShippingChange('address', e.target.value)}
                 placeholder="Calle, número, barrio"
@@ -585,10 +819,10 @@ const CheckoutPage = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Ciudad *</label>
+                <label className="block text-base font-bold mb-2 text-gray-900">Ciudad *</label>
                 <input
                   type="text"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   value={shippingInfo.city}
                   onChange={(e) => handleShippingChange('city', e.target.value)}
                   placeholder="Ciudad"
@@ -596,10 +830,10 @@ const CheckoutPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Código Postal *</label>
+                <label className="block text-base font-bold mb-2 text-gray-900">Código Postal *</label>
                 <input
                   type="text"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border-2 border-gray-400 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-600"
                   value={shippingInfo.zipCode}
                   onChange={(e) => handleShippingChange('zipCode', e.target.value)}
                   placeholder="170515"

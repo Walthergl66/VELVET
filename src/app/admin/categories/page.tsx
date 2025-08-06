@@ -456,7 +456,7 @@ export default function AdminCategoriesPage() {
                     value={state.formData.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                    className="w-full border-2 border-gray-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent placeholder-gray-600"
                     placeholder="Ej: Camisas"
                   />
                   <p className="text-xs text-gray-500 mt-1">
@@ -473,7 +473,7 @@ export default function AdminCategoriesPage() {
                       name="parent_id"
                       value={state.formData.parent_id}
                       onChange={handleInputChange}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                      className="w-full border-2 border-gray-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                     >
                       <option value="">Categoría principal</option>
                       {mainCategories.map((category) => (
@@ -494,7 +494,7 @@ export default function AdminCategoriesPage() {
                     value={state.formData.description}
                     onChange={handleInputChange}
                     rows={3}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                    className="w-full border-2 border-gray-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent placeholder-gray-600"
                     placeholder="Descripción de la categoría..."
                   />
                 </div>
@@ -507,7 +507,7 @@ export default function AdminCategoriesPage() {
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                    className="w-full border-2 border-gray-400 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Sube una imagen para la categoría (formatos: JPG, PNG, WebP)

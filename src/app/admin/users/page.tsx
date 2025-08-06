@@ -403,7 +403,7 @@ export default function AdminUsersPage() {
               type="text"
               id="search"
               placeholder="Nombre, email..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border-2 border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-600"
               value={state.searchTerm}
               onChange={(e) => setState(prev => ({ ...prev, searchTerm: e.target.value, currentPage: 1 }))}
             />
@@ -416,7 +416,7 @@ export default function AdminUsersPage() {
             </label>
             <select
               id="role"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border-2 border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={state.selectedRole}
               onChange={(e) => setState(prev => ({ ...prev, selectedRole: e.target.value, currentPage: 1 }))}
             >
@@ -433,7 +433,7 @@ export default function AdminUsersPage() {
             </label>
             <select
               id="status"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border-2 border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={state.selectedStatus}
               onChange={(e) => setState(prev => ({ ...prev, selectedStatus: e.target.value, currentPage: 1 }))}
             >
@@ -450,7 +450,7 @@ export default function AdminUsersPage() {
             </label>
             <select
               id="sort"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border-2 border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={state.sortBy}
               onChange={(e) => setState(prev => ({ ...prev, sortBy: e.target.value, currentPage: 1 }))}
             >

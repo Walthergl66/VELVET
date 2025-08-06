@@ -426,7 +426,7 @@ export default function ProductPage() {
                 >
                   -
                 </button>
-                <span className="w-16 text-center font-semibold">{quantity}</span>
+                <span className="w-16 text-center font-bold text-2xl text-gray-900">{quantity}</span>
                 <button
                   onClick={() => setQuantity(Math.min(getAvailableStock(), quantity + 1))}
                   className="w-10 h-10 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"

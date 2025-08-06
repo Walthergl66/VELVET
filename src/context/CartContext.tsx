@@ -106,17 +106,17 @@ const calculateCartTotals = (items: CartItem[]): Pick<Cart, 'subtotal' | 'tax' |
     return sum + (price * item.quantity);
   }, 0);
 
-  const tax = subtotal * 0.16; // 16% IVA México
-  const shipping = subtotal > 1000 ? 0 : 150; // Envío gratis arriba de $1000
+  const tax = subtotal * 0.15; // 15% IVA Ecuador
+  const shipping = subtotal >= 50 ? 0 : 5; // Envío gratis arriba de $50, costo $5
   const discount = 0; // Se puede implementar lógica de descuentos
   const total = subtotal + tax + shipping - discount;
 
   return {
-    subtotal,
-    tax,
-    shipping,
-    discount,
-    total,
+    subtotal: Math.round(subtotal * 100) / 100, // Redondear a 2 decimales
+    tax: Math.round(tax * 100) / 100,
+    shipping: Math.round(shipping * 100) / 100,
+    discount: Math.round(discount * 100) / 100,
+    total: Math.round(total * 100) / 100,
   };
 };
 
