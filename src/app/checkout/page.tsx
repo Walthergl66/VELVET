@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import PaymentMethodSelector from '@/components/checkout/PaymentMethodSelector';
 import Button from '@/components/ui/Button';
 
@@ -117,17 +118,132 @@ const CheckoutPage = () => {
   };
 
   const handlePaymentSuccess = async (paymentIntent: any) => {
+    console.log('🎉 INICIANDO PROCESO DE CREACIÓN DE ORDEN...');
+    console.log('📋 Pago exitoso:', paymentIntent);
+    console.log('👤 Usuario actual:', user);
+    console.log('🛒 Items del carrito:', cart.items);
+    
     try {
-      console.log('Pago exitoso:', paymentIntent);
+      // Verificar sesión de Supabase
+      console.log('🔍 Verificando sesión de Supabase...');
+      const { data: session, error: sessionError } = await supabase.auth.getSession();
+      console.log('🔑 Sesión de Supabase:', session);
+      if (sessionError) {
+        console.error('❌ Error obteniendo sesión:', sessionError);
+        throw new Error(`Error de sesión: ${sessionError.message}`);
+      }
       
-      // El webhook de Stripe se encargará de crear la orden en la base de datos
-      // Aquí solo limpiamos el carrito y redirigimos
+      // Validar que tenemos usuario autenticado
+      console.log('✅ Validando usuario autenticado...');
+      if (!user?.id) {
+        console.error('❌ Usuario no autenticado');
+        throw new Error('Usuario no autenticado. Necesitas estar logueado para crear una orden.');
+      }
+      console.log('✅ Usuario validado:', user.id);
+
+      // Validar que hay items en el carrito
+      console.log('🛒 Validando items del carrito...');
+      if (!cart.items || cart.items.length === 0) {
+        console.error('❌ Carrito vacío');
+        throw new Error('No hay items en el carrito para crear la orden.');
+      }
+      console.log('✅ Carrito validado:', cart.items.length, 'items');
       
+      // Crear la orden en la base de datos
+      console.log('📦 Preparando datos de la orden...');
+      const orderData = {
+        user_id: user.id,
+        status: 'confirmed',
+        subtotal: Number(subtotal.toFixed(2)),
+        tax: Number(tax.toFixed(2)),
+        shipping: Number(shipping.toFixed(2)),
+        discount: 0,
+        total: Number(total.toFixed(2)),
+        shipping_address: shippingInfo,
+        billing_address: shippingInfo, // Usando la misma dirección para billing
+        payment_method: {
+          type: 'stripe',
+          payment_intent_id: paymentIntent.id,
+          payment_method: paymentIntent.payment_method,
+          status: paymentIntent.status
+        },
+        payment_status: 'completed',
+        payment_id: paymentIntent.id
+      };
+
+      console.log('📋 Datos de la orden a crear:', JSON.stringify(orderData, null, 2));
+
+      // Crear la orden principal
+      console.log('💾 Insertando orden en la base de datos...');
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert([orderData])
+        .select()
+        .single();
+
+      if (orderError) {
+        console.error('❌ Error detallado creando orden:', JSON.stringify(orderError, null, 2));
+        throw new Error(`Error al crear la orden: ${orderError.message} (Código: ${orderError.code})`);
+      }
+
+      console.log('✅ Orden creada exitosamente:', order);
+
+      // Crear los items de la orden
+      console.log('📦 Preparando items de la orden...');
+      const orderItems = cart.items.map(item => {
+        console.log('🔄 Procesando item:', item);
+        return {
+          order_id: order.id,
+          product_id: item.product_id,
+          variant_id: item.variant_id,
+          product_snapshot: {
+            name: item.product?.name || 'Producto sin nombre',
+            description: item.product?.description || '',
+            images: item.product?.images || [],
+            brand: item.product?.brand || '',
+            sku: item.product?.sku || ''
+          },
+          quantity: item.quantity,
+          size: item.size || null,
+          color: item.color || null,
+          unit_price: Number((item.product?.price || 0).toFixed(2)),
+          total_price: Number(((item.product?.price || 0) * item.quantity).toFixed(2))
+        };
+      });
+
+      console.log('📋 Items de orden a crear:', JSON.stringify(orderItems, null, 2));
+
+      console.log('💾 Insertando items en la base de datos...');
+      const { data: createdItems, error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems)
+        .select();
+
+      if (itemsError) {
+        console.error('❌ Error detallado creando items:', JSON.stringify(itemsError, null, 2));
+        throw new Error(`Error al crear los items de la orden: ${itemsError.message} (Código: ${itemsError.code})`);
+      }
+
+      console.log('✅ Items de orden creados exitosamente:', createdItems);
+
+      // Limpiar el carrito y redirigir
+      console.log('🧹 Limpiando carrito...');
       await clearCart();
-      router.push(`/checkout/success?payment_intent=${paymentIntent.id}`);
+      console.log('🚀 Redirigiendo a página de éxito...');
+      router.push(`/checkout/success?payment_intent=${paymentIntent.id}&order_id=${order.id}`);
+      
     } catch (err) {
-      console.error('Error al procesar el pedido:', err);
-      setError('Error al procesar el pedido');
+      console.error('💥 ERROR COMPLETO al procesar el pedido:');
+      console.error('📍 Mensaje del error:', err instanceof Error ? err.message : 'Error desconocido');
+      console.error('📍 Stack trace:', err instanceof Error ? err.stack : 'No stack trace');
+      console.error('📍 Tipo de error:', typeof err);
+      console.error('📍 Error completo:', err);
+      
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido al procesar el pedido';
+      setError(`Error al procesar el pedido: ${errorMessage}`);
+      
+      // Mostrar alerta para el usuario
+      alert(`❌ Error: ${errorMessage}`);
     }
   };
 
@@ -302,7 +418,10 @@ const CheckoutPage = () => {
         clientSecret={clientSecret}
         amount={total}
         shippingInfo={shippingInfo}
-        onSuccess={handlePaymentSuccess}
+        onSuccess={(paymentIntent) => {
+          console.log('🔥 PaymentMethodSelector onSuccess ejecutado con:', paymentIntent);
+          handlePaymentSuccess(paymentIntent);
+        }}
         onError={handlePaymentError}
       />
       
